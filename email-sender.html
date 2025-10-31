@@ -1,0 +1,2508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmailPro - Sistema de Envio de E-mails</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-stop:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-play:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+        
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #f8fafc;
+            border-left: 3px solid #0ea5e9;
+        }
+        
+        .sidebar-item.active {
+            background-color: #f1f5f9;
+            border-left: 3px solid #0ea5e9;
+            color: #0ea5e9;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .progress-gradient {
+            background: linear-gradient(90deg, #0ea5e9, #0284c7, #0369a1);
+        }
+        
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .compact-input {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .compact-button {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .editor-toolbar {
+            border: 1px solid #d1d5db;
+            border-bottom: none;
+            border-radius: 0.5rem 0.5rem 0 0;
+            padding: 0.5rem;
+            background: #f9fafb;
+        }
+        
+        .editor-content {
+            border: 1px solid #d1d5db;
+            border-radius: 0 0 0.5rem 0.5rem;
+            min-height: 150px;
+            padding: 0.75rem;
+            background: white;
+        }
+        
+        .editor-content:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .toolbar-btn {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        .toolbar-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .batch-progress {
+            background: linear-gradient(90deg, #10b981, #059669, #047857);
+        }
+
+        .limit-message {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-left: 4px solid #ea580c;
+        }
+
+        .google-limit-alert {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .auto-schedule-card {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-left: 4px solid #ea580c;
+        }
+        
+        .countdown-timer {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: bold;
+        }
+        
+        .pulse-warning {
+            animation: pulse 2s infinite;
+        }
+
+        .progress-sidebar {
+            background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 50%, #ffffff 50%, #ffffff 100%);
+        }
+
+        .stop-button-compact {
+            background: #ef4444;
+            color: white;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .stop-button-compact:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .attachment-badge {
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3">
+    <div id="app" class="max-w-7xl mx-auto">
+        <div class="text-center py-20">
+            <div class="bg-white rounded-2xl p-8 inline-block">
+                <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+                <p class="text-gray-600">Carregando EmailPro...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        const RATE_LIMIT = {
+            daily: 500,
+            google: 100,
+            batchDelay: 2000,
+            maxAttachments: 5,
+            maxAttachmentSize: 10 * 1024 * 1024,
+            retryAttempts: 3,
+            retryDelay: 1000
+        };
+
+        const GoogleLimitManager = {
+            limitPatterns: [
+                'quota exceeded', 'daily limit exceeded', 'rate limit exceeded', 
+                'too many requests', 'user rate limit exceeded', 'quota',
+                'limit exceeded', 'rate limit', 'daily sending limit exceeded',
+                'maximum rate', 'limite excedido', 'limite diário excedido',
+                'limite de taxa excedido', 'muitas solicitações', 
+                'limite de usuário excedido', 'cota excedida',
+                'limite de envio diário excedido', 'taxa máxima', 'limite máximo',
+                '550 5.4.5', '550 5.7.0', '421 4.7.0', '553 5.3.0',
+                'exceeded', 'too many', 'maximum', 'limit'
+            ],
+
+            isGoogleLimitError: function(errorMessage) {
+                if (!errorMessage) return false;
+                const message = errorMessage.toString().toLowerCase();
+                return this.limitPatterns.some(pattern => 
+                    message.includes(pattern.toLowerCase())
+                );
+            },
+
+            getNextSendTime: function() {
+                const now = new Date();
+                const nextDay = new Date(now);
+                nextDay.setDate(now.getDate() + 1);
+                nextDay.setHours(8, 0, 0, 0);
+                return nextDay;
+            },
+
+            getTimeUntilNextSend: function(nextSendTime) {
+                const now = new Date();
+                const diff = nextSendTime - now;
+                
+                if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+                
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                return { hours, minutes, seconds };
+            },
+
+            formatTimeRemaining: function(timeObj) {
+                return `${timeObj.hours.toString().padStart(2, '0')}:${timeObj.minutes.toString().padStart(2, '0')}:${timeObj.seconds.toString().padStart(2, '0')}`;
+            },
+
+            calculateNextBusinessDay: function(blockTime) {
+                const nextDay = new Date(blockTime);
+                nextDay.setDate(nextDay.getDate() + 1);
+                
+                if (nextDay.getDay() === 0) {
+                    nextDay.setDate(nextDay.getDate() + 1);
+                } else if (nextDay.getDay() === 6) {
+                    nextDay.setDate(nextDay.getDate() + 2);
+                }
+                
+                nextDay.setHours(nextDay.getHours() + 1);
+                
+                return nextDay;
+            }
+        };
+
+        const ToastManager = {
+            show: (message, type = 'info', duration = 5000) => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                const bgColors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    warning: 'bg-yellow-500',
+                    info: 'bg-blue-500'
+                };
+                
+                toast.className = `toast ${bgColors[type]} text-white px-6 py-3 rounded-lg shadow-lg mb-2 flex items-center justify-between min-w-80`;
+                toast.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-white hover:text-gray-200 ml-4">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, duration);
+            }
+        };
+
+        const ConfigManager = {
+            saveConfigToFile: (config, filename = 'email-config.json') => {
+                try {
+                    const dataStr = JSON.stringify(config, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(dataBlob);
+                    link.download = filename;
+                    link.click();
+                    
+                    setTimeout(() => URL.revokeObjectURL(link.href), 100);
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao salvar configurações:', error);
+                    ToastManager.show('Erro ao salvar configurações', 'error');
+                    return false;
+                }
+            },
+
+            loadConfigFromFile: async () => {
+                return new Promise((resolve) => {
+                    try {
+                        const localStorageConfig = localStorage.getItem('appConfig');
+                        console.log('📁 Configurações carregadas do localStorage:', localStorageConfig);
+                        if (localStorageConfig) {
+                            const parsedConfig = JSON.parse(localStorageConfig);
+                            resolve(parsedConfig);
+                        } else {
+                            console.log('ℹ️ Nenhuma configuração encontrada no localStorage');
+                            resolve(null);
+                        }
+                    } catch (error) {
+                        console.error('❌ Erro ao carregar configurações:', error);
+                        ToastManager.show('Erro ao carregar configurações', 'error');
+                        resolve(null);
+                    }
+                });
+            },
+
+            saveConfigAutomatically: (config) => {
+                try {
+                    localStorage.setItem('appConfig', JSON.stringify(config));
+                    console.log('💾 Configurações salvas automaticamente');
+                    return true;
+                } catch (error) {
+                    console.error('❌ Erro ao salvar automaticamente:', error);
+                    return false;
+                }
+            },
+
+            saveHistoryAutomatically: (history) => {
+                try {
+                    localStorage.setItem('emailHistory', JSON.stringify(history));
+                    console.log('✅ Histórico salvo:', history.length, 'itens');
+                    return true;
+                } catch (error) {
+                    console.error('❌ Erro ao salvar histórico:', error);
+                    return false;
+                }
+            },
+
+            loadHistoryAutomatically: () => {
+                try {
+                    const history = localStorage.getItem('emailHistory');
+                    console.log('📊 Histórico encontrado no localStorage:', history);
+                    const parsedHistory = history ? JSON.parse(history) : [];
+                    console.log('📋 Histórico carregado:', parsedHistory.length, 'itens');
+                    return parsedHistory;
+                } catch (error) {
+                    console.error('❌ Erro ao carregar histórico:', error);
+                    return [];
+                }
+            }
+        };
+
+        const ValidationUtils = {
+            validateEmail: (email) => {
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return regex.test(email);
+            },
+
+            validateConfig: (config) => {
+                const errors = [];
+                
+                if (!config.gmailUser || !config.gmailUser.includes('@gmail.com')) {
+                    errors.push('E-mail do Gmail inválido');
+                }
+                
+                if (!config.gmailPassword || config.gmailPassword.length < 8) {
+                    errors.push('Senha de app muito curta (mínimo 8 caracteres)');
+                }
+                
+                if (!config.serverUrl || !config.serverUrl.startsWith('http')) {
+                    errors.push('URL do servidor inválida');
+                }
+                
+                if (!config.senderName || config.senderName.trim().length < 2) {
+                    errors.push('Nome do remetente muito curto');
+                }
+                
+                return errors;
+            }
+        };
+
+        // Função auxiliar para verificar se é File object
+        const isFileObject = (obj) => {
+            return obj instanceof File || 
+                   (typeof obj === 'object' && obj !== null && 'name' in obj && 'size' in obj && 'type' in obj);
+        };
+
+        function App() {
+            const stopRequestedRef = useRef(false);
+            const startTimeRef = useRef(null);
+            const [elapsedTime, setElapsedTime] = useState('00:00:00');
+            
+            const [serverUrl, setServerUrl] = useState('http://localhost:3001');
+            const [gmailUser, setGmailUser] = useState('');
+            const [gmailPassword, setGmailPassword] = useState('');
+            const [senderName, setSenderName] = useState('');
+            
+            const [templates, setTemplates] = useState([{
+                id: 1,
+                name: "Boas-vindas",
+                subject: "Bem-vindo(a)!",
+                body: "Olá,\n\nSeja bem-vindo(a) à nossa plataforma!\n\nAtenciosamente,\nEquipe",
+                isHtml: false
+            }]);
+            const [selectedTemplate, setSelectedTemplate] = useState(null);
+            const [newTemplate, setNewTemplate] = useState({ 
+                name: '', 
+                subject: '', 
+                body: '',
+                isHtml: true 
+            });
+            const [editingTemplate, setEditingTemplate] = useState(null);
+            
+            const [recipients, setRecipients] = useState('');
+            const [subject, setSubject] = useState('');
+            const [body, setBody] = useState('');
+            const [attachments, setAttachments] = useState([]);
+            
+            const [sentEmails, setSentEmails] = useState([]);
+            const [scheduledBatches, setScheduledBatches] = useState([]);
+            
+            const [isSending, setIsSending] = useState(false);
+            const [progress, setProgress] = useState(0);
+            const [logs, setLogs] = useState([]);
+            
+            const [currentView, setCurrentView] = useState('send');
+            const [showConfig, setShowConfig] = useState(false);
+            const [showTemplateModal, setShowTemplateModal] = useState(false);
+            const [showLogs, setShowLogs] = useState(false);
+            const [stopRequested, setStopRequested] = useState(false);
+            const [googleLimitReached, setGoogleLimitReached] = useState(false);
+            const [sendingBatchId, setSendingBatchId] = useState(null);
+            const [batchProgress, setBatchProgress] = useState(0);
+            const [isLoading, setIsLoading] = useState(true);
+
+            const [nextSendTime, setNextSendTime] = useState(null);
+            const [timeRemaining, setTimeRemaining] = useState({ hours: 0, minutes: 0, seconds: 0 });
+            const [autoScheduledBatch, setAutoScheduledBatch] = useState(null);
+            const [pendingRecipients, setPendingRecipients] = useState([]);
+            const [failedEmails, setFailedEmails] = useState([]);
+            const [showAddAttachmentModal, setShowAddAttachmentModal] = useState(false);
+            const [selectedBatchForAttachment, setSelectedBatchForAttachment] = useState(null);
+            const [newBatchAttachments, setNewBatchAttachments] = useState([]);
+
+            // Timer para o tempo de envio
+            useEffect(() => {
+                let interval;
+                if (isSending || sendingBatchId) {
+                    startTimeRef.current = new Date();
+                    interval = setInterval(() => {
+                        const now = new Date();
+                        const diff = now - startTimeRef.current;
+                        const hours = Math.floor(diff / (1000 * 60 * 60));
+                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                        
+                        setElapsedTime(
+                            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                        );
+                    }, 1000);
+                } else {
+                    setElapsedTime('00:00:00');
+                }
+                
+                return () => {
+                    if (interval) clearInterval(interval);
+                };
+            }, [isSending, sendingBatchId]);
+
+            useEffect(() => {
+                let interval;
+                if (googleLimitReached && nextSendTime) {
+                    interval = setInterval(() => {
+                        const remaining = GoogleLimitManager.getTimeUntilNextSend(nextSendTime);
+                        setTimeRemaining(remaining);
+                        
+                        if (remaining.hours === 0 && remaining.minutes === 0 && remaining.seconds === 0) {
+                            setGoogleLimitReached(false);
+                            setNextSendTime(null);
+                            ToastManager.show('Limite do Google resetado! Você pode enviar e-mails novamente.', 'success');
+                        }
+                    }, 1000);
+                }
+                
+                return () => {
+                    if (interval) clearInterval(interval);
+                };
+            }, [googleLimitReached, nextSendTime]);
+
+            const parseRecipients = useCallback((text) => {
+                return text.split(/[\s,;]+/)
+                    .map(e => e.trim())
+                    .filter(e => e && ValidationUtils.validateEmail(e));
+            }, []);
+
+            const getTodaySentCount = useCallback(() => {
+                const today = new Date().toDateString();
+                return sentEmails.filter(email => 
+                    new Date(email.sentAt).toDateString() === today
+                ).length;
+            }, [sentEmails]);
+
+            const getGoogleLimitReached = useCallback(() => {
+                return getTodaySentCount() >= RATE_LIMIT.google;
+            }, [getTodaySentCount]);
+
+            const remainingPercentage = useMemo(() => {
+                return ((RATE_LIMIT.daily - getTodaySentCount()) / RATE_LIMIT.daily) * 100;
+            }, [getTodaySentCount]);
+
+            // CORREÇÃO: Carregar configurações e histórico de forma síncrona
+            useEffect(() => {
+                const loadData = () => {
+                    try {
+                        setIsLoading(true);
+                        console.log('🔄 Iniciando carregamento de dados...');
+                        
+                        // Carregar configurações
+                        const configData = localStorage.getItem('appConfig');
+                        console.log('📁 Configurações do localStorage:', configData);
+                        
+                        if (configData) {
+                            const config = JSON.parse(configData);
+                            setServerUrl(config.serverUrl || 'http://localhost:3001');
+                            setGmailUser(config.gmailUser || '');
+                            setGmailPassword(config.gmailPassword || '');
+                            setSenderName(config.senderName || '');
+                            setTemplates(config.templates || [{
+                                id: 1,
+                                name: "Boas-vindas",
+                                subject: "Bem-vindo(a)!",
+                                body: "Olá,\n\nSeja bem-vindo(a) à nossa plataforma!\n\nAtenciosamente,\nEquipe",
+                                isHtml: false
+                            }]);
+                            setScheduledBatches(config.scheduledBatches || []);
+                            console.log('✅ Configurações carregadas');
+                        }
+
+                        // CORREÇÃO: Carregar histórico de forma síncrona
+                        const historyData = localStorage.getItem('emailHistory');
+                        console.log('📊 Histórico do localStorage:', historyData);
+                        
+                        if (historyData) {
+                            try {
+                                const history = JSON.parse(historyData);
+                                setSentEmails(history);
+                                console.log('✅ Histórico carregado:', history.length, 'itens');
+                            } catch (error) {
+                                console.error('❌ Erro ao fazer parse do histórico:', error);
+                                setSentEmails([]);
+                            }
+                        } else {
+                            console.log('ℹ️ Nenhum histórico encontrado');
+                            setSentEmails([]);
+                        }
+                        
+                        ToastManager.show('Dados carregados com sucesso', 'success');
+                    } catch (error) {
+                        console.error('❌ Erro ao carregar dados:', error);
+                        ToastManager.show('Erro ao carregar dados', 'error');
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+                
+                loadData();
+            }, []);
+
+            // Salvar configurações automaticamente
+            const debouncedSaveRef = useRef(null);
+            const saveConfig = useCallback((config) => {
+                if (debouncedSaveRef.current) {
+                    clearTimeout(debouncedSaveRef.current);
+                }
+                
+                debouncedSaveRef.current = setTimeout(() => {
+                    ConfigManager.saveConfigAutomatically(config);
+                }, 1000);
+            }, []);
+
+            useEffect(() => {
+                const config = {
+                    serverUrl,
+                    gmailUser,
+                    gmailPassword,
+                    senderName,
+                    templates,
+                    scheduledBatches,
+                    lastUpdate: new Date().toISOString()
+                };
+                saveConfig(config);
+            }, [serverUrl, gmailUser, gmailPassword, senderName, templates, scheduledBatches, saveConfig]);
+
+            // CORREÇÃO: Salvar histórico sempre que sentEmails mudar
+            useEffect(() => {
+                if (sentEmails.length > 0) {
+                    console.log('💾 Salvando histórico:', sentEmails.length, 'itens');
+                    console.log('📧 Último e-mail:', sentEmails[sentEmails.length - 1]);
+                    ConfigManager.saveHistoryAutomatically(sentEmails);
+                }
+            }, [sentEmails]);
+
+            const convertFilesToBase64 = async (files) => {
+                const promises = Array.from(files).map(file => {
+                    return new Promise((resolve, reject) => {
+                        // Se já estiver no formato base64, retornar como está
+                        if (file.content && file.filename && file.contentType) {
+                            resolve(file);
+                            return;
+                        }
+                        
+                        // Se for File object, converter para base64
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            resolve({
+                                filename: file.name,
+                                content: reader.result.split(',')[1],
+                                contentType: file.type
+                            });
+                        };
+                        reader.onerror = () => reject(new Error(`Erro ao ler arquivo: ${file.name}`));
+                        reader.readAsDataURL(file);
+                    });
+                });
+                return await Promise.all(promises);
+            };
+
+            const handleGoogleLimitReached = useCallback(async (currentRecipients, currentSubject, currentBody, currentAttachments = [], blockTime = new Date()) => {
+                console.log('🚨 Limite do Google detectado, agendando e-mails...');
+
+                stopRequestedRef.current = true;
+                setStopRequested(true);
+                setIsSending(false);
+                setSendingBatchId(null);
+                
+                const nextTime = GoogleLimitManager.calculateNextBusinessDay(blockTime);
+                setNextSendTime(nextTime);
+                setGoogleLimitReached(true);
+                
+                const remainingRecipients = currentRecipients && currentRecipients.length > 0 
+                    ? currentRecipients 
+                    : parseRecipients(recipients);
+                
+                console.log('📧 Destinatários restantes para agendar:', remainingRecipients);
+                setPendingRecipients(remainingRecipients);
+                
+                if (remainingRecipients && remainingRecipients.length > 0) {
+                    // CORREÇÃO: Processar anexos para o formato correto
+                    let processedAttachments = currentAttachments;
+                    if (currentAttachments.length > 0 && isFileObject(currentAttachments[0])) {
+                        try {
+                            processedAttachments = await convertFilesToBase64(currentAttachments);
+                        } catch (error) {
+                            console.error('❌ Erro ao processar anexos para agendamento automático:', error);
+                        }
+                    }
+
+                    const autoBatch = {
+                        id: `auto-${Date.now()}`,
+                        subject: currentSubject || subject,
+                        body: currentBody || body,
+                        recipients: remainingRecipients,
+                        attachments: processedAttachments, // CORREÇÃO: Usar anexos processados
+                        scheduledDate: nextTime.toISOString(),
+                        status: 'Agendado Automaticamente',
+                        type: 'auto',
+                        createdAt: new Date().toISOString(),
+                        originalCount: remainingRecipients.length,
+                        completed: false
+                    };
+                    
+                    console.log('📅 Criando lote automático:', autoBatch);
+                    setAutoScheduledBatch(autoBatch);
+                    
+                    setScheduledBatches(prev => {
+                        const newBatches = [...prev, autoBatch];
+                        console.log('✅ Lotes agendados atualizados:', newBatches.length, 'lotes');
+                        return newBatches;
+                    });
+                    
+                    const limitLog = {
+                        email: 'Sistema',
+                        status: `📧 LIMITE DO GOOGLE ATINGIDO! Envio interrompido. ${remainingRecipients.length} e-mail(s) agendados para ${nextTime.toLocaleString('pt-BR')}`,
+                        success: false,
+                        time: new Date().toLocaleTimeString(),
+                        type: 'limit_reached'
+                    };
+                    
+                    setLogs(prev => [...prev, limitLog]);
+                    
+                    ToastManager.show(
+                        `Limite do Google atingido! ${remainingRecipients.length} e-mails restantes foram agendados para ${nextTime.toLocaleDateString('pt-BR')} às ${nextTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.`,
+                        'warning',
+                        8000
+                    );
+                } else {
+                    console.log('⚠️ Nenhum destinatário para agendar');
+                    ToastManager.show(
+                        'Limite do Google atingido! Nenhum e-mail restante para agendar.',
+                        'warning',
+                        5000
+                    );
+                }
+                
+                if (!sendingBatchId) {
+                    setRecipients('');
+                    setProgress(0);
+                }
+            }, [recipients, subject, body, sendingBatchId, parseRecipients]);
+
+            const checkAndHandleLimitError = useCallback((error, email, currentRecipients = null, currentSubject = null, currentBody = null, currentAttachments = []) => {
+                const errorMessage = error.message || error.toString();
+                
+                if (GoogleLimitManager.isGoogleLimitError(errorMessage)) {
+                    console.log('📧 Limite do Google detectado:', errorMessage);
+                    handleGoogleLimitReached(currentRecipients, currentSubject, currentBody, currentAttachments, new Date());
+                    return true;
+                }
+                return false;
+            }, [handleGoogleLimitReached]);
+
+            const scheduleFailedEmails = useCallback((failedEmailsList, emailSubject, emailBody, emailAttachments = []) => {
+                if (failedEmailsList.length === 0) return;
+
+                const scheduledDate = new Date();
+                scheduledDate.setDate(scheduledDate.getDate() + 1);
+                scheduledDate.setHours(9, 0, 0, 0);
+
+                const failedBatch = {
+                    id: `failed-${Date.now()}`,
+                    subject: emailSubject,
+                    body: emailBody,
+                    recipients: failedEmailsList,
+                    attachments: emailAttachments,
+                    scheduledDate: scheduledDate.toISOString(),
+                    status: 'Agendado (Falha Anterior)',
+                    type: 'retry',
+                    createdAt: new Date().toISOString(),
+                    originalCount: failedEmailsList.length,
+                    completed: false
+                };
+
+                setScheduledBatches(prev => {
+                    const newBatches = [...prev, failedBatch];
+                    console.log('✅ Lotes de falha adicionados:', newBatches.length, 'lotes');
+                    return newBatches;
+                });
+
+                ToastManager.show(
+                    `${failedEmailsList.length} e-mail(s) com falha foram agendados para reenvio amanhã`,
+                    'warning',
+                    6000
+                );
+
+                setFailedEmails([]);
+            }, []);
+
+            const sendEmailWithRetry = async (emailData, retries = RATE_LIMIT.retryAttempts) => {
+                for (let attempt = 1; attempt <= retries; attempt++) {
+                    try {
+                        const response = await fetch(`${serverUrl}/send-gmail`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(emailData)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (!response.ok && GoogleLimitManager.isGoogleLimitError(result.message)) {
+                            throw new Error(result.message);
+                        }
+                        
+                        if (response.ok) {
+                            return result;
+                        }
+                        
+                        if (attempt === retries) {
+                            throw new Error(`Falha após ${retries} tentativas: ${result.message}`);
+                        }
+                        
+                        await new Promise(r => setTimeout(r, RATE_LIMIT.retryDelay * attempt));
+                    } catch (error) {
+                        if (attempt === retries) throw error;
+                    }
+                }
+            };
+
+            const sendEmail = async () => {
+                const recipientList = parseRecipients(recipients);
+                
+                if (!recipientList.length) {
+                    ToastManager.show('Adicione pelo menos um e-mail válido', 'warning');
+                    return;
+                }
+                
+                if (!subject || !body) {
+                    ToastManager.show('Preencha assunto e mensagem', 'warning');
+                    return;
+                }
+
+                const configErrors = ValidationUtils.validateConfig({
+                    gmailUser, gmailPassword, serverUrl, senderName
+                });
+                
+                if (configErrors.length > 0) {
+                    ToastManager.show(`Erro de configuração: ${configErrors[0]}`, 'error');
+                    setShowConfig(true);
+                    return;
+                }
+
+                if (getGoogleLimitReached()) {
+                    ToastManager.show(`📧 Limite diário do Gmail atingido! Retomando às ${nextSendTime?.toLocaleTimeString('pt-BR')}`, 'warning');
+                    return;
+                }
+
+                stopRequestedRef.current = false;
+                setIsSending(true);
+                setProgress(0);
+                setLogs([]);
+                setShowLogs(true);
+                setStopRequested(false);
+                setFailedEmails([]);
+
+                let attachmentData = [];
+                if (attachments.length > 0) {
+                    try {
+                        attachmentData = await convertFilesToBase64(attachments);
+                    } catch (error) {
+                        setIsSending(false);
+                        ToastManager.show('Erro ao processar anexos', 'error');
+                        return;
+                    }
+                }
+
+                let processedCount = 0;
+                let hasLimitError = false;
+                const currentFailedEmails = [];
+
+                for (let i = 0; i < recipientList.length; i++) {
+                    if (stopRequestedRef.current || hasLimitError) {
+                        break;
+                    }
+
+                    const email = recipientList[i];
+                    const progressPercent = ((i + 1) / recipientList.length) * 100;
+                    
+                    try {
+                        const result = await sendEmailWithRetry({
+                            user: gmailUser,
+                            password: gmailPassword,
+                            from: `"${senderName}" <${gmailUser}>`,
+                            to: email,
+                            subject: subject,
+                            text: body,
+                            html: body.replace(/\n/g, '<br>'),
+                            attachments: attachmentData
+                        });
+                        
+                        const log = {
+                            email,
+                            status: result.success ? 'Enviado com sucesso' : result.message,
+                            success: result.success,
+                            time: new Date().toLocaleTimeString()
+                        };
+                        
+                        setLogs(prev => [...prev, log]);
+                        setProgress(progressPercent);
+
+                        if (result.success) {
+                            const newEmail = {
+                                to: email,
+                                subject: subject,
+                                sentAt: new Date().toISOString(),
+                                status: 'Enviado',
+                                source: 'main',
+                                hasAttachments: attachmentData.length > 0
+                            };
+                            console.log('📧 Adicionando e-mail ao histórico:', newEmail);
+                            setSentEmails(prev => {
+                                const updated = [...prev, newEmail];
+                                console.log('✅ Histórico atualizado:', updated.length, 'itens');
+                                return updated;
+                            });
+                            processedCount++;
+                        } else {
+                            // Adicionar à lista de falhas
+                            currentFailedEmails.push(email);
+                        }
+
+                        await new Promise(r => setTimeout(r, RATE_LIMIT.batchDelay));
+                    } catch (error) {
+                        console.log('❌ Erro no envio:', error.message);
+                        
+                        // Adicionar à lista de falhas
+                        currentFailedEmails.push(email);
+                        
+                        const remainingRecipients = recipientList.slice(i);
+                        
+                        if (checkAndHandleLimitError(error, email, remainingRecipients, subject, body, attachmentData)) {
+                            hasLimitError = true;
+                            break;
+                        }
+                        
+                        setLogs(prev => [...prev, {
+                            email,
+                            status: `Erro: ${error.message}`,
+                            success: false,
+                            time: new Date().toLocaleTimeString()
+                        }]);
+                        setProgress(progressPercent);
+                    }
+                }
+
+                setIsSending(false);
+                setProgress(100);
+                
+                // Agendar e-mails que falharam (exceto por limite do Google)
+                if (currentFailedEmails.length > 0 && !hasLimitError) {
+                    scheduleFailedEmails(currentFailedEmails, subject, body, attachmentData);
+                }
+                
+                if (!stopRequestedRef.current && !hasLimitError) {
+                    ToastManager.show(`Envio concluído: ${processedCount}/${recipientList.length} e-mail(s) processado(s)`, 'success');
+                    setRecipients('');
+                } else if (hasLimitError) {
+                    console.log('✅ Limite tratado - envios agendados');
+                } else {
+                    ToastManager.show(`Envio interrompido: ${processedCount} e-mail(s) enviados`, 'warning');
+                }
+            };
+
+            const sendScheduledBatch = useCallback(async (batch) => {
+                const configErrors = ValidationUtils.validateConfig({
+                    gmailUser, gmailPassword, serverUrl, senderName
+                });
+                
+                if (configErrors.length > 0) {
+                    ToastManager.show(`Erro de configuração: ${configErrors[0]}`, 'error');
+                    setShowConfig(true);
+                    return;
+                }
+
+                if (getGoogleLimitReached()) {
+                    ToastManager.show('📧 Limite do Google atingido! Aguarde até amanhã.', 'warning');
+                    return;
+                }
+
+                stopRequestedRef.current = false;
+                setSendingBatchId(batch.id);
+                setBatchProgress(0);
+                setLogs([]);
+                setShowLogs(true);
+                setStopRequested(false);
+
+                // CORREÇÃO: Converter anexos para base64 se necessário
+                let attachmentData = [];
+                if (batch.attachments && batch.attachments.length > 0) {
+                    try {
+                        // Verificar se os anexos já estão em base64 ou se são File objects
+                        if (isFileObject(batch.attachments[0])) {
+                            // Se são File objects, converter para base64
+                            attachmentData = await convertFilesToBase64(batch.attachments);
+                        } else {
+                            // Se já estão no formato esperado (com filename, content, contentType)
+                            attachmentData = batch.attachments;
+                        }
+                    } catch (error) {
+                        console.error('❌ Erro ao processar anexos do lote agendado:', error);
+                        setLogs(prev => [...prev, {
+                            email: 'Sistema',
+                            status: `Erro ao processar anexos: ${error.message}`,
+                            success: false,
+                            time: new Date().toLocaleTimeString(),
+                            source: 'scheduled'
+                        }]);
+                    }
+                }
+
+                let processedCount = 0;
+                let hasLimitError = false;
+                const currentFailedEmails = [];
+
+                for (let i = 0; i < batch.recipients.length; i++) {
+                    if (stopRequestedRef.current || hasLimitError) {
+                        break;
+                    }
+
+                    const email = batch.recipients[i];
+                    const progressPercent = ((i + 1) / batch.recipients.length) * 100;
+                    
+                    try {
+                        const result = await sendEmailWithRetry({
+                            user: gmailUser,
+                            password: gmailPassword,
+                            from: `"${senderName}" <${gmailUser}>`,
+                            to: email,
+                            subject: batch.subject,
+                            text: batch.body,
+                            html: batch.body.replace(/\n/g, '<br>'),
+                            attachments: attachmentData // CORREÇÃO: Usar attachmentData processado
+                        });
+                        
+                        const log = {
+                            email,
+                            status: result.success ? 'Enviado com sucesso' : result.message,
+                            success: result.success,
+                            time: new Date().toLocaleTimeString(),
+                            source: 'scheduled'
+                        };
+                        
+                        setLogs(prev => [...prev, log]);
+                        setBatchProgress(progressPercent);
+
+                        if (result.success) {
+                            const newEmail = {
+                                to: email,
+                                subject: batch.subject,
+                                sentAt: new Date().toISOString(),
+                                status: 'Enviado',
+                                source: 'scheduled',
+                                hasAttachments: attachmentData.length > 0 // CORREÇÃO: Registrar se tinha anexos
+                            };
+                            console.log('📧 Adicionando e-mail agendado ao histórico:', newEmail);
+                            setSentEmails(prev => {
+                                const updated = [...prev, newEmail];
+                                console.log('✅ Histórico atualizado:', updated.length, 'itens');
+                                return updated;
+                            });
+                            processedCount++;
+                        } else {
+                            currentFailedEmails.push(email);
+                        }
+
+                        await new Promise(r => setTimeout(r, RATE_LIMIT.batchDelay));
+                    } catch (error) {
+                        console.log('❌ Erro no envio agendado:', error.message);
+                        
+                        currentFailedEmails.push(email);
+                        
+                        const remainingRecipients = batch.recipients.slice(i);
+                        
+                        if (checkAndHandleLimitError(error, email, remainingRecipients, batch.subject, batch.body, attachmentData)) {
+                            hasLimitError = true;
+                            break;
+                        }
+                        
+                        setLogs(prev => [...prev, {
+                            email,
+                            status: `Erro: ${error.message}`,
+                            success: false,
+                            time: new Date().toLocaleTimeString(),
+                            source: 'scheduled'
+                        }]);
+                        setBatchProgress(progressPercent);
+                    }
+                }
+
+                setSendingBatchId(null);
+                setBatchProgress(100);
+                
+                // Agendar e-mails que falharam no lote agendado
+                if (currentFailedEmails.length > 0 && !hasLimitError) {
+                    scheduleFailedEmails(currentFailedEmails, batch.subject, batch.body, attachmentData);
+                }
+                
+                if (!stopRequestedRef.current && !hasLimitError) {
+                    setScheduledBatches(prev => prev.map(b => 
+                        b.id === batch.id 
+                            ? { ...b, completed: true, status: 'Concluído', sentCount: processedCount }
+                            : b
+                    ));
+                    
+                    ToastManager.show(`Lote agendado concluído: ${processedCount}/${batch.recipients.length} e-mail(s) enviados`, 'success');
+                } else if (hasLimitError) {
+                    console.log('✅ Limite tratado - lote agendado será reprocessado');
+                } else {
+                    ToastManager.show(`Lote interrompido: ${processedCount} e-mail(s) enviados`, 'warning');
+                }
+            }, [gmailUser, gmailPassword, serverUrl, senderName, getGoogleLimitReached, checkAndHandleLimitError, scheduleFailedEmails]);
+
+            const stopSending = () => {
+                stopRequestedRef.current = true;
+                setStopRequested(true);
+                setIsSending(false);
+                setSendingBatchId(null);
+                ToastManager.show('Envio interrompido pelo usuário', 'warning');
+            };
+
+            const addTemplate = () => {
+                if (!newTemplate.name || !newTemplate.subject || !newTemplate.body) {
+                    ToastManager.show('Preencha todos os campos do template', 'warning');
+                    return;
+                }
+
+                const template = {
+                    id: editingTemplate ? editingTemplate.id : Date.now(),
+                    name: newTemplate.name,
+                    subject: newTemplate.subject,
+                    body: newTemplate.body,
+                    isHtml: newTemplate.isHtml
+                };
+
+                if (editingTemplate) {
+                    setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? template : t));
+                    ToastManager.show('Template atualizado com sucesso', 'success');
+                } else {
+                    setTemplates(prev => [...prev, template]);
+                    ToastManager.show('Template criado com sucesso', 'success');
+                }
+
+                setNewTemplate({ name: '', subject: '', body: '', isHtml: true });
+                setEditingTemplate(null);
+                setShowTemplateModal(false);
+            };
+
+            const deleteTemplate = (id) => {
+                setTemplates(prev => prev.filter(t => t.id !== id));
+                ToastManager.show('Template excluído com sucesso', 'success');
+            };
+
+            const applyTemplate = (template) => {
+                setSubject(template.subject);
+                setBody(template.body);
+                setSelectedTemplate(template);
+                ToastManager.show('Template aplicado com sucesso', 'success');
+            };
+
+            const editTemplate = (template) => {
+                setNewTemplate({
+                    name: template.name,
+                    subject: template.subject,
+                    body: template.body,
+                    isHtml: template.isHtml
+                });
+                setEditingTemplate(template);
+                setShowTemplateModal(true);
+            };
+
+            const handleFileSelect = (e) => {
+                const files = Array.from(e.target.files);
+                const validFiles = files.filter(file => {
+                    if (file.size > RATE_LIMIT.maxAttachmentSize) {
+                        ToastManager.show(`Arquivo ${file.name} excede 10MB`, 'warning');
+                        return false;
+                    }
+                    return true;
+                });
+
+                if (attachments.length + validFiles.length > RATE_LIMIT.maxAttachments) {
+                    ToastManager.show(`Máximo ${RATE_LIMIT.maxAttachments} anexos permitidos`, 'warning');
+                    return;
+                }
+
+                setAttachments(prev => [...prev, ...validFiles]);
+            };
+
+            const handleBatchFileSelect = (e) => {
+                const files = Array.from(e.target.files);
+                const validFiles = files.filter(file => {
+                    if (file.size > RATE_LIMIT.maxAttachmentSize) {
+                        ToastManager.show(`Arquivo ${file.name} excede 10MB`, 'warning');
+                        return false;
+                    }
+                    return true;
+                });
+
+                if (newBatchAttachments.length + validFiles.length > RATE_LIMIT.maxAttachments) {
+                    ToastManager.show(`Máximo ${RATE_LIMIT.maxAttachments} anexos permitidos`, 'warning');
+                    return;
+                }
+
+                setNewBatchAttachments(prev => [...prev, ...validFiles]);
+            };
+
+            const removeAttachment = (index) => {
+                setAttachments(prev => prev.filter((_, i) => i !== index));
+            };
+
+            const removeBatchAttachment = (index) => {
+                setNewBatchAttachments(prev => prev.filter((_, i) => i !== index));
+            };
+
+            const addAttachmentsToBatch = async () => {
+                if (!selectedBatchForAttachment || newBatchAttachments.length === 0) {
+                    ToastManager.show('Selecione pelo menos um arquivo', 'warning');
+                    return;
+                }
+
+                try {
+                    // Converter anexos para base64
+                    const processedAttachments = await convertFilesToBase64(newBatchAttachments);
+                    
+                    setScheduledBatches(prev => prev.map(batch => {
+                        if (batch.id === selectedBatchForAttachment.id) {
+                            const updatedAttachments = [...(batch.attachments || []), ...processedAttachments];
+                            return {
+                                ...batch,
+                                attachments: updatedAttachments
+                            };
+                        }
+                        return batch;
+                    }));
+
+                    ToastManager.show(`${newBatchAttachments.length} anexo(s) adicionado(s) ao lote agendado`, 'success');
+                    setShowAddAttachmentModal(false);
+                    setNewBatchAttachments([]);
+                    setSelectedBatchForAttachment(null);
+                } catch (error) {
+                    console.error('❌ Erro ao adicionar anexos ao lote:', error);
+                    ToastManager.show('Erro ao processar anexos', 'error');
+                }
+            };
+
+            const removeBatchExistingAttachment = (batchId, attachmentIndex) => {
+                setScheduledBatches(prev => prev.map(batch => {
+                    if (batch.id === batchId) {
+                        const updatedAttachments = batch.attachments ? batch.attachments.filter((_, i) => i !== attachmentIndex) : [];
+                        return {
+                            ...batch,
+                            attachments: updatedAttachments
+                        };
+                    }
+                    return batch;
+                }));
+                ToastManager.show('Anexo removido do lote', 'success');
+            };
+
+            const scheduleBatch = async () => {
+                const recipientList = parseRecipients(recipients);
+                
+                if (!recipientList.length) {
+                    ToastManager.show('Adicione pelo menos um e-mail válido', 'warning');
+                    return;
+                }
+                
+                if (!subject || !body) {
+                    ToastManager.show('Preencha assunto e mensagem', 'warning');
+                    return;
+                }
+
+                const scheduledDate = new Date();
+                scheduledDate.setDate(scheduledDate.getDate() + 1);
+                scheduledDate.setHours(9, 0, 0, 0);
+
+                // CORREÇÃO: Processar anexos para base64 antes de salvar
+                let processedAttachments = [];
+                if (attachments.length > 0) {
+                    try {
+                        processedAttachments = await convertFilesToBase64(attachments);
+                    } catch (error) {
+                        ToastManager.show('Erro ao processar anexos para agendamento', 'error');
+                        return;
+                    }
+                }
+
+                const batch = {
+                    id: Date.now().toString(),
+                    subject,
+                    body,
+                    recipients: recipientList,
+                    attachments: processedAttachments, // CORREÇÃO: Salvar anexos processados
+                    scheduledDate: scheduledDate.toISOString(),
+                    status: 'Agendado',
+                    type: 'manual',
+                    createdAt: new Date().toISOString(),
+                    originalCount: recipientList.length,
+                    completed: false
+                };
+
+                setScheduledBatches(prev => [...prev, batch]);
+                ToastManager.show('Lote agendado com sucesso', 'success');
+                
+                setRecipients('');
+                setSubject('');
+                setBody('');
+                setAttachments([]);
+            };
+
+            const deleteScheduledBatch = (id) => {
+                setScheduledBatches(prev => prev.filter(b => b.id !== id));
+                ToastManager.show('Lote agendado excluído', 'success');
+            };
+
+            const formatDate = (dateString) => {
+                return new Date(dateString).toLocaleString('pt-BR');
+            };
+
+            const getStatusColor = (status) => {
+                const colors = {
+                    'Enviado': 'bg-green-100 text-green-800',
+                    'Falhou': 'bg-red-100 text-red-800',
+                    'Agendado': 'bg-blue-100 text-blue-800',
+                    'Agendado Automaticamente': 'bg-orange-100 text-orange-800',
+                    'Concluído': 'bg-green-100 text-green-800',
+                    'Agendado (Falha Anterior)': 'bg-purple-100 text-purple-800'
+                };
+                return colors[status] || 'bg-gray-100 text-gray-800';
+            };
+
+            const clearHistory = () => {
+                setSentEmails([]);
+                localStorage.setItem('emailHistory', JSON.stringify([]));
+                ToastManager.show('Histórico limpo com sucesso', 'success');
+            };
+
+            const exportHistory = () => {
+                const dataStr = JSON.stringify(sentEmails, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `email-history-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                setTimeout(() => URL.revokeObjectURL(link.href), 100);
+                ToastManager.show('Histórico exportado com sucesso', 'success');
+            };
+
+            const forceSaveHistory = () => {
+                localStorage.setItem('emailHistory', JSON.stringify(sentEmails));
+                ToastManager.show('Histórico salvo com sucesso', 'success');
+            };
+
+            const debugLocalStorage = () => {
+                console.log('🔍 DEBUG LOCALSTORAGE:');
+                console.log('emailHistory:', JSON.parse(localStorage.getItem('emailHistory') || '[]'));
+                console.log('appConfig:', JSON.parse(localStorage.getItem('appConfig') || '{}'));
+                ToastManager.show('Verifique o console (F12) para debug', 'info');
+            };
+
+            const sortedLogs = useMemo(() => {
+                return [...logs].reverse();
+            }, [logs]);
+
+            const sortedHistory = useMemo(() => {
+                return [...sentEmails].sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+            }, [sentEmails]);
+
+            const sortedScheduledBatches = useMemo(() => {
+                return [...scheduledBatches].sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+            }, [scheduledBatches]);
+
+            const canSend = useMemo(() => {
+                return !isSending && !sendingBatchId && !googleLimitReached;
+            }, [isSending, sendingBatchId, googleLimitReached]);
+
+            const canSendScheduled = useMemo(() => {
+                return (batch) => !batch.completed && !sendingBatchId && !googleLimitReached;
+            }, [sendingBatchId, googleLimitReached]);
+
+            const goToHome = () => {
+                window.location.href = 'index.html';
+            };
+
+            if (isLoading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="bg-white rounded-2xl p-8 text-center">
+                            <i className="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+                            <p className="text-gray-600">Carregando EmailPro...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="fade-in">
+                    {/* Header */}
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 mb-6 p-4 card-hover">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+                                    <i className="fas fa-paper-plane text-xl text-white"></i>
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold text-gray-800">EmailPro</h1>
+                                    <p className="text-gray-600 text-xs">Sistema de envio de e-mails</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                {googleLimitReached && (
+                                    <div className="google-limit-alert text-white rounded-lg px-3 py-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <i className="fas fa-exclamation-triangle"></i>
+                                            <span className="text-sm font-medium">Limite Google</span>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <div className="bg-gray-50 rounded-full p-1 px-3 border border-gray-200">
+                                    <div className="flex items-center gap-1">
+                                        <i className="fas fa-chart-line text-blue-600 text-sm"></i>
+                                        <span className="text-gray-700 font-semibold text-sm">
+                                            {getTodaySentCount()}/{RATE_LIMIT.daily}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <button
+                                    onClick={goToHome}
+                                    className="bg-black text-white px-3 py-1.5 rounded-lg border border-gray-800 card-hover transition flex items-center gap-2 hover:bg-gray-800 text-sm"
+                                >
+                                    <i className="fas fa-home text-white"></i>
+                                    Início
+                                </button>
+                                
+                                <button
+                                    onClick={() => setShowConfig(true)}
+                                    className="bg-green-600 text-white px-3 py-1.5 rounded-lg border border-green-700 card-hover transition flex items-center gap-2 hover:bg-green-700 text-sm"
+                                >
+                                    <i className="fas fa-cog"></i>
+                                    Configurar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Google Limit Alert */}
+                    {googleLimitReached && (
+                        <div className="auto-schedule-card text-white rounded-lg p-4 mb-4 pulse-warning">
+                            <div className="flex items-center gap-3">
+                                <i className="fas fa-clock text-2xl"></i>
+                                <div className="flex-1">
+                                    <p className="font-bold text-lg">📧 Limite do Google Atingido!</p>
+                                    <p className="text-sm opacity-90 mb-2">
+                                        Envio interrompido automaticamente. {pendingRecipients.length} e-mail(s) restantes foram agendados.
+                                    </p>
+                                    <div className="flex items-center gap-4 text-sm">
+                                        <div>
+                                            <strong>Retomando em:</strong>
+                                            <div className="countdown-timer mt-1">
+                                                {GoogleLimitManager.formatTimeRemaining(timeRemaining)}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong>Próximo envio:</strong>
+                                            <div className="mt-1">
+                                                {nextSendTime.toLocaleDateString('pt-BR')} às {nextSendTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        {/* Sidebar */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3">
+                                <nav className="space-y-1">
+                                    {[
+                                        { id: 'send', icon: 'fa-paper-plane', label: 'Enviar E-mails' },
+                                        { id: 'scheduled', icon: 'fa-calendar', label: `Agendados (${scheduledBatches.length})` },
+                                        { id: 'history', icon: 'fa-history', label: `Histórico (${sentEmails.length})` },
+                                        { id: 'templates', icon: 'fa-file-alt', label: 'Templates' }
+                                    ].map(item => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setCurrentView(item.id)}
+                                            className={`w-full text-left p-2 rounded-lg transition-all duration-200 sidebar-item text-sm ${
+                                                currentView === item.id ? 'active' : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <i className={`fas ${item.icon} w-4 text-center ${currentView === item.id ? 'text-blue-600' : 'text-gray-400'}`}></i>
+                                                <span className="font-medium">{item.label}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </nav>
+
+                                {/* Progress Bar */}
+                                <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                                        <span>Limite Diário</span>
+                                        <span className="font-semibold">{remainingPercentage.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div
+                                            className="h-1.5 rounded-full transition-all duration-500 progress-gradient"
+                                            style={{ 
+                                                width: `${remainingPercentage}%`,
+                                                background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 50%, #ffffff 50%, #ffffff 100%)'
+                                            }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {getTodaySentCount()}/{RATE_LIMIT.daily} enviados
+                                    </p>
+                                    <div className="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
+                                        <p className="text-xs text-orange-700">
+                                            <i className="fas fa-info-circle mr-1"></i>
+                                            Limite Google: {getTodaySentCount()}/{RATE_LIMIT.google}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="lg:col-span-3">
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                <div className="p-4">
+                                    {/* Send View */}
+                                    {currentView === 'send' && (
+                                        <div className="space-y-4 fade-in">
+                                            {getGoogleLimitReached() && (
+                                                <div className="google-limit-alert text-white rounded-lg p-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <i className="fas fa-exclamation-triangle text-2xl"></i>
+                                                        <div>
+                                                            <p className="font-bold text-lg">📧 Limite Diário do Gmail Atingido!</p>
+                                                            <p className="text-sm opacity-90">
+                                                                Você já enviou {getTodaySentCount()} e-mails hoje. 
+                                                                O Gmail permite apenas {RATE_LIMIT.google} envios por dia.
+                                                                Por favor, aguarde até amanhã para continuar.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Template
+                                                        </label>
+                                                        <select
+                                                            value={selectedTemplate?.id || ''}
+                                                            onChange={(e) => {
+                                                                const template = templates.find(t => t.id === parseInt(e.target.value));
+                                                                if (template) applyTemplate(template);
+                                                            }}
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                                        >
+                                                            <option value="">Selecione um template...</option>
+                                                            {templates.map(template => (
+                                                                <option key={template.id} value={template.id}>
+                                                                    {template.name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Destinatários
+                                                        </label>
+                                                        <textarea
+                                                            value={recipients}
+                                                            onChange={(e) => setRecipients(e.target.value)}
+                                                            placeholder="email1@exemplo.com, email2@exemplo.com"
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition h-20 text-sm"
+                                                        />
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            {parseRecipients(recipients).length} e-mail(s) detectados
+                                                        </p>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Anexos
+                                                        </label>
+                                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-300 transition cursor-pointer card-hover">
+                                                            <input
+                                                                type="file"
+                                                                multiple
+                                                                onChange={handleFileSelect}
+                                                                className="hidden"
+                                                                id="file-upload"
+                                                            />
+                                                            <label
+                                                                htmlFor="file-upload"
+                                                                className="flex flex-col items-center justify-center gap-1 cursor-pointer text-gray-500 hover:text-blue-600 text-sm"
+                                                            >
+                                                                <i className="fas fa-cloud-upload-alt text-xl"></i>
+                                                                <span>Clique para adicionar arquivos</span>
+                                                            </label>
+                                                        </div>
+                                                        {attachments.length > 0 && (
+                                                            <div className="mt-3 space-y-1">
+                                                                {attachments.map((file, index) => (
+                                                                    <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <i className="fas fa-file text-gray-400 text-sm"></i>
+                                                                            <span className="text-gray-700 text-sm">{file.name}</span>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => removeAttachment(index)}
+                                                                            className="text-gray-400 hover:text-red-500 transition text-sm"
+                                                                        >
+                                                                            <i className="fas fa-times"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Assunto
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={subject}
+                                                            onChange={(e) => setSubject(e.target.value)}
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                                            placeholder="Assunto do e-mail..."
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex-1">
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Mensagem
+                                                        </label>
+                                                        <textarea
+                                                            value={body}
+                                                            onChange={(e) => setBody(e.target.value)}
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition h-32 text-sm"
+                                                            placeholder="Conteúdo do e-mail..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={sendEmail}
+                                                    disabled={!canSend || isSending}
+                                                    className="flex-1 btn-primary text-white py-2.5 rounded-lg font-semibold text-sm card-hover disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-2"
+                                                >
+                                                    {getGoogleLimitReached() ? (
+                                                        <>
+                                                            <i className="fas fa-ban"></i>
+                                                            Limite Google Atingido
+                                                        </>
+                                                    ) : isSending ? (
+                                                        <>
+                                                            <i className="fas fa-spinner fa-spin"></i>
+                                                            Enviando...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <i className="fas fa-paper-plane"></i>
+                                                            Enviar E-mails
+                                                        </>
+                                                    )}
+                                                </button>
+                                                
+                                                <button
+                                                    onClick={scheduleBatch}
+                                                    disabled={isSending}
+                                                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-lg font-semibold text-sm card-hover transition-all duration-300 flex items-center justify-center gap-2"
+                                                >
+                                                    <i className="fas fa-calendar-plus"></i>
+                                                    Agendar
+                                                </button>
+                                            </div>
+
+                                            {isSending && (
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-sm text-gray-600">
+                                                        <span>Progresso</span>
+                                                        <span>{progress.toFixed(0)}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                                        <div
+                                                            className="h-2 rounded-full transition-all duration-500 batch-progress"
+                                                            style={{ width: `${progress}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex justify-center">
+                                                        <button
+                                                            onClick={stopSending}
+                                                            className="stop-button-compact flex items-center gap-2 px-4 py-2 text-sm"
+                                                        >
+                                                            <i className="fas fa-stop"></i>
+                                                            Parar Envio
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Scheduled View */}
+                                    {currentView === 'scheduled' && (
+                                        <div className="fade-in">
+                                            <div className="mb-4">
+                                                <h2 className="text-lg font-bold text-gray-800 mb-2">
+                                                    Envios Agendados
+                                                </h2>
+                                                <p className="text-gray-600 text-sm">
+                                                    E-mails que serão enviados automaticamente
+                                                </p>
+                                            </div>
+
+                                            {scheduledBatches.length === 0 ? (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    <i className="fas fa-calendar text-4xl mb-3"></i>
+                                                    <p className="text-sm">Nenhum envio agendado</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                                                    {sortedScheduledBatches.map(batch => (
+                                                        <div key={batch.id} className={`border rounded-lg p-3 ${
+                                                            batch.completed ? 'border-green-200 bg-green-50' : 
+                                                            batch.type === 'auto' ? 'border-orange-200 bg-orange-50' :
+                                                            batch.type === 'retry' ? 'border-purple-200 bg-purple-50' :
+                                                            'border-blue-200 bg-blue-50'
+                                                        } card-hover`}>
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <i className="fas fa-calendar text-blue-500 text-sm"></i>
+                                                                        <span className="font-semibold text-blue-700 text-sm">
+                                                                            {new Date(batch.scheduledDate).toLocaleDateString('pt-BR')}
+                                                                        </span>
+                                                                        <span className={`text-xs px-2 py-0.5 rounded ${getStatusColor(batch.status)}`}>
+                                                                            {batch.status}
+                                                                        </span>
+                                                                        {batch.type === 'auto' && (
+                                                                            <span className="text-xs bg-orange-200 text-orange-800 px-2 py-0.5 rounded">
+                                                                                Automático
+                                                                            </span>
+                                                                        )}
+                                                                        {batch.type === 'retry' && (
+                                                                            <span className="text-xs bg-purple-200 text-purple-800 px-2 py-0.5 rounded">
+                                                                                Retry
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-xs mb-1">
+                                                                        <strong>Assunto:</strong> {batch.subject}
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-600">
+                                                                        <strong>Destinatários:</strong> {batch.recipients.length} e-mail(s)
+                                                                    </p>
+                                                                    
+                                                                    {/* Anexos do lote agendado */}
+                                                                    <div className="mt-2">
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <i className="fas fa-paperclip text-gray-400 text-xs"></i>
+                                                                            <span className="text-xs font-semibold text-gray-700">Anexos:</span>
+                                                                            <span className="text-xs text-gray-500">
+                                                                                {batch.attachments ? batch.attachments.length : 0} arquivo(s)
+                                                                            </span>
+                                                                        </div>
+                                                                        {batch.attachments && batch.attachments.length > 0 && (
+                                                                            <div className="flex flex-wrap gap-1 mb-2">
+                                                                                {batch.attachments.map((attachment, idx) => (
+                                                                                    <div key={idx} className="attachment-badge flex items-center gap-1">
+                                                                                        <i className="fas fa-file text-xs"></i>
+                                                                                        <span className="text-xs">{attachment.filename}</span>
+                                                                                        <button
+                                                                                            onClick={() => removeBatchExistingAttachment(batch.id, idx)}
+                                                                                            className="text-red-500 hover:text-red-700 text-xs"
+                                                                                        >
+                                                                                            <i className="fas fa-times"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setSelectedBatchForAttachment(batch);
+                                                                                setShowAddAttachmentModal(true);
+                                                                            }}
+                                                                            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                                        >
+                                                                            <i className="fas fa-plus"></i>
+                                                                            Adicionar Anexos
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <details className="mt-1">
+                                                                        <summary className="text-xs text-blue-600 cursor-pointer hover:underline">
+                                                                            Ver destinatários
+                                                                        </summary>
+                                                                        <div className="mt-1 text-xs text-gray-600 max-h-20 overflow-y-auto bg-white p-1 rounded border">
+                                                                            {batch.recipients.join(', ')}
+                                                                        </div>
+                                                                    </details>
+                                                                </div>
+                                                                <div className="flex gap-1 ml-2">
+                                                                    {!batch.completed && canSendScheduled(batch) && (
+                                                                        <button
+                                                                            onClick={() => sendScheduledBatch(batch)}
+                                                                            disabled={sendingBatchId === batch.id}
+                                                                            className="btn-play text-white p-2 rounded-lg flex items-center justify-center card-hover transition disabled:opacity-50"
+                                                                            title="Enviar este lote agora"
+                                                                        >
+                                                                            {sendingBatchId === batch.id ? (
+                                                                                <i className="fas fa-spinner fa-spin"></i>
+                                                                            ) : (
+                                                                                <i className="fas fa-play"></i>
+                                                                            )}
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => deleteScheduledBatch(batch.id)}
+                                                                        className="text-gray-400 hover:text-red-500 transition text-sm p-1"
+                                                                        title="Excluir lote"
+                                                                    >
+                                                                        <i className="fas fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* History View */}
+                                    {currentView === 'history' && (
+                                        <div className="fade-in">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div>
+                                                    <h2 className="text-lg font-bold text-gray-800 mb-1">
+                                                        Histórico de Envios
+                                                    </h2>
+                                                    <p className="text-gray-600 text-sm">
+                                                        Total de {sentEmails.length} e-mail(s) enviado(s)
+                                                    </p>
+                                                </div>
+                                                {sentEmails.length > 0 && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={forceSaveHistory}
+                                                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm card-hover transition flex items-center gap-2"
+                                                        >
+                                                            <i className="fas fa-save"></i>
+                                                            Salvar
+                                                        </button>
+                                                        <button
+                                                            onClick={exportHistory}
+                                                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm card-hover transition flex items-center gap-2"
+                                                        >
+                                                            <i className="fas fa-download"></i>
+                                                            Exportar
+                                                        </button>
+                                                        <button
+                                                            onClick={clearHistory}
+                                                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm card-hover transition flex items-center gap-2"
+                                                        >
+                                                            <i className="fas fa-trash"></i>
+                                                            Limpar
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {sentEmails.length === 0 ? (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    <i className="fas fa-inbox text-4xl mb-3"></i>
+                                                    <p className="text-sm">Nenhum e-mail enviado ainda</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                                                    {sortedHistory.map((email, index) => (
+                                                        <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3 card-hover">
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <i className="fas fa-envelope text-green-500 text-sm"></i>
+                                                                        <span className="font-semibold text-gray-800 text-sm">
+                                                                            {email.to}
+                                                                        </span>
+                                                                        <span className={`text-xs px-2 py-0.5 rounded ${getStatusColor(email.status)}`}>
+                                                                            {email.status}
+                                                                        </span>
+                                                                        <span className={`text-xs px-2 py-0.5 rounded ${
+                                                                            email.source === 'scheduled' 
+                                                                                ? 'bg-purple-100 text-purple-800' 
+                                                                                : 'bg-blue-100 text-blue-800'
+                                                                        }`}>
+                                                                            {email.source === 'scheduled' ? 'Agendado' : 'Principal'}
+                                                                        </span>
+                                                                        {email.hasAttachments && (
+                                                                            <span className="attachment-badge">
+                                                                                <i className="fas fa-paperclip"></i>
+                                                                                Anexo
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-xs text-gray-700 mb-1">
+                                                                        {email.subject}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                        <i className="fas fa-clock"></i>
+                                                                        <span>{new Date(email.sentAt).toLocaleString('pt-BR')}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Templates View */}
+                                    {currentView === 'templates' && (
+                                        <div className="fade-in">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h2 className="text-lg font-bold text-gray-800">
+                                                    Meus Templates ({templates.length})
+                                                </h2>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingTemplate(null);
+                                                        setNewTemplate({ name: '', subject: '', body: '', isHtml: true });
+                                                        setShowTemplateModal(true);
+                                                    }}
+                                                    className="btn-primary text-white px-3 py-1.5 rounded-lg text-sm card-hover transition flex items-center gap-2"
+                                                >
+                                                    <i className="fas fa-plus"></i>
+                                                    Novo Template
+                                                </button>
+                                            </div>
+
+                                            {templates.length === 0 ? (
+                                                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                                    <i className="fas fa-file-alt text-4xl text-gray-400 mb-3"></i>
+                                                    <p className="text-gray-500 text-sm mb-4">Nenhum template criado ainda</p>
+                                                </div>
+                                            ) : (
+                                                <div className="grid gap-4">
+                                                    {templates.map(template => (
+                                                        <div key={template.id} className="bg-white border border-gray-200 rounded-lg p-4 card-hover transition hover:border-blue-300">
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <h3 className="font-semibold text-gray-800 text-sm mb-2">{template.name}</h3>
+                                                                    <p className="text-gray-600 text-xs mb-2">
+                                                                        <strong>Assunto:</strong> {template.subject}
+                                                                    </p>
+                                                                    <div className="text-gray-500 text-xs mt-1 line-clamp-2">
+                                                                        {template.body}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex gap-1 ml-3">
+                                                                    <button
+                                                                        onClick={() => applyTemplate(template)}
+                                                                        className="text-green-500 hover:text-green-700 transition text-sm p-1"
+                                                                        title="Aplicar"
+                                                                    >
+                                                                        <i className="fas fa-play"></i>
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => editTemplate(template)}
+                                                                        className="text-blue-500 hover:text-blue-700 transition text-sm p-1"
+                                                                        title="Editar"
+                                                                    >
+                                                                        <i className="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => deleteTemplate(template.id)}
+                                                                        className="text-red-500 hover:text-red-700 transition text-sm p-1"
+                                                                        title="Excluir"
+                                                                    >
+                                                                        <i className="fas fa-trash"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Configuration Modal */}
+                    {showConfig && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal-overlay">
+                            <div className="bg-white rounded-xl max-w-md w-full">
+                                <div className="p-4 border-b border-gray-200">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-lg font-bold text-gray-800">Configurações</h3>
+                                        <button
+                                            onClick={() => setShowConfig(false)}
+                                            className="text-gray-400 hover:text-gray-600 transition"
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            URL do Servidor
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={serverUrl}
+                                            onChange={(e) => setServerUrl(e.target.value)}
+                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                            placeholder="http://localhost:3001"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            E-mail do Gmail
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={gmailUser}
+                                            onChange={(e) => setGmailUser(e.target.value)}
+                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                            placeholder="seuemail@gmail.com"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            Senha do App Gmail
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={gmailPassword}
+                                            onChange={(e) => setGmailPassword(e.target.value)}
+                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                            placeholder="Sua senha de app"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            Nome do Remetente
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={senderName}
+                                            onChange={(e) => setSenderName(e.target.value)}
+                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                            placeholder="Seu Nome"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 border-t border-gray-200">
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowConfig(false)}
+                                            className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm card-hover transition"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const config = { serverUrl, gmailUser, gmailPassword, senderName, templates, scheduledBatches };
+                                                if (ConfigManager.saveConfigToFile(config)) {
+                                                    ToastManager.show('Configurações salvas com sucesso', 'success');
+                                                    setShowConfig(false);
+                                                }
+                                            }}
+                                            className="flex-1 btn-primary text-white px-3 py-2 rounded-lg text-sm card-hover transition"
+                                        >
+                                            Salvar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Template Modal */}
+                    {showTemplateModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal-overlay">
+                            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                                <div className="p-4 border-b border-gray-200">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-lg font-bold text-gray-800">
+                                            {editingTemplate ? 'Editar Template' : 'Novo Template'}
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowTemplateModal(false)}
+                                            className="text-blue-500 hover:text-blue-700 transition text-lg"
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            Nome do Template
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={newTemplate.name}
+                                            onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                            placeholder="Nome do template"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            Assunto
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={newTemplate.subject}
+                                            onChange={(e) => setNewTemplate(prev => ({ ...prev, subject: e.target.value }))}
+                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                            placeholder="Assunto do e-mail"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            Mensagem
+                                        </label>
+                                        <textarea
+                                            value={newTemplate.body}
+                                            onChange={(e) => setNewTemplate(prev => ({ ...prev, body: e.target.value }))}
+                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm h-48"
+                                            placeholder="Conteúdo do template..."
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="isHtml"
+                                            checked={newTemplate.isHtml}
+                                            onChange={(e) => setNewTemplate(prev => ({ ...prev, isHtml: e.target.checked }))}
+                                            className="rounded"
+                                        />
+                                        <label htmlFor="isHtml" className="text-sm text-gray-700">
+                                            Usar formatação HTML
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 border-t border-gray-200">
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowTemplateModal(false)}
+                                            className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm card-hover transition"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            onClick={addTemplate}
+                                            className="flex-1 btn-primary text-white px-3 py-2 rounded-lg text-sm card-hover transition"
+                                        >
+                                            {editingTemplate ? 'Atualizar Template' : 'Criar Template'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Add Attachment to Batch Modal */}
+                    {showAddAttachmentModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal-overlay">
+                            <div className="bg-white rounded-xl max-w-md w-full">
+                                <div className="p-4 border-b border-gray-200">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-lg font-bold text-gray-800">
+                                            Adicionar Anexos ao Lote
+                                        </h3>
+                                        <button
+                                            onClick={() => {
+                                                setShowAddAttachmentModal(false);
+                                                setNewBatchAttachments([]);
+                                                setSelectedBatchForAttachment(null);
+                                            }}
+                                            className="text-blue-500 hover:text-blue-700 transition text-lg"
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 space-y-4">
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-3">
+                                            Adicionando anexos ao lote: <strong>{selectedBatchForAttachment?.subject}</strong>
+                                        </p>
+                                        
+                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-300 transition cursor-pointer card-hover">
+                                            <input
+                                                type="file"
+                                                multiple
+                                                onChange={handleBatchFileSelect}
+                                                className="hidden"
+                                                id="batch-file-upload"
+                                            />
+                                            <label
+                                                htmlFor="batch-file-upload"
+                                                className="flex flex-col items-center justify-center gap-1 cursor-pointer text-gray-500 hover:text-blue-600 text-sm"
+                                            >
+                                                <i className="fas fa-cloud-upload-alt text-xl"></i>
+                                                <span>Clique para adicionar arquivos</span>
+                                            </label>
+                                        </div>
+                                        {newBatchAttachments.length > 0 && (
+                                            <div className="mt-3 space-y-1">
+                                                {newBatchAttachments.map((file, index) => (
+                                                    <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                                        <div className="flex items-center gap-2">
+                                                            <i className="fas fa-file text-gray-400 text-sm"></i>
+                                                            <span className="text-gray-700 text-sm">{file.name}</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => removeBatchAttachment(index)}
+                                                            className="text-gray-400 hover:text-red-500 transition text-sm"
+                                                        >
+                                                            <i className="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 border-t border-gray-200">
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setShowAddAttachmentModal(false);
+                                                setNewBatchAttachments([]);
+                                                setSelectedBatchForAttachment(null);
+                                            }}
+                                            className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm card-hover transition"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            onClick={addAttachmentsToBatch}
+                                            className="flex-1 btn-primary text-white px-3 py-2 rounded-lg text-sm card-hover transition"
+                                        >
+                                            Adicionar Anexos
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Logs Modal */}
+                    {showLogs && (isSending || sendingBatchId || logs.length > 0) && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal-overlay">
+                            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                                <div className="p-4 border-b border-gray-200">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-lg font-bold text-gray-800">
+                                            {sendingBatchId ? 'Enviando Lote Agendado' : 'Logs de Envio'}
+                                            {(isSending || sendingBatchId) && (
+                                                <span className="countdown-timer ml-3 text-sm font-normal">
+                                                    {elapsedTime}
+                                                </span>
+                                            )}
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowLogs(false)}
+                                            className="text-blue-500 hover:text-blue-700 transition text-lg"
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="flex-1">
+                                            {sendingBatchId && (
+                                                <div>
+                                                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                                        <span>Progresso do Lote</span>
+                                                        <span className="font-semibold">{batchProgress.toFixed(0)}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                                        <div
+                                                            className="h-3 rounded-full transition-all duration-500 batch-progress"
+                                                            style={{ width: `${batchProgress}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {isSending && !sendingBatchId && (
+                                                <div>
+                                                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                                        <span>Progresso</span>
+                                                        <span>{progress.toFixed(0)}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                                        <div
+                                                            className="h-2 rounded-full transition-all duration-500 progress-gradient"
+                                                            style={{ width: `${progress}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {(isSending || sendingBatchId) && !stopRequested && (
+                                            <button
+                                                onClick={stopSending}
+                                                className="stop-button-compact flex items-center gap-2 px-4 py-2 text-sm"
+                                            >
+                                                <i className="fas fa-stop"></i>
+                                                Parar Envio
+                                            </button>
+                                        )}
+                                        
+                                        {stopRequested && (
+                                            <div className="bg-yellow-100 border border-yellow-300 rounded-lg px-3 py-2">
+                                                <div className="flex items-center gap-2">
+                                                    <i className="fas fa-hourglass-half text-yellow-600"></i>
+                                                    <span className="text-yellow-700 text-sm">Parando envio...</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {googleLimitReached && (
+                                        <div className="mb-4 p-3 rounded-lg limit-message text-white">
+                                            <div className="flex items-center gap-2">
+                                                <i className="fas fa-exclamation-triangle text-xl"></i>
+                                                <div>
+                                                    <p className="font-semibold">📧 Limite Diário do Gmail Atingido!</p>
+                                                    <p className="text-sm opacity-90">
+                                                        Aguarde até amanhã para continuar enviando e-mails.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                                        {sortedLogs.map((log, index) => (
+                                            <div key={index} className={`p-2 rounded-lg text-sm ${
+                                                log.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+                                            }`}>
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <i className={`fas ${
+                                                                log.success ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500'
+                                                            }`}></i>
+                                                            <span className="font-medium text-gray-800">{log.email}</span>
+                                                        </div>
+                                                        <p className={`text-xs mt-1 ${
+                                                            log.success ? 'text-green-700' : 'text-red-700'
+                                                        }`}>
+                                                            {log.status}
+                                                        </p>
+                                                    </div>
+                                                    <span className="text-xs text-gray-500 whitespace-nowrap">{log.time}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 border-t border-gray-200">
+                                    <button
+                                        onClick={() => setShowLogs(false)}
+                                        className="w-full btn-primary text-white px-3 py-2 rounded-lg text-sm card-hover transition"
+                                    >
+                                        Fechar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // CORREÇÃO: Usar ReactDOM.render em vez de createRoot para compatibilidade
+        ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
+</body>
+</html>

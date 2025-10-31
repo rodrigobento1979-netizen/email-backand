@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema CTBIL - Importação e Geração</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Biblioteca para ler Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #f8fafc;
+            border-left: 3px solid #0ea5e9;
+        }
+        
+        .sidebar-item.active {
+            background-color: #f1f5f9;
+            border-left: 3px solid #0ea5e9;
+            color: #0ea5e9;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .compact-input {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .grid-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .document-row:hover {
+            background-color: #f8fafc;
+        }
+
+        .compact-table {
+            font-size: 0.75rem;
+        }
+
+        .compact-table th {
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+        }
+
+        .compact-table td {
+            padding: 0.4rem 0.75rem;
+            vertical-align: middle;
+        }
+
+        .search-input {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.6rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
+
+        .delete-btn {
+            color: #dc2626;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+        }
+
+        .delete-btn:hover {
+            background-color: #fee2e2;
+            transform: scale(1.1);
+        }
+
+        .edit-btn {
+            color: #0ea5e9;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            margin-right: 0.25rem;
+        }
+
+        .edit-btn:hover {
+            background-color: #f0f9ff;
+            transform: scale(1.1);
+        }
+
+        .small-modal {
+            max-width: 400px;
+            width: 90%;
+        }
+
+        /* Estilos para Toastify */
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            animation: toastSlideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast-success {
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+
+        .toast-error {
+            border-left: 4px solid #ef4444;
+            color: #7f1d1d;
+        }
+
+        .toast-warning {
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .toast-info {
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .toast-icon {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            opacity: 0.7;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            margin-left: 0.75rem;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Estilos para área de upload compacta */
+        .compact-upload-area {
+            padding: 1.5rem !important;
+        }
+
+        /* Estilos para o ícone de informação */
+        .info-icon {
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .info-icon:hover {
+            background: #2563eb;
+            transform: scale(1.1);
+        }
+
+        .editable-field {
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            padding: 0.15rem 0.4rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-size: 0.75rem;
+            min-width: 80px;
+        }
+
+        .editable-field:hover {
+            border-color: #0ea5e9;
+            background-color: #f0f9ff;
+        }
+
+        .editable-field:focus {
+            border-color: #0ea5e9;
+            background-color: white;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
+
+        /* Estilo ajustado para a tabela de lançamentos */
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Tamanhos de coluna ajustados para caber melhor */
+        .compact-table th:nth-child(1) { width: 70px; } /* Ações */
+        .compact-table th:nth-child(2) { width: 80px; } /* Data */
+        .compact-table th:nth-child(3) { width: 90px; } /* Documento */
+        .compact-table th:nth-child(4) { width: 120px; } /* Conta Débito */
+        .compact-table th:nth-child(5) { width: 120px; } /* Conta Crédito */
+        .compact-table th:nth-child(6) { width: 90px; } /* Valor */
+        .compact-table th:nth-child(7) { width: 60px; } /* HP */
+        .compact-table th:nth-child(8) { min-width: 150px; } /* Histórico */
+    </style>
+</head>
+<body class="min-h-screen p-3">
+    <div id="app" class="max-w-7xl mx-auto">
+        <div class="text-center py-20">
+            <div class="bg-white rounded-2xl p-8 inline-block">
+                <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+                <p class="text-gray-600">Carregando Sistema CTBIL...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        // Função para formatar data dd/mm/aaaa
+        const formatarData = (dataString) => {
+            if (!dataString) return '';
+            
+            try {
+                if (dataString.includes('/')) {
+                    return dataString;
+                }
+                
+                const data = new Date(dataString);
+                if (isNaN(data.getTime())) return dataString;
+                
+                const dia = String(data.getDate()).padStart(2, '0');
+                const mes = String(data.getMonth() + 1).padStart(2, '0');
+                const ano = data.getFullYear();
+                
+                return `${dia}/${mes}/${ano}`;
+            } catch (error) {
+                console.error('Erro ao formatar data:', error);
+                return dataString;
+            }
+        };
+
+        // Função para converter data dd/mm/aaaa para aaaa-mm-dd (para o input date)
+        const converterDataParaInput = (dataString) => {
+            if (!dataString) return '';
+            
+            try {
+                if (dataString.includes('-')) {
+                    return dataString;
+                }
+                
+                const [dia, mes, ano] = dataString.split('/');
+                return `${ano}-${mes}-${dia}`;
+            } catch (error) {
+                console.error('Erro ao converter data:', error);
+                return dataString;
+            }
+        };
+
+        // Gerador de arquivo CTBIL
+        const CTBILGenerator = {
+            generateCTBIL: (documentos, config) => {
+                let ctbilContent = '';
+                let numeroLancamento = 1;
+                
+                documentos.forEach((doc) => {
+                    const numeroLancFormatado = numeroLancamento.toString().padStart(8, '0');
+                    
+                    let dataLancamento = '';
+                    try {
+                        if (doc.data.includes('/')) {
+                            const [dia, mes, ano] = doc.data.split('/');
+                            dataLancamento = ano + mes + dia;
+                        } else {
+                            dataLancamento = doc.data.replace(/-/g, '');
+                        }
+                    } catch (error) {
+                        dataLancamento = '00000000';
+                    }
+                    
+                    const valorFormatado = CTBILGenerator.formatValue(doc.valor);
+                    const historicoFormatado = (doc.historico || 'Lançamento automático').substring(0, 50).padEnd(50, ' ');
+                    const contaDebitoFormatada = doc.contaDebito.padEnd(17, ' ');
+                    const contaCreditoFormatada = doc.contaCredito.padEnd(17, ' ');
+                    const hp = (doc.hp || '   ').padEnd(3, ' ');
+                    const filialDebito = (config.filialDebito || '00').padEnd(2, ' ');
+                    const filialCredito = (config.filialCredito || '00').padEnd(2, ' ');
+                    
+                    const lancamentoDebito = 
+                        dataLancamento +
+                        numeroLancFormatado +
+                        contaDebitoFormatada +
+                        contaCreditoFormatada +
+                        valorFormatado +
+                        hp +
+                        historicoFormatado +
+                        filialDebito +
+                        filialCredito;
+                    
+                    const lancamentoCredito = 
+                        dataLancamento +
+                        numeroLancFormatado +
+                        contaCreditoFormatada +
+                        contaDebitoFormatada +
+                        valorFormatado +
+                        hp +
+                        historicoFormatado +
+                        filialCredito +
+                        filialDebito;
+                    
+                    ctbilContent += lancamentoDebito + '\r\n';
+                    ctbilContent += lancamentoCredito + '\r\n';
+                    
+                    numeroLancamento++;
+                });
+                
+                return ctbilContent;
+            },
+
+            formatValue: (valorStr) => {
+                try {
+                    const cleanValue = valorStr.replace(/[^\d,]/g, '').replace(',', '.');
+                    const valor = parseFloat(cleanValue) || 0;
+                    
+                    if (isNaN(valor)) {
+                        return ' '.repeat(14);
+                    }
+                    
+                    const valorFormatado = valor.toFixed(2);
+                    const [parteInteira, parteDecimal] = valorFormatado.split('.');
+                    const valorCompleto = parteInteira + '.' + parteDecimal;
+                    
+                    if (valorCompleto.length > 14) {
+                        return valorCompleto.substring(0, 14).padStart(14, ' ');
+                    }
+                    
+                    return valorCompleto.padStart(14, ' ');
+                    
+                } catch (error) {
+                    return ' '.repeat(14);
+                }
+            },
+
+            validateCTBIL: (content) => {
+                const lines = content.split('\r\n').filter(line => line.trim() !== '');
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line.length !== 121) {
+                        return false;
+                    }
+                    
+                    const valor = line.substring(50, 64);
+                    if (!/^ *\d*\.?\d* *$/.test(valor)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            },
+
+            downloadCTBIL: (content, filename) => {
+                try {
+                    if (!CTBILGenerator.validateCTBIL(content)) {
+                        ToastManager.show('Erro na validação do arquivo CTBIL', 'error');
+                        return false;
+                    }
+                    
+                    const encoder = new TextEncoder('iso-8859-1');
+                    const data = encoder.encode(content);
+                    const blob = new Blob([data], { type: 'text/plain;charset=iso-8859-1' });
+                    
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao baixar CTBIL:', error);
+                    ToastManager.show('Erro ao gerar arquivo CTBIL', 'error');
+                    return false;
+                }
+            }
+        };
+
+        // Gerador de modelo de planilha
+        const ModeloPlanilha = {
+            gerarModelo: () => {
+                const dados = [
+                    {
+                        'Data': '15/01/2024',
+                        'Documento': '00000001',
+                        'Conta Débito': '1.1.1.01.001',
+                        'Conta Crédito': '2.1.1.01.001', 
+                        'Valor': '1500,00',
+                        'HP': '001',
+                        'Histórico': 'Pagamento de fornecedor'
+                    },
+                    {
+                        'Data': '16/01/2024',
+                        'Documento': '00000002',
+                        'Conta Débito': '1.1.2.01.001',
+                        'Conta Crédito': '2.1.2.01.001',
+                        'Valor': '2300,50',
+                        'HP': '002',
+                        'Histórico': 'Recebimento de cliente'
+                    }
+                ];
+
+                const worksheet = XLSX.utils.json_to_sheet(dados);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Lançamentos");
+                
+                const colWidths = [
+                    { wch: 12 }, { wch: 10 }, { wch: 15 }, { wch: 15 },
+                    { wch: 12 }, { wch: 6 }, { wch: 25 }
+                ];
+                worksheet['!cols'] = colWidths;
+
+                XLSX.writeFile(workbook, "modelo_lancamentos.xlsx");
+            }
+        };
+
+        // ToastManager
+        const ToastManager = {
+            show: (message, type = 'info', duration = 3000) => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                const typeConfigs = {
+                    success: { icon: 'fa-check-circle', class: 'toast-success' },
+                    error: { icon: 'fa-exclamation-circle', class: 'toast-error' },
+                    warning: { icon: 'fa-exclamation-triangle', class: 'toast-warning' },
+                    info: { icon: 'fa-info-circle', class: 'toast-info' }
+                };
+
+                const config = typeConfigs[type] || typeConfigs.info;
+
+                toast.className = `toast ${config.class}`;
+                toast.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas ${config.icon} toast-icon"></i>
+                        <span class="text-sm font-medium">${message}</span>
+                    </div>
+                    <button class="toast-close">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                `;
+
+                const closeBtn = toast.querySelector('.toast-close');
+                closeBtn.addEventListener('click', () => {
+                    toast.style.animation = 'toastSlideIn 0.3s ease-out reverse';
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 250);
+                });
+
+                container.appendChild(toast);
+
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.style.animation = 'toastSlideIn 0.3s ease-out reverse';
+                        setTimeout(() => {
+                            if (toast.parentElement) {
+                                toast.remove();
+                            }
+                        }, 250);
+                    }
+                }, duration);
+            }
+        };
+
+        function App() {
+            const [currentView, setCurrentView] = useState('import');
+            const [isLoading, setIsLoading] = useState(true);
+            const [lancamentos, setLancamentos] = useState([]);
+            const [showCTBILModal, setShowCTBILModal] = useState(false);
+            const [showInfoModal, setShowInfoModal] = useState(false);
+
+            const [configCTBIL, setConfigCTBIL] = useState({
+                codigoEmpresa: '001',
+                numeroLote: '000001',
+                dataFinal: new Date().toISOString().split('T')[0],
+                filialDebito: '00',
+                filialCredito: '00'
+            });
+
+            const [editingCell, setEditingCell] = useState(null);
+            const [editValue, setEditValue] = useState('');
+            const [showEditModal, setShowEditModal] = useState(false);
+
+            useEffect(() => {
+                const loadData = () => {
+                    try {
+                        const savedLancamentos = localStorage.getItem('lancamentosCTBIL');
+                        const savedConfigCTBIL = localStorage.getItem('configCTBIL');
+                        
+                        if (savedLancamentos) {
+                            setLancamentos(JSON.parse(savedLancamentos));
+                        }
+                        if (savedConfigCTBIL) {
+                            setConfigCTBIL(JSON.parse(savedConfigCTBIL));
+                        }
+                        setIsLoading(false);
+                    } catch (error) {
+                        console.error('Erro ao carregar dados:', error);
+                        setIsLoading(false);
+                    }
+                };
+                loadData();
+            }, []);
+
+            useEffect(() => {
+                if (lancamentos.length > 0) {
+                    localStorage.setItem('lancamentosCTBIL', JSON.stringify(lancamentos));
+                }
+            }, [lancamentos]);
+
+            useEffect(() => {
+                localStorage.setItem('configCTBIL', JSON.stringify(configCTBIL));
+            }, [configCTBIL]);
+
+            const importarPlanilha = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                        const lancamentosImportados = jsonData.map((row, index) => ({
+                            id: Date.now() + index,
+                            data: formatarData(row['Data'] || row['data'] || ''),
+                            documento: row['Documento'] || row['documento'] || '',
+                            contaDebito: row['Conta Débito'] || row['contaDebito'] || row['conta_debito'] || '',
+                            contaCredito: row['Conta Crédito'] || row['contaCredito'] || row['conta_credito'] || '',
+                            valor: row['Valor'] || row['valor'] || '',
+                            hp: row['HP'] || row['hp'] || '',
+                            historico: row['Histórico'] || row['historico'] || ''
+                        }));
+
+                        setLancamentos(lancamentosImportados);
+                        setCurrentView('lancamentos');
+                        ToastManager.show(`Planilha importada com ${lancamentosImportados.length} lançamentos`, 'success');
+                    } catch (error) {
+                        console.error('Erro ao importar planilha:', error);
+                        ToastManager.show('Erro ao importar arquivo Excel. Verifique o formato.', 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            const gerarCTBIL = () => {
+                try {
+                    if (lancamentos.length === 0) {
+                        ToastManager.show('Nenhum lançamento para gerar CTBIL', 'warning');
+                        return;
+                    }
+
+                    if (!configCTBIL.codigoEmpresa || configCTBIL.codigoEmpresa.trim() === '') {
+                        ToastManager.show('Informe o código da empresa', 'error');
+                        return;
+                    }
+
+                    const ctbilContent = CTBILGenerator.generateCTBIL(lancamentos, configCTBIL);
+                    const codigoEmpresaFormatado = configCTBIL.codigoEmpresa.padStart(3, '0');
+                    const filename = `CTBIL${codigoEmpresaFormatado}.TXT`;
+                    
+                    if (CTBILGenerator.downloadCTBIL(ctbilContent, filename)) {
+                        ToastManager.show(`Arquivo ${filename} gerado com ${lancamentos.length} lançamentos`, 'success');
+                        setShowCTBILModal(false);
+                    }
+                } catch (error) {
+                    console.error('Erro ao gerar CTBIL:', error);
+                    ToastManager.show('Erro ao gerar arquivo CTBIL', 'error');
+                }
+            };
+
+            const iniciarEdicao = (lancamento, campo, valor, event) => {
+                setEditingCell({ id: lancamento.id, campo });
+                
+                if (campo === 'data') {
+                    setEditValue(converterDataParaInput(valor) || '');
+                } else {
+                    setEditValue(valor || '');
+                }
+                
+                setShowEditModal(true);
+            };
+
+            const salvarEdicao = () => {
+                if (!editingCell) return;
+
+                let valorFinal = editValue;
+                
+                if (editingCell.campo === 'data' && editValue) {
+                    valorFinal = formatarData(editValue);
+                }
+
+                setLancamentos(prev => prev.map(item => 
+                    item.id === editingCell.id
+                        ? { ...item, [editingCell.campo]: valorFinal }
+                        : item
+                ));
+
+                setShowEditModal(false);
+                setEditingCell(null);
+                setEditValue('');
+                ToastManager.show('Campo atualizado com sucesso', 'success');
+            };
+
+            const excluirLancamento = (id) => {
+                if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+                    setLancamentos(prev => prev.filter(item => item.id !== id));
+                    ToastManager.show('Lançamento excluído com sucesso', 'success');
+                }
+            };
+
+            const adicionarLancamento = () => {
+                const dataAtual = new Date();
+                const dia = String(dataAtual.getDate()).padStart(2, '0');
+                const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+                const ano = dataAtual.getFullYear();
+                const dataFormatada = `${dia}/${mes}/${ano}`;
+
+                const novoLancamento = {
+                    id: Date.now(),
+                    data: dataFormatada,
+                    documento: '',
+                    contaDebito: '',
+                    contaCredito: '',
+                    valor: '',
+                    hp: '',
+                    historico: ''
+                };
+
+                setLancamentos(prev => [novoLancamento, ...prev]);
+                ToastManager.show('Novo lançamento adicionado', 'success');
+            };
+
+            const InfoModal = () => {
+                if (!showInfoModal) return null;
+
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+                        <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-gray-800">
+                                    <i className="fas fa-info-circle text-blue-500 mr-2"></i>
+                                    Sistema CTBIL - Importação e Geração
+                                </h3>
+                                <button 
+                                    onClick={() => setShowInfoModal(false)}
+                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <i className="fas fa-times text-lg"></i>
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-4 text-sm text-gray-600">
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                    <h4 className="font-semibold text-blue-800 mb-2">Como usar o sistema:</h4>
+                                    <ol className="list-decimal list-inside space-y-2">
+                                        <li>Baixe o modelo de planilha clicando em "Baixar Modelo"</li>
+                                        <li>Preencha a planilha com seus lançamentos contábeis</li>
+                                        <li>Importe a planilha preenchida no sistema</li>
+                                        <li>Revise e edite os dados se necessário</li>
+                                        <li>Gere o arquivo CTBIL para importar no seu sistema contábil</li>
+                                    </ol>
+                                </div>
+                                
+                                <div className="bg-green-50 p-4 rounded-lg">
+                                    <h4 className="font-semibold text-green-800 mb-2">Campos da Planilha:</h4>
+                                    <ul className="list-disc list-inside space-y-1">
+                                        <li><strong>Data:</strong> Data do lançamento (formato dd/mm/aaaa)</li>
+                                        <li><strong>Documento:</strong> Número do documento</li>
+                                        <li><strong>Conta Débito:</strong> Código da conta de débito</li>
+                                        <li><strong>Conta Crédito:</strong> Código da conta de crédito</li>
+                                        <li><strong>Valor:</strong> Valor do lançamento</li>
+                                        <li><strong>HP:</strong> Código HP (opcional)</li>
+                                        <li><strong>Histórico:</strong> Descrição do lançamento</li>
+                                    </ul>
+                                </div>
+
+                                <div className="bg-purple-50 p-4 rounded-lg">
+                                    <h4 className="font-semibold text-purple-800 mb-2">Arquivo CTBIL:</h4>
+                                    <ul className="list-disc list-inside space-y-1">
+                                        <li>O arquivo será gerado com o nome <strong>CTBILXXX.TXT</strong></li>
+                                        <li><strong>XXX</strong> representa o código da empresa (3 dígitos)</li>
+                                        <li>Exemplo: CTBIL001.TXT, CTBIL123.TXT</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-6 flex justify-end">
+                                <button
+                                    onClick={() => setShowInfoModal(false)}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                                >
+                                    Entendi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            if (isLoading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="bg-white rounded-2xl p-8 text-center">
+                            <i className="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+                            <p className="text-gray-600">Carregando Sistema CTBIL...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="fade-in">
+                    {/* Header */}
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 mb-6 p-4 card-hover">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+                                    <i className="fas fa-file-export text-xl text-white"></i>
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold text-gray-800">Sistema CTBIL</h1>
+                                    <p className="text-gray-600 text-xs">Importação e geração de arquivo CTBIL</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <div 
+                                    className="info-icon"
+                                    onClick={() => setShowInfoModal(true)}
+                                    title="Informações do Sistema"
+                                >
+                                    <i className="fas fa-info"></i>
+                                </div>
+                                {lancamentos.length > 0 && (
+                                    <button
+                                        onClick={() => setShowCTBILModal(true)}
+                                        className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-lg card-hover transition flex items-center gap-2 text-sm"
+                                    >
+                                        <i className="fas fa-file-export"></i>
+                                        Gerar CTBIL
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => ModeloPlanilha.gerarModelo()}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg card-hover transition flex items-center gap-2 text-sm"
+                                >
+                                    <i className="fas fa-file-excel"></i>
+                                    Baixar Modelo
+                                </button>
+                                <button
+                                    onClick={() => window.location.href = 'index.html'}
+                                    className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg card-hover transition flex items-center gap-2 text-sm"
+                                >
+                                    <i className="fas fa-home"></i>
+                                    Tela Inicial
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        {/* Sidebar */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3">
+                                <nav className="space-y-1">
+                                    {[
+                                        { id: 'import', icon: 'fa-upload', label: 'Importar Planilha' },
+                                        { id: 'lancamentos', icon: 'fa-list', label: `Lançamentos (${lancamentos.length})` }
+                                    ].map(item => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setCurrentView(item.id)}
+                                            className={`sidebar-item w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                currentView === item.id ? 'active text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            <i className={`fas ${item.icon} mr-2 w-4 text-center`}></i>
+                                            {item.label}
+                                        </button>
+                                    ))}
+                                </nav>
+                            </div>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="lg:col-span-3">
+                            {currentView === 'import' && (
+                                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 card-hover">
+                                    <div className="text-center compact-upload-area">
+                                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <i className="fas fa-file-excel text-2xl text-blue-600"></i>
+                                        </div>
+                                        <h3 className="text-lg font-bold text-gray-800 mb-2">Importar Planilha Excel</h3>
+                                        <p className="text-gray-600 text-sm mb-4">
+                                            Faça o upload da planilha com os lançamentos contábeis
+                                        </p>
+                                        
+                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4 hover:border-blue-400 transition-colors">
+                                            <input
+                                                type="file"
+                                                id="file-upload"
+                                                accept=".xlsx,.xls"
+                                                onChange={importarPlanilha}
+                                                className="hidden"
+                                            />
+                                            <label htmlFor="file-upload" className="cursor-pointer">
+                                                <div className="text-center">
+                                                    <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                                    <p className="text-sm text-gray-600">
+                                                        <span className="text-blue-600 font-medium">Clique para fazer upload</span> ou arraste o arquivo
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">Formatos suportados: .xlsx, .xls</p>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        
+                                        <div className="text-xs text-gray-500">
+                                            <p>Certifique-se de que a planilha contém as colunas:</p>
+                                            <p className="font-medium">Data, Documento, Conta Débito, Conta Crédito, Valor, HP, Histórico</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentView === 'lancamentos' && (
+                                <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                    <div className="grid-header p-3">
+                                        <div className="flex justify-between items-center">
+                                            <h3 className="text-white font-bold text-sm">
+                                                <i className="fas fa-list mr-2"></i>
+                                                Lançamentos Importados ({lancamentos.length})
+                                            </h3>
+                                            <button
+                                                onClick={adicionarLancamento}
+                                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1 transition"
+                                            >
+                                                <i className="fas fa-plus"></i>
+                                                Novo
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3">
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar lançamentos..."
+                                            className="search-input"
+                                        />
+                                    </div>
+
+                                    {/* Container com altura reduzida */}
+                                    <div className="table-container custom-scrollbar">
+                                        <table className="w-full compact-table">
+                                            <thead>
+                                                <tr className="bg-gray-50 border-b border-gray-200">
+                                                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider p-2">Ações</th>
+                                                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider p-2">Data</th>
+                                                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider p-2">Documento</th>
+                                                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider p-2">Conta Débito</th>
+                                                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider p-2">Conta Crédito</th>
+                                                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider p-2">Valor</th>
+                                                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider p-2">HP</th>
+                                                    <th className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider p-2">Histórico</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {lancamentos.map((lancamento) => (
+                                                    <tr key={lancamento.id} className="document-row border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                        <td className="p-2">
+                                                            <div className="flex items-center gap-1">
+                                                                <i 
+                                                                    className="fas fa-edit edit-btn"
+                                                                    onClick={() => iniciarEdicao(lancamento, 'historico', lancamento.historico)}
+                                                                    title="Editar lançamento"
+                                                                ></i>
+                                                                <i 
+                                                                    className="fas fa-trash delete-btn"
+                                                                    onClick={() => excluirLancamento(lancamento.id)}
+                                                                    title="Excluir lançamento"
+                                                                ></i>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-2">
+                                                            <div 
+                                                                className="editable-field"
+                                                                onClick={(e) => iniciarEdicao(lancamento, 'data', lancamento.data, e)}
+                                                            >
+                                                                {formatarData(lancamento.data)}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-2">
+                                                            <div 
+                                                                className="editable-field"
+                                                                onClick={(e) => iniciarEdicao(lancamento, 'documento', lancamento.documento, e)}
+                                                            >
+                                                                {lancamento.documento}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-2">
+                                                            <div 
+                                                                className="editable-field"
+                                                                onClick={(e) => iniciarEdicao(lancamento, 'contaDebito', lancamento.contaDebito, e)}
+                                                            >
+                                                                {lancamento.contaDebito}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-2">
+                                                            <div 
+                                                                className="editable-field"
+                                                                onClick={(e) => iniciarEdicao(lancamento, 'contaCredito', lancamento.contaCredito, e)}
+                                                            >
+                                                                {lancamento.contaCredito}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-2">
+                                                            <div 
+                                                                className="editable-field"
+                                                                onClick={(e) => iniciarEdicao(lancamento, 'valor', lancamento.valor, e)}
+                                                            >
+                                                                {lancamento.valor}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-2">
+                                                            <div 
+                                                                className="editable-field"
+                                                                onClick={(e) => iniciarEdicao(lancamento, 'hp', lancamento.hp, e)}
+                                                            >
+                                                                {lancamento.hp}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-2">
+                                                            <div 
+                                                                className="editable-field line-clamp-2"
+                                                                onClick={(e) => iniciarEdicao(lancamento, 'historico', lancamento.historico, e)}
+                                                                title={lancamento.historico}
+                                                            >
+                                                                {lancamento.historico}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {lancamentos.length === 0 && (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <i className="fas fa-inbox text-3xl mb-2"></i>
+                                            <p className="text-sm">Nenhum lançamento importado</p>
+                                            <p className="text-xs">Importe uma planilha ou adicione um novo lançamento</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Modal de Geração CTBIL */}
+                    {showCTBILModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-gray-800">
+                                        <i className="fas fa-file-export text-orange-500 mr-2"></i>
+                                        Gerar Arquivo CTBIL
+                                    </h3>
+                                    <button 
+                                        onClick={() => setShowCTBILModal(false)}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <i className="fas fa-times text-lg"></i>
+                                    </button>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                            Código da Empresa *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={configCTBIL.codigoEmpresa}
+                                            onChange={(e) => setConfigCTBIL(prev => ({...prev, codigoEmpresa: e.target.value}))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="001"
+                                            maxLength="3"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Será usado no nome do arquivo: CTBIL<b>{configCTBIL.codigoEmpresa.padStart(3, '0')}</b>.TXT
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                            Data Final
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={configCTBIL.dataFinal}
+                                            onChange={(e) => setConfigCTBIL(prev => ({...prev, dataFinal: e.target.value}))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                Filial Débito
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={configCTBIL.filialDebito}
+                                                onChange={(e) => setConfigCTBIL(prev => ({...prev, filialDebito: e.target.value}))}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="00"
+                                                maxLength="2"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                Filial Crédito
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={configCTBIL.filialCredito}
+                                                onChange={(e) => setConfigCTBIL(prev => ({...prev, filialCredito: e.target.value}))}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="00"
+                                                maxLength="2"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-blue-50 p-3 rounded-lg">
+                                        <p className="text-xs text-blue-800">
+                                            <i className="fas fa-info-circle mr-1"></i>
+                                            Será gerado o arquivo: <strong>CTBIL{configCTBIL.codigoEmpresa.padStart(3, '0')}.TXT</strong><br/>
+                                            Com <strong>{lancamentos.length}</strong> lançamentos
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-6 flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setShowCTBILModal(false)}
+                                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={gerarCTBIL}
+                                        className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm flex items-center gap-2"
+                                    >
+                                        <i className="fas fa-download"></i>
+                                        Gerar CTBIL
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal de Edição */}
+                    {showEditModal && editingCell && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 small-modal">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-gray-800">
+                                        <i className="fas fa-edit text-blue-500 mr-2"></i>
+                                        Editar Campo
+                                    </h3>
+                                    <button 
+                                        onClick={() => setShowEditModal(false)}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <i className="fas fa-times text-lg"></i>
+                                    </button>
+                                </div>
+                                
+                                <div className="mb-4">
+                                    <label className="block text-xs font-medium text-gray-700 mb-2">
+                                        {editingCell.campo === 'data' && 'Data'}
+                                        {editingCell.campo === 'documento' && 'Documento'}
+                                        {editingCell.campo === 'contaDebito' && 'Conta Débito'}
+                                        {editingCell.campo === 'contaCredito' && 'Conta Crédito'}
+                                        {editingCell.campo === 'valor' && 'Valor'}
+                                        {editingCell.campo === 'hp' && 'HP'}
+                                        {editingCell.campo === 'historico' && 'Histórico'}
+                                    </label>
+                                    {editingCell.campo === 'data' ? (
+                                        <input
+                                            type="date"
+                                            value={editValue}
+                                            onChange={(e) => setEditValue(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            value={editValue}
+                                            onChange={(e) => setEditValue(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    )}
+                                </div>
+                                
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setShowEditModal(false)}
+                                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={salvarEdicao}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                                    >
+                                        Salvar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal de Informações */}
+                    <InfoModal />
+                </div>
+            );
+        }
+
+        // Renderizar a aplicação
+        ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
+</body>
+</html>

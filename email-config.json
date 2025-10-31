@@ -1,0 +1,17 @@
+{
+  "serverUrl": "http://localhost:3001",
+  "gmailUser": "rodrigobento1979@gmail.com",
+  "gmailPassword": "xkfjoawdvahiabmg",
+  "senderName": "Rodrigo Alves Bento",
+  "templates": [
+    {
+      "id": 1,
+      "name": "Boas-vindas",
+      "subject": "Bem-vindo(a)!",
+      "body": "Olá,\n\nSeja bem-vindo(a) à nossa plataforma!\n\nAtenciosamente,\nEquipe"
+    }
+  ],
+  "sentEmails": [],
+  "scheduledBatches": [],
+  "exportDate": "2025-10-23T20:51:16.657Z"
+}

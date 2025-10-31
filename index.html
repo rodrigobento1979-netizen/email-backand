@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rodrigo Alves Bento - Profissional de TI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --text: #333;
+            --text-light: #7f8c8d;
+            --online: #2ecc71;
+            --offline: #e74c3c;
+            --warning: #f39c12;
+            --success: #27ae60;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text);
+            line-height: 1.4;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 10px auto;
+            padding: 0 10px;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            border-bottom: 2px solid var(--secondary);
+            width: calc(100% - 20px);
+            margin: 0 auto 10px auto;
+            border-radius: 8px;
+        }
+
+        .profile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .profile-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--secondary);
+            background-color: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .profile-title {
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+        }
+
+        .profile-subtitle {
+            font-size: 0.8rem;
+            color: var(--light);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .profile-location {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            color: var(--light);
+            font-size: 0.7rem;
+        }
+
+        section {
+            background: white;
+            margin: 12px auto;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: calc(100% - 20px);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 1px solid var(--secondary);
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 1rem;
+        }
+
+        h2 i {
+            color: var(--secondary);
+        }
+
+        .tools-section {
+            text-align: center;
+            padding: 12px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .tool-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tool-icon {
+            font-size: 2.2rem;
+            color: var(--secondary);
+            margin-bottom: 12px;
+        }
+
+        .tool-card h3 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .tool-card p {
+            color: var(--text-light);
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            flex-grow: 1;
+        }
+
+        .tool-button {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.2s;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .tool-button:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Estilos melhorados para o Monitor */
+        .monitor-minimal {
+            text-align: center;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            padding: 5px 10px;
+            background: var(--light);
+            border-radius: 15px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--offline);
+        }
+
+        .status-dot.online {
+            background: var(--online);
+        }
+
+        .status-dot.warning {
+            background: var(--warning);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 5px 0;
+        }
+
+        /* Progress Bar Styles com Gradiente */
+        .progress-container {
+            width: 100%;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+            height: 12px;
+            border: 1px solid #e9ecef;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, 
+                #3498db 0%, 
+                #5dade2 25%, 
+                #85c1e9 50%, 
+                #aed6f1 75%, 
+                #d6eaf8 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255,255,255,0.4) 50%, 
+                transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+
+        .monitor-button {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .monitor-button:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Real-time indicator */
+        .real-time-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: var(--text-light);
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--online);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { 
+                opacity: 1; 
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.5; 
+                transform: scale(1.2);
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1);
+            }
+        }
+
+        /* Layout horizontal para competências */
+        .skills-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .skill-column {
+            flex: 1;
+            background: var(--light);
+            padding: 12px;
+            border-radius: 6px;
+            min-width: 0;
+        }
+
+        .skill-column h3 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        .skill-list {
+            list-style-type: none;
+        }
+
+        .skill-list li {
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            line-height: 1.3;
+        }
+
+        .skill-list li i {
+            font-size: 0.75rem;
+            color: var(--secondary);
+            flex-shrink: 0;
+        }
+
+        /* Layout horizontal para contato */
+        .contact-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .contact-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--light);
+            border-radius: 6px;
+            min-width: 0;
+        }
+
+        .contact-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .contact-item div h3 {
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .contact-item div p {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            width: calc(100% - 20px);
+            margin: 12px auto;
+        }
+
+        .cta-section h2 {
+            color: white;
+            border-bottom: 1px solid var(--accent);
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .cta-section p {
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 18px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .cta-button:hover {
+            background: #c0392b;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            color: var(--text-light);
+            font-size: 0.7rem;
+            width: calc(100% - 20px);
+            margin: 0 auto;
+        }
+
+        /* Layout responsivo */
+        @media screen and (max-width: 992px) {
+            .tools-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 0 8px;
+            }
+            
+            header,
+            section,
+            .cta-section,
+            footer {
+                width: calc(100% - 16px);
+            }
+            
+            .skills-row,
+            .contact-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .profile-image {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .profile-title {
+                font-size: 1rem;
+            }
+            
+            .profile-subtitle {
+                font-size: 0.75rem;
+            }
+            
+            section {
+                margin: 10px auto;
+                padding: 12px;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .tool-card {
+                padding: 15px;
+            }
+
+            .skill-column h3 {
+                font-size: 0.9rem;
+            }
+
+            .skill-list li {
+                font-size: 0.8rem;
+            }
+
+            .contact-item div h3 {
+                font-size: 0.85rem;
+            }
+
+            .contact-item div p {
+                font-size: 0.75rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .container {
+                padding: 0 5px;
+            }
+            
+            header,
+            section,
+            .cta-section,
+            footer {
+                width: calc(100% - 10px);
+            }
+            
+            .skill-column h3 {
+                font-size: 0.85rem;
+            }
+            
+            .skill-list li {
+                font-size: 0.75rem;
+            }
+            
+            .contact-item div h3 {
+                font-size: 0.8rem;
+            }
+            
+            .contact-item div p {
+                font-size: 0.7rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="profile-header">
+                <div class="profile-image">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <h1 class="profile-title">Rodrigo Alves Bento</h1>
+                <p class="profile-subtitle">Analista de Suporte | Consultor de Processos | Especialista ERP</p>
+                <div class="profile-location">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Minas Gerais, Brasil</span>
+                </div>
+            </div>
+        </header>
+
+        <section id="ferramentas">
+            <h2><i class="fas fa-tools"></i> Ferramentas</h2>
+            <div class="tools-section">
+                <div class="tools-grid">
+                    <!-- Card Gestor de E-mails -->
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <h3>Gestor de E-mail</h3>
+                        <p>Ferramenta para envio de e-mails corporativos</p>
+                        <a href="email-sender.html" class="tool-button">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            Acessar Gestor
+                        </a>
+                    </div>
+
+                    <!-- Card Gestor de Documentos -->
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <h3>Gestor Documentos</h3>
+                        <p>Gerencie e organize seus documentos de forma eficiente</p>
+                        <a href="documentos.html" class="tool-button">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            Acessar Gestor
+                        </a>
+                    </div>
+
+                    <!-- Card Gestor de Planilhas -->
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <h3>Gestor de Planilhas</h3>
+                        <p>Controle e gerencie lançamentos financeiros em planilhas</p>
+                        <a href="lancamentos.html" class="tool-button">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            Acessar Gestor
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="monitor">
+            <h2><i class="fas fa-server"></i> Monitor do Servidor</h2>
+            <div class="monitor-minimal">
+                <div class="status-row">
+                    <div class="status-item">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">Verificando...</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-clock"></i>
+                        <span id="uptime">--:--:--</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">USO DE MEMÓRIA</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="memoryProgress" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span>0%</span>
+                            <span id="memoryUsage">--%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label">PORTA</div>
+                        <div class="stat-value" id="serverPort">3001</div>
+                        <div style="font-size: 0.7rem; color: var(--text-light); margin-top: 5px;">
+                            <i class="fas fa-plug"></i> Serviço Web
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label">E-MAILS HOJE</div>
+                        <div class="stat-value" id="emailsToday">0</div>
+                        <div style="font-size: 0.7rem; color: var(--text-light); margin-top: 5px;">
+                            <i class="fas fa-paper-plane"></i> Enviados
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label">ONLINE DESDE</div>
+                        <div class="stat-value" id="startTime">--:--</div>
+                        <div style="font-size: 0.7rem; color: var(--text-light); margin-top: 5px;">
+                            <i class="fas fa-rocket"></i> Ativo
+                        </div>
+                    </div>
+                </div>
+
+                <div class="real-time-indicator">
+                    <div class="pulse-dot"></div>
+                    <span>Atualizando em tempo real (1s)</span>
+                </div>
+
+                <button class="monitor-button" onclick="checkServerStatus()">
+                    <i class="fas fa-sync-alt"></i> Atualizar Agora
+                </button>
+            </div>
+        </section>
+
+        <section id="skills">
+            <h2><i class="fas fa-star"></i> Competências</h2>
+            <div class="skills-row">
+                <div class="skill-column">
+                    <h3><i class="fas fa-cogs"></i> Gestão</h3>
+                    <ul class="skill-list">
+                        <li><i class="fas fa-check"></i> Gestão de Projetos</li>
+                        <li><i class="fas fa-check"></i> Controle de Escopo</li>
+                        <li><i class="fas fa-check"></i> Automação</li>
+                        <li><i class="fas fa-check"></i> Otimização</li>
+                    </ul>
+                </div>
+                <div class="skill-column">
+                    <h3><i class="fas fa-database"></i> Tecnologia</h3>
+                    <ul class="skill-list">
+                        <li><i class="fas fa-check"></i> ERP & Integração</li>
+                        <li><i class="fas fa-check"></i> SQL Server</li>
+                        <li><i class="fas fa-check"></i> Indicadores</li>
+                        <li><i class="fas fa-check"></i> Dashboards</li>
+                    </ul>
+                </div>
+                <div class="skill-column">
+                    <h3><i class="fas fa-users"></i> Business</h3>
+                    <ul class="skill-list">
+                        <li><i class="fas fa-check"></i> Stakeholders</li>
+                        <li><i class="fas fa-check"></i> Treinamento</li>
+                        <li><i class="fas fa-check"></i> Suporte Técnico</li>
+                        <li><i class="fas fa-check"></i> Consultoria</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <h2><i class="fas fa-envelope"></i> Contato</h2>
+            <div class="contact-row">
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div>
+                        <h3>Telefone</h3>
+                        <p>(31) 98631-5737</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div>
+                        <h3>E-mail</h3>
+                        <p>rodrigo.bento@educacao.mg.gov.br</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fab fa-linkedin"></i>
+                    </div>
+                    <div>
+                        <h3>LinkedIn</h3>
+                        <p>rodrigoalvesbento</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <h2>Transformação Digital</h2>
+            <p>Busco liderança em Projetos de TI para impulsionar eficiência operacional</p>
+            <a href="#contact" class="cta-button">Entre em Contato</a>
+        </section>
+
+        <footer>
+            <p>Rodrigo Alves Bento &copy; 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        // Configuração do endpoint do servidor
+        const SERVER_URL = 'http://localhost:3001';
+        let serverStatusInterval;
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${SERVER_URL}/status`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateMonitor(data);
+                    return true;
+                } else {
+                    setOfflineStatus();
+                    return false;
+                }
+            } catch (error) {
+                setOfflineStatus();
+                return false;
+            }
+        }
+
+        function updateMonitor(data) {
+            // Status do servidor
+            document.getElementById('statusDot').className = 'status-dot online';
+            document.getElementById('statusText').textContent = 'Online';
+            document.getElementById('statusText').style.color = 'var(--online)';
+
+            // Progress Bar da Memória
+            if (data.memory && data.memory.usage) {
+                const memoryPercent = Math.round(data.memory.usage * 100);
+                const progressBar = document.getElementById('memoryProgress');
+                const memoryUsage = document.getElementById('memoryUsage');
+                
+                // Atualizar progress bar
+                progressBar.style.width = `${memoryPercent}%`;
+                memoryUsage.textContent = `${memoryPercent}%`;
+            }
+
+            // Porta do servidor
+            if (data.port) {
+                document.getElementById('serverPort').textContent = data.port;
+            }
+
+            // Estatísticas de e-mail
+            if (data.emails) {
+                document.getElementById('emailsToday').textContent = data.emails.today || 0;
+            }
+
+            // Tempo de atividade
+            if (data.uptime) {
+                const hours = Math.floor(data.uptime / 3600);
+                const minutes = Math.floor((data.uptime % 3600) / 60);
+                const seconds = Math.floor(data.uptime % 60);
+                document.getElementById('uptime').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            // Horário de início
+            if (data.startTime) {
+                const startTime = new Date(data.startTime);
+                document.getElementById('startTime').textContent = 
+                    startTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+
+        function setOfflineStatus() {
+            document.getElementById('statusDot').className = 'status-dot';
+            document.getElementById('statusText').textContent = 'Offline';
+            document.getElementById('statusText').style.color = 'var(--offline)';
+            
+            // Reset progress bar
+            document.getElementById('memoryProgress').style.width = '0%';
+            document.getElementById('memoryUsage').textContent = '--%';
+            document.getElementById('emailsToday').textContent = '0';
+            document.getElementById('uptime').textContent = '--:--:--';
+            document.getElementById('startTime').textContent = '--:--';
+        }
+
+        // Verificar status a cada 1 segundo para tempo real
+        function startRealTimeMonitoring() {
+            if (serverStatusInterval) {
+                clearInterval(serverStatusInterval);
+            }
+            serverStatusInterval = setInterval(checkServerStatus, 1000);
+        }
+
+        // Iniciar monitoramento em tempo real
+        startRealTimeMonitoring();
+        
+        // Verificar status imediatamente ao carregar a página
+        checkServerStatus();
+    </script>
+</body>
+</html>
