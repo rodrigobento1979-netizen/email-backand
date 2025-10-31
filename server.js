@@ -353,6 +353,10 @@ app.use('*', (req, res) => {
   });
 });
 
+// ========== EXPORTAÇÃO PARA VERCEL ==========
+module.exports = app;
+
+
 // ========== INICIAR SERVIDOR ==========
 
 const PORT = process.env.PORT || 3001;
