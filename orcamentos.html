@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmailPro - Calculadora de Honorários Contábeis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Biblioteca SheetJS para Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Biblioteca jsPDF para geração de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Toastify para notificações -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-size: 0.875rem;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #f8fafc;
+            border-left: 3px solid #0ea5e9;
+        }
+        
+        .sidebar-item.active {
+            background-color: #f1f5f9;
+            border-left: 3px solid #0ea5e9;
+            color: #0ea5e9;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .calculator-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 0.75rem;
+        }
+
+        .service-badge {
+            padding: 0.15rem 0.5rem; /* Mais compacto */
+            border-radius: 0.375rem;
+            font-size: 0.65rem; /* Fonte menor */
+            font-weight: 600;
+        }
+
+        .service-empresarial { background: #dbeafe; color: #1e40af; }
+        .service-extra { background: #f3e8ff; color: #7c3aed; }
+        .service-fiscal { background: #fef3c7; color: #d97706; }
+        .service-trabalhista { background: #dcfce7; color: #166534; }
+        .service-tributaria { background: #fce7f3; color: #be185d; }
+        .service-contabil { background: #e0f2fe; color: #0369a1; }
+        .service-administrativo { background: #fef3c7; color: #d97706; }
+        .service-gerencial { background: #d1fae5; color: #065f46; }
+        .service-pessoal { background: #f3e8ff; color: #7c3aed; }
+        .service-digital { background: #e0e7ff; color: #3730a3; }
+        .service-operacional { background: #fef3c7; color: #d97706; }
+
+        /* PRICE TAG MAIS COMPACTA */
+        .price-tag {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 0.15rem 0.35rem; /* Ainda mais compacto */
+            border-radius: 0.25rem; /* Bordas mais suaves */
+            font-weight: 600; /* Peso da fonte reduzido */
+            font-size: 0.65rem; /* Fonte ainda menor */
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .toggle-service {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.5rem; /* Mais compacto */
+        }
+
+        .toggle-service:hover {
+            background-color: #f8fafc;
+        }
+
+        .toggle-service.selected {
+            background-color: #f0f9ff;
+            border-color: #0ea5e9;
+        }
+
+        .editable-table input, .editable-table select {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.2rem 0.4rem;
+            width: 100%;
+            font-size: 0.8rem;
+        }
+
+        .editable-table input:focus, .editable-table select:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
+
+        .table-actions {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .table-row:hover .table-actions {
+            opacity: 1;
+        }
+        
+        .logo-preview {
+            max-width: 160px;
+            max-height: 80px;
+            object-fit: contain;
+        }
+        
+        .logo-placeholder {
+            width: 160px;
+            height: 80px;
+            background-color: #f3f4f6;
+            border: 2px dashed #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+        
+        .status-aprovado {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-rejeitado {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-pendente {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .compact-card {
+            padding: 0.75rem;
+        }
+        
+        .compact-text {
+            font-size: 0.8rem;
+        }
+        
+        .compact-title {
+            font-size: 0.9rem;
+        }
+        
+        /* Abas para serviços */
+        .tab-button {
+            padding: 0.4rem 0.8rem; /* Mais compacto */
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 0.8rem; /* Fonte menor */
+        }
+        
+        .tab-button.active {
+            color: #0ea5e9;
+            border-bottom-color: #0ea5e9;
+        }
+        
+        .tab-button:hover {
+            color: #0ea5e9;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Checklist para observações */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.4rem; /* Mais compacto */
+        }
+        
+        .checklist-checkbox {
+            margin-right: 0.5rem;
+            margin-top: 0.2rem;
+        }
+        
+        .checklist-label {
+            font-size: 0.75rem; /* Fonte menor */
+            line-height: 1.3; /* Linha mais compacta */
+        }
+        
+        /* Mensagens de alerta - REMOVIDAS pois usaremos Toastify */
+        
+        /* Cabeçalho fixo */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: white;
+        }
+        
+        /* Serviços mais compactos */
+        .service-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem; /* Gap menor */
+        }
+        
+        @media (min-width: 768px) {
+            .service-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .service-grid.service-extras {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        /* Textarea para observações editáveis */
+        .observacao-textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            resize: vertical;
+        }
+        
+        .observacao-textarea:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3">
+    <div id="app">
+        <!-- O conteúdo será carregado aqui pelo React -->
+    </div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Dados base da tabela de honorários
+        const defaultHonorariosData = {
+            tiposEmpresa: [
+                {
+                    id: 'mei',
+                    nome: 'MEI',
+                    baseMensal: 150,
+                    acrescimoFuncionario: 20,
+                    observacoes: 'DAS, Declaração Anual - Ideal para autônomos e pequenos negócios'
+                },
+                {
+                    id: 'simples',
+                    nome: 'Simples Nacional',
+                    baseMensal: 400,
+                    acrescimoFuncionario: 25,
+                    observacoes: 'DAS, DEFIS, EFD-Reinf - Ajustar conforme volume de notas'
+                },
+                {
+                    id: 'presumido',
+                    nome: 'Lucro Presumido',
+                    baseMensal: 800,
+                    acrescimoFuncionario: 35,
+                    observacoes: 'DCTF, EFD, ECD, ECF - Empresas médias'
+                },
+                {
+                    id: 'real',
+                    nome: 'Lucro Real',
+                    baseMensal: 1200,
+                    acrescimoFuncionario: 40,
+                    observacoes: 'ECF, ECD, DCTF, EFD - Empresas de maior porte'
+                },
+                {
+                    id: 'isenta',
+                    nome: 'Isentas/Imunes',
+                    baseMensal: 350,
+                    acrescimoFuncionario: 25,
+                    observacoes: 'DCTF, ECD, ECF - ONGs, igrejas, fundações'
+                },
+                {
+                    id: 'rural',
+                    nome: 'Produtor Rural',
+                    baseMensal: 450,
+                    acrescimoFuncionario: 30,
+                    observacoes: 'Livro Caixa, GFIP, EFD-Reinf - Depende do porte'
+                }
+            ],
+
+            servicosEmpresariais: [
+                {
+                    id: 'abertura_simples',
+                    nome: 'Abertura - Simples Nacional',
+                    descricao: 'Contrato, Junta, CNPJ, Alvará',
+                    valorMin: 800,
+                    valorMax: 1200,
+                    observacoes: 'Depende do estado',
+                    categoria: 'empresarial'
+                },
+                {
+                    id: 'abertura_presumido',
+                    nome: 'Abertura - Presumido/Real',
+                    descricao: 'Com análise e enquadramento fiscal',
+                    valorMin: 1200,
+                    valorMax: 1800,
+                    observacoes: 'Inclui CNAEs e regime',
+                    categoria: 'empresarial'
+                },
+                {
+                    id: 'abertura_mei',
+                    nome: 'Abertura - MEI',
+                    descricao: 'Cadastro e orientações',
+                    valorMin: 150,
+                    valorMax: 250,
+                    observacoes: 'Serviço rápido',
+                    categoria: 'empresarial'
+                },
+                {
+                    id: 'alteracao_contratual',
+                    nome: 'Alteração Contratual',
+                    descricao: 'Mudança de sócios, endereço, atividade',
+                    valorMin: 500,
+                    valorMax: 700,
+                    observacoes: 'Conforme alterações',
+                    categoria: 'empresarial'
+                },
+                {
+                    id: 'baixa_empresa',
+                    nome: 'Baixa de Empresa',
+                    descricao: 'Distrato, baixa na Receita e Junta',
+                    valorMin: 600,
+                    valorMax: 1000,
+                    observacoes: 'Inclui taxas públicas',
+                    categoria: 'empresarial'
+                }
+            ],
+
+            servicosExtras: [
+                {
+                    id: 'declaracoes_fiscais',
+                    nome: 'Entrega/retificação de declarações',
+                    categoria: 'fiscal',
+                    valorMin: 100,
+                    valorMax: 300,
+                    observacoes: 'Por declaração',
+                    unidade: 'declaracao'
+                },
+                {
+                    id: 'folha_adicional',
+                    nome: 'Funcionário adicional',
+                    categoria: 'trabalhista',
+                    valorMin: 20,
+                    valorMax: 40,
+                    observacoes: 'Por colaborador',
+                    unidade: 'funcionario'
+                },
+                {
+                    id: 'rescisao',
+                    nome: 'Rescisão',
+                    categoria: 'trabalhista',
+                    valorMin: 150,
+                    valorMax: 300,
+                    observacoes: 'Por evento',
+                    unidade: 'evento'
+                },
+                {
+                    id: 'consultoria_tributaria',
+                    nome: 'Consultoria Tributária',
+                    categoria: 'tributaria',
+                    valorMin: 400,
+                    valorMax: 1000,
+                    observacoes: 'Análise tributária',
+                    unidade: 'consulta'
+                },
+                {
+                    id: 'planejamento_fiscal',
+                    nome: 'Planejamento Fiscal',
+                    categoria: 'tributaria',
+                    valorMin: 1000,
+                    valorMax: 3000,
+                    observacoes: 'Com reunião',
+                    unidade: 'projeto'
+                },
+                {
+                    id: 'balanco_patrimonial',
+                    nome: 'Balanço Patrimonial/DRE',
+                    categoria: 'contabil',
+                    valorMin: 400,
+                    valorMax: 800,
+                    observacoes: 'Anual',
+                    unidade: 'documento'
+                },
+                {
+                    id: 'certidoes_negativas',
+                    nome: 'Certidões Negativas',
+                    categoria: 'administrativo',
+                    valorMin: 50,
+                    valorMax: 150,
+                    observacoes: 'Por órgão',
+                    unidade: 'certidao'
+                },
+                {
+                    id: 'relatorios_personalizados',
+                    nome: 'Relatórios personalizados',
+                    categoria: 'gerencial',
+                    valorMin: 200,
+                    valorMax: 500,
+                    observacoes: 'Sob demanda',
+                    unidade: 'relatorio'
+                },
+                {
+                    id: 'declaracao_irpf',
+                    nome: 'Declaração IRPF',
+                    categoria: 'pessoal',
+                    valorMin: 150,
+                    valorMax: 400,
+                    observacoes: 'Por pessoa',
+                    unidade: 'declaracao'
+                },
+                {
+                    id: 'envio_digital',
+                    nome: 'Envio digital (Guias/Docs)',
+                    categoria: 'digital',
+                    valorMin: 0,
+                    valorMax: 0,
+                    observacoes: 'Entrega digital com suporte - V6DataApp',
+                    unidade: 'servico'
+                },
+                {
+                    id: 'busca_documentos',
+                    nome: 'Busca de documentos em cliente',
+                    categoria: 'operacional',
+                    valorMin: 80,
+                    valorMax: 80,
+                    observacoes: 'Taxa por deslocamento',
+                    unidade: 'visita'
+                },
+                {
+                    id: 'reemissao_guias',
+                    nome: 'Reemissão de guias',
+                    categoria: 'fiscal',
+                    valorMin: 30,
+                    valorMax: 30,
+                    observacoes: 'Sem alteração de valores',
+                    unidade: 'guia'
+                },
+                {
+                    id: 'recalculo_guias',
+                    nome: 'Recalculo de guias',
+                    categoria: 'fiscal',
+                    valorMin: 80,
+                    valorMax: 80,
+                    observacoes: 'Com atualização de valores',
+                    unidade: 'guia'
+                }
+            ]
+        };
+
+        // Observações padrão para o checklist
+        const observacoesPadrao = [
+            "Este orçamento tem validade de 15 dias",
+            "Os valores podem sofrer alteração conforme complexidade do serviço",
+            "Pagamento: 50% antecipado, 50% na entrega",
+            "Serviços não incluídos serão cotados separadamente",
+            "Horário de atendimento: Segunda a Sexta, 8h às 18h",
+            "Prazo de entrega: 5 dias úteis após aprovação",
+            "Alterações no escopo podem impactar no valor final"
+        ];
+
+        // Função para mostrar mensagens com Toastify
+        const mostrarToast = (tipo, texto) => {
+            let background = '';
+            switch (tipo) {
+                case 'success':
+                    background = 'linear-gradient(to right, #00b09b, #96c93d)';
+                    break;
+                case 'error':
+                    background = 'linear-gradient(to right, #ff5f6d, #ffc371)';
+                    break;
+                case 'warning':
+                    background = 'linear-gradient(to right, #f46b45, #eea849)';
+                    break;
+                case 'info':
+                default:
+                    background = 'linear-gradient(to right, #4facfe, #00f2fe)';
+                    break;
+            }
+
+            Toastify({
+                text: texto,
+                duration: 5000,
+                gravity: "top",
+                position: "right",
+                style: {
+                    background: background,
+                    borderRadius: "8px",
+                    fontSize: "0.8rem",
+                    padding: "12px 16px"
+                }
+            }).showToast();
+        };
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('calculator');
+            const [servicosTab, setServicosTab] = useState('empresariais');
+            const [tipoEmpresa, setTipoEmpresa] = useState('mei');
+            const [quantidadeFuncionarios, setQuantidadeFuncionarios] = useState(0);
+            const [servicosSelecionados, setServicosSelecionados] = useState({});
+            const [quantidadesServicos, setQuantidadesServicos] = useState({});
+            const [showOrcamento, setShowOrcamento] = useState(false);
+            const [honorariosData, setHonorariosData] = useState(defaultHonorariosData);
+            const [editingTable, setEditingTable] = useState(null);
+            const [showImportExport, setShowImportExport] = useState(false);
+            const [showConfiguracoes, setShowConfiguracoes] = useState(false);
+            const [logoEmpresa, setLogoEmpresa] = useState(null);
+            const [textoPersonalizado, setTextoPersonalizado] = useState('');
+            const [dadosEmpresa, setDadosEmpresa] = useState({
+                nome: 'Contabilidade Exemplo Ltda',
+                cnpj: '12.345.678/0001-90',
+                endereco: 'Rua das Empresas, 123 - Belo Horizonte/MG',
+                telefone: '(31) 99999-9999',
+                email: 'contato@contabilidadeexemplo.com.br'
+            });
+            const [orcamentosGerados, setOrcamentosGerados] = useState([]);
+            const [showHistoricoOrcamentos, setShowHistoricoOrcamentos] = useState(false);
+            const [showDadosCliente, setShowDadosCliente] = useState(false);
+            const [dadosCliente, setDadosCliente] = useState({
+                nome: '',
+                cnpj: '',
+                endereco: '',
+                cidade: '',
+                telefone: '',
+                email: ''
+            });
+            const [observacoesSelecionadas, setObservacoesSelecionadas] = useState({});
+            const [observacoesEditaveis, setObservacoesEditaveis] = useState('');
+
+            // Carregar dados do localStorage
+            useEffect(() => {
+                const savedData = localStorage.getItem('honorariosPersonalizados');
+                if (savedData) {
+                    setHonorariosData(JSON.parse(savedData));
+                }
+                
+                const savedConfig = localStorage.getItem('configuracoesOrcamento');
+                if (savedConfig) {
+                    const config = JSON.parse(savedConfig);
+                    setDadosEmpresa(config.dadosEmpresa || dadosEmpresa);
+                    setTextoPersonalizado(config.textoPersonalizado || '');
+                    if (config.logoEmpresa) {
+                        setLogoEmpresa(config.logoEmpresa);
+                    }
+                }
+                
+                const savedOrcamentos = localStorage.getItem('orcamentosGerados');
+                if (savedOrcamentos) {
+                    setOrcamentosGerados(JSON.parse(savedOrcamentos));
+                }
+
+                // Inicializar observações selecionadas
+                const obsIniciais = {};
+                observacoesPadrao.forEach((_, index) => {
+                    obsIniciais[index] = true;
+                });
+                setObservacoesSelecionadas(obsIniciais);
+            }, []);
+
+            // Salvar dados no localStorage
+            useEffect(() => {
+                localStorage.setItem('honorariosPersonalizados', JSON.stringify(honorariosData));
+                
+                const config = {
+                    dadosEmpresa,
+                    textoPersonalizado,
+                    logoEmpresa
+                };
+                localStorage.setItem('configuracoesOrcamento', JSON.stringify(config));
+                
+                localStorage.setItem('orcamentosGerados', JSON.stringify(orcamentosGerados));
+            }, [honorariosData, dadosEmpresa, textoPersonalizado, logoEmpresa, orcamentosGerados]);
+
+            // Calcular honorários mensais
+            const calcularHonorariosMensais = useMemo(() => {
+                const tipo = honorariosData.tiposEmpresa.find(t => t.id === tipoEmpresa);
+                if (!tipo) return 0;
+                
+                return tipo.baseMensal + (tipo.acrescimoFuncionario * quantidadeFuncionarios);
+            }, [tipoEmpresa, quantidadeFuncionarios, honorariosData]);
+
+            // Calcular serviços adicionais
+            const calcularServicosAdicionais = useMemo(() => {
+                let total = 0;
+                Object.keys(servicosSelecionados).forEach(servicoId => {
+                    if (servicosSelecionados[servicoId]) {
+                        const servico = [...honorariosData.servicosEmpresariais, ...honorariosData.servicosExtras]
+                            .find(s => s.id === servicoId);
+                        if (servico) {
+                            const quantidade = quantidadesServicos[servicoId] || 1;
+                            // Usar valor médio para cálculo
+                            const valorMedio = (servico.valorMin + servico.valorMax) / 2;
+                            total += valorMedio * quantidade;
+                        }
+                    }
+                });
+                return total;
+            }, [servicosSelecionados, quantidadesServicos, honorariosData]);
+
+            // Total geral
+            const totalGeral = useMemo(() => {
+                return calcularHonorariosMensais + calcularServicosAdicionais;
+            }, [calcularHonorariosMensais, calcularServicosAdicionais]);
+
+            // Obter observações dos serviços selecionados
+            const obterObservacoesServicos = useMemo(() => {
+                const observacoes = [];
+                
+                // Adicionar observação do tipo de empresa
+                const tipo = honorariosData.tiposEmpresa.find(t => t.id === tipoEmpresa);
+                if (tipo && tipo.observacoes) {
+                    observacoes.push(tipo.observacoes);
+                }
+                
+                // Adicionar observações dos serviços selecionados
+                Object.keys(servicosSelecionados).forEach(servicoId => {
+                    if (servicosSelecionados[servicoId]) {
+                        const servico = [...honorariosData.servicosEmpresariais, ...honorariosData.servicosExtras]
+                            .find(s => s.id === servicoId);
+                        if (servico && servico.observacoes) {
+                            observacoes.push(servico.observacoes);
+                        }
+                    }
+                });
+                
+                return observacoes;
+            }, [tipoEmpresa, servicosSelecionados, honorariosData]);
+
+            // Toggle serviço
+            const toggleServico = (servicoId) => {
+                setServicosSelecionados(prev => ({
+                    ...prev,
+                    [servicoId]: !prev[servicoId]
+                }));
+            };
+
+            // Atualizar quantidade do serviço
+            const atualizarQuantidadeServico = (servicoId, quantidade) => {
+                setQuantidadesServicos(prev => ({
+                    ...prev,
+                    [servicoId]: Math.max(1, parseInt(quantidade) || 1)
+                }));
+            };
+
+            // Toggle observação
+            const toggleObservacao = (index) => {
+                setObservacoesSelecionadas(prev => ({
+                    ...prev,
+                    [index]: !prev[index]
+                }));
+            };
+
+            // Funções de edição da tabela
+            const updateTipoEmpresa = (index, field, value) => {
+                const updated = [...honorariosData.tiposEmpresa];
+                updated[index][field] = field === 'baseMensal' || field === 'acrescimoFuncionario' ? Number(value) : value;
+                setHonorariosData(prev => ({ ...prev, tiposEmpresa: updated }));
+            };
+
+            const updateServicoEmpresarial = (index, field, value) => {
+                const updated = [...honorariosData.servicosEmpresariais];
+                updated[index][field] = field === 'valorMin' || field === 'valorMax' ? Number(value) : value;
+                setHonorariosData(prev => ({ ...prev, servicosEmpresariais: updated }));
+            };
+
+            const updateServicoExtra = (index, field, value) => {
+                const updated = [...honorariosData.servicosExtras];
+                updated[index][field] = field === 'valorMin' || field === 'valorMax' ? Number(value) : value;
+                setHonorariosData(prev => ({ ...prev, servicosExtras: updated }));
+            };
+
+            const addTipoEmpresa = () => {
+                const novoId = `novo_${Date.now()}`;
+                const novoTipo = {
+                    id: novoId,
+                    nome: 'Novo Tipo',
+                    baseMensal: 0,
+                    acrescimoFuncionario: 0,
+                    observacoes: 'Descreva as observações'
+                };
+                setHonorariosData(prev => ({
+                    ...prev,
+                    tiposEmpresa: [...prev.tiposEmpresa, novoTipo]
+                }));
+                mostrarToast('success', 'Novo tipo de empresa adicionado!');
+            };
+
+            const addServicoEmpresarial = () => {
+                const novoId = `novo_${Date.now()}`;
+                const novoServico = {
+                    id: novoId,
+                    nome: 'Novo Serviço',
+                    descricao: 'Descrição do serviço',
+                    valorMin: 0,
+                    valorMax: 0,
+                    observacoes: 'Observações',
+                    categoria: 'empresarial'
+                };
+                setHonorariosData(prev => ({
+                    ...prev,
+                    servicosEmpresariais: [...prev.servicosEmpresariais, novoServico]
+                }));
+                mostrarToast('success', 'Novo serviço empresarial adicionado!');
+            };
+
+            const addServicoExtra = () => {
+                const novoId = `novo_${Date.now()}`;
+                const novoServico = {
+                    id: novoId,
+                    nome: 'Novo Serviço',
+                    categoria: 'fiscal',
+                    valorMin: 0,
+                    valorMax: 0,
+                    observacoes: 'Observações',
+                    unidade: 'unidade'
+                };
+                setHonorariosData(prev => ({
+                    ...prev,
+                    servicosExtras: [...prev.servicosExtras, novoServico]
+                }));
+                mostrarToast('success', 'Novo serviço extra adicionado!');
+            };
+
+            const removeTipoEmpresa = (index) => {
+                const updated = honorariosData.tiposEmpresa.filter((_, i) => i !== index);
+                setHonorariosData(prev => ({ ...prev, tiposEmpresa: updated }));
+                mostrarToast('info', 'Tipo de empresa removido!');
+            };
+
+            const removeServicoEmpresarial = (index) => {
+                const updated = honorariosData.servicosEmpresariais.filter((_, i) => i !== index);
+                setHonorariosData(prev => ({ ...prev, servicosEmpresariais: updated }));
+                mostrarToast('info', 'Serviço empresarial removido!');
+            };
+
+            const removeServicoExtra = (index) => {
+                const updated = honorariosData.servicosExtras.filter((_, i) => i !== index);
+                setHonorariosData(prev => ({ ...prev, servicosExtras: updated }));
+                mostrarToast('info', 'Serviço extra removido!');
+            };
+
+            // Exportar para Excel
+            const exportToExcel = () => {
+                try {
+                    // Preparar dados para exportação
+                    const wb = XLSX.utils.book_new();
+                    
+                    // Planilha de tipos de empresa
+                    const tiposData = honorariosData.tiposEmpresa.map(tipo => ({
+                        'Tipo de Empresa': tipo.nome,
+                        'Base Mensal (R$)': tipo.baseMensal,
+                        'Acréscimo por Funcionário (R$)': tipo.acrescimoFuncionario,
+                        'Observações': tipo.observacoes
+                    }));
+                    const tiposWs = XLSX.utils.json_to_sheet(tiposData);
+                    XLSX.utils.book_append_sheet(wb, tiposWs, 'Tipos de Empresa');
+                    
+                    // Planilha de serviços empresariais
+                    const servicosEmpData = honorariosData.servicosEmpresariais.map(servico => ({
+                        'Serviço': servico.nome,
+                        'Descrição': servico.descricao,
+                        'Valor Mínimo (R$)': servico.valorMin,
+                        'Valor Máximo (R$)': servico.valorMax,
+                        'Observações': servico.observacoes,
+                        'Categoria': servico.categoria
+                    }));
+                    const servicosEmpWs = XLSX.utils.json_to_sheet(servicosEmpData);
+                    XLSX.utils.book_append_sheet(wb, servicosEmpWs, 'Serviços Empresariais');
+                    
+                    // Planilha de serviços extras
+                    const servicosExtData = honorariosData.servicosExtras.map(servico => ({
+                        'Serviço': servico.nome,
+                        'Categoria': servico.categoria,
+                        'Valor Mínimo (R$)': servico.valorMin,
+                        'Valor Máximo (R$)': servico.valorMax,
+                        'Observações': servico.observacoes,
+                        'Unidade': servico.unidade
+                    }));
+                    const servicosExtWs = XLSX.utils.json_to_sheet(servicosExtData);
+                    XLSX.utils.book_append_sheet(wb, servicosExtWs, 'Serviços Extras');
+                    
+                    // Gerar arquivo
+                    XLSX.writeFile(wb, 'tabela_honorarios.xlsx');
+                    mostrarToast('success', 'Dados exportados para Excel com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao exportar para Excel:', error);
+                    mostrarToast('error', 'Erro ao exportar para Excel!');
+                }
+            };
+
+            // Importar de Excel
+            const importFromExcel = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // Processar planilhas
+                        const tiposSheet = workbook.Sheets['Tipos de Empresa'];
+                        const servicosEmpSheet = workbook.Sheets['Serviços Empresariais'];
+                        const servicosExtSheet = workbook.Sheets['Serviços Extras'];
+                        
+                        const novosDados = { ...honorariosData };
+                        
+                        if (tiposSheet) {
+                            const tiposJson = XLSX.utils.sheet_to_json(tiposSheet);
+                            novosDados.tiposEmpresa = tiposJson.map((item, index) => ({
+                                id: `imported_${index}`,
+                                nome: item['Tipo de Empresa'] || '',
+                                baseMensal: Number(item['Base Mensal (R$)']) || 0,
+                                acrescimoFuncionario: Number(item['Acréscimo por Funcionário (R$)']) || 0,
+                                observacoes: item['Observações'] || ''
+                            }));
+                        }
+                        
+                        if (servicosEmpSheet) {
+                            const servicosEmpJson = XLSX.utils.sheet_to_json(servicosEmpSheet);
+                            novosDados.servicosEmpresariais = servicosEmpJson.map((item, index) => ({
+                                id: `imported_emp_${index}`,
+                                nome: item['Serviço'] || '',
+                                descricao: item['Descrição'] || '',
+                                valorMin: Number(item['Valor Mínimo (R$)']) || 0,
+                                valorMax: Number(item['Valor Máximo (R$)']) || 0,
+                                observacoes: item['Observações'] || '',
+                                categoria: item['Categoria'] || 'empresarial'
+                            }));
+                        }
+                        
+                        if (servicosExtSheet) {
+                            const servicosExtJson = XLSX.utils.sheet_to_json(servicosExtSheet);
+                            novosDados.servicosExtras = servicosExtJson.map((item, index) => ({
+                                id: `imported_ext_${index}`,
+                                nome: item['Serviço'] || '',
+                                categoria: item['Categoria'] || 'fiscal',
+                                valorMin: Number(item['Valor Mínimo (R$)']) || 0,
+                                valorMax: Number(item['Valor Máximo (R$)']) || 0,
+                                observacoes: item['Observações'] || '',
+                                unidade: item['Unidade'] || 'unidade'
+                            }));
+                        }
+                        
+                        setHonorariosData(novosDados);
+                        mostrarToast('success', 'Dados importados do Excel com sucesso!');
+                    } catch (error) {
+                        console.error('Erro ao importar do Excel:', error);
+                        mostrarToast('error', 'Erro ao importar do Excel!');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            // Upload de logo
+            const handleLogoUpload = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        setLogoEmpresa(e.target.result);
+                        mostrarToast('success', 'Logo carregada com sucesso!');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Remover logo
+            const removerLogo = () => {
+                setLogoEmpresa(null);
+                mostrarToast('info', 'Logo removida.');
+            };
+
+            // Gerar orçamento com dados do cliente
+            const gerarOrcamentoComCliente = () => {
+                // Validar dados do cliente
+                if (!dadosCliente.nome || !dadosCliente.cnpj) {
+                    mostrarToast('error', 'Por favor, preencha pelo menos o nome e CNPJ/CPF do cliente.');
+                    return;
+                }
+                
+                // Fechar modal de dados do cliente
+                setShowDadosCliente(false);
+                
+                // Gerar PDF
+                const nomeArquivo = gerarPDF();
+                
+                // Adicionar ao histórico de orçamentos
+                const novoOrcamento = {
+                    id: Date.now(),
+                    data: new Date().toLocaleDateString('pt-BR'),
+                    cliente: { ...dadosCliente },
+                    valor: totalGeral,
+                    status: 'pendente',
+                    arquivo: nomeArquivo,
+                    detalhes: gerarOrcamentoDetalhado(),
+                    tipoEmpresa: tipoEmpresa,
+                    quantidadeFuncionarios: quantidadeFuncionarios,
+                    servicosSelecionados: { ...servicosSelecionados },
+                    quantidadesServicos: { ...quantidadesServicos }
+                };
+                
+                setOrcamentosGerados(prev => [novoOrcamento, ...prev]);
+                
+                // Limpar dados do cliente para próximo uso
+                setDadosCliente({
+                    nome: '',
+                    cnpj: '',
+                    endereco: '',
+                    cidade: '',
+                    telefone: '',
+                    email: ''
+                });
+
+                // Limpar observações editáveis
+                setObservacoesEditaveis('');
+
+                mostrarToast('success', 'Orçamento gerado com sucesso!');
+            };
+
+            // Gerar orçamento detalhado
+            const gerarOrcamentoDetalhado = () => {
+                const tipo = honorariosData.tiposEmpresa.find(t => t.id === tipoEmpresa);
+                
+                let detalhes = [
+                    {
+                        descricao: `Honorários Mensais - ${tipo.nome}`,
+                        valor: calcularHonorariosMensais,
+                        detalhes: `Base: R$ ${tipo.baseMensal} + ${quantidadeFuncionarios} funcionários × R$ ${tipo.acrescimoFuncionario}`
+                    }
+                ];
+
+                // Adicionar serviços selecionados
+                Object.keys(servicosSelecionados).forEach(servicoId => {
+                    if (servicosSelecionados[servicoId]) {
+                        const servico = [...honorariosData.servicosEmpresariais, ...honorariosData.servicosExtras]
+                            .find(s => s.id === servicoId);
+                        if (servico) {
+                            const quantidade = quantidadesServicos[servicoId] || 1;
+                            const valorMedio = (servico.valorMin + servico.valorMax) / 2;
+                            const valorTotal = valorMedio * quantidade;
+                            
+                            detalhes.push({
+                                descricao: servico.nome,
+                                valor: valorTotal,
+                                detalhes: `${quantidade} ${servico.unidade || 'un.'} × R$ ${valorMedio.toFixed(2)}`
+                            });
+                        }
+                    }
+                });
+
+                return detalhes;
+            };
+
+            // Gerar PDF do orçamento
+            const gerarPDF = (orcamento = null) => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Configurações iniciais
+                let yPos = 20;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const margin = 20;
+                
+                // Adicionar logo se existir
+                if (logoEmpresa) {
+                    try {
+                        const img = new Image();
+                        img.src = logoEmpresa;
+                        doc.addImage(img, 'JPEG', margin, yPos, 40, 20);
+                        yPos += 30;
+                    } catch (error) {
+                        console.error('Erro ao adicionar logo:', error);
+                        yPos += 10;
+                    }
+                }
+                
+                // Informações da empresa
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text('ORÇAMENTO DE SERVIÇOS CONTÁBEIS', pageWidth / 2, yPos, { align: 'center' });
+                yPos += 10;
+                
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                doc.text(`${dadosEmpresa.nome} | CNPJ: ${dadosEmpresa.cnpj}`, margin, yPos);
+                yPos += 5;
+                doc.text(`Endereço: ${dadosEmpresa.endereco} | Telefone: ${dadosEmpresa.telefone}`, margin, yPos);
+                yPos += 5;
+                doc.text(`E-mail: ${dadosEmpresa.email}`, margin, yPos);
+                yPos += 10;
+                
+                // Linha divisória
+                doc.line(margin, yPos, pageWidth - margin, yPos);
+                yPos += 10;
+                
+                // Informações do cliente (se disponível)
+                if (orcamento && orcamento.cliente) {
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('DADOS DO CLIENTE', margin, yPos);
+                    yPos += 7;
+                    
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Cliente: ${orcamento.cliente.nome}`, margin, yPos);
+                    yPos += 5;
+                    doc.text(`CNPJ/CPF: ${orcamento.cliente.cnpj}`, margin, yPos);
+                    yPos += 5;
+                    doc.text(`Endereço: ${orcamento.cliente.endereco}`, margin, yPos);
+                    yPos += 5;
+                    doc.text(`Cidade: ${orcamento.cliente.cidade}`, margin, yPos);
+                    yPos += 5;
+                    doc.text(`Telefone: ${orcamento.cliente.telefone} | E-mail: ${orcamento.cliente.email}`, margin, yPos);
+                    yPos += 10;
+                    
+                    // Linha divisória
+                    doc.line(margin, yPos, pageWidth - margin, yPos);
+                    yPos += 10;
+                }
+                
+                // Detalhes do orçamento
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('DETALHAMENTO DOS SERVIÇOS', margin, yPos);
+                yPos += 10;
+                
+                // Tabela de serviços
+                const detalhes = orcamento ? orcamento.detalhes : gerarOrcamentoDetalhado();
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                
+                detalhes.forEach(item => {
+                    // Quebra de página se necessário
+                    if (yPos > 240) {
+                        // Não permitir quebra de página - ajustar layout
+                        doc.setFontSize(8);
+                    }
+                    
+                    doc.text(item.descricao, margin, yPos);
+                    doc.text(`R$ ${item.valor.toFixed(2)}`, pageWidth - margin - 20, yPos, { align: 'right' });
+                    yPos += 4;
+                    
+                    if (item.detalhes) {
+                        doc.setFontSize(7);
+                        doc.text(item.detalhes, margin + 5, yPos);
+                        doc.setFontSize(9);
+                        yPos += 4;
+                    }
+                    
+                    yPos += 3;
+                });
+                
+                // Linha do total
+                doc.line(margin, yPos, pageWidth - margin, yPos);
+                yPos += 8;
+                doc.setFont(undefined, 'bold');
+                doc.text('TOTAL GERAL', margin, yPos);
+                doc.text(`R$ ${(orcamento ? orcamento.valor : totalGeral).toFixed(2)}`, pageWidth - margin - 20, yPos, { align: 'right' });
+                yPos += 15;
+                
+                // Observações selecionadas
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text('OBSERVAÇÕES E CONDIÇÕES', margin, yPos);
+                yPos += 8;
+                
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'normal');
+                
+                // Adicionar observações dos serviços selecionados
+                obterObservacoesServicos.forEach((obs, index) => {
+                    if (yPos < 270) {
+                        doc.text('✓ ' + obs, margin + 5, yPos);
+                        yPos += 5;
+                    }
+                });
+                
+                // Adicionar observações padrão selecionadas
+                Object.keys(observacoesSelecionadas).forEach(key => {
+                    if (observacoesSelecionadas[key] && yPos < 270) {
+                        doc.text('✓ ' + observacoesPadrao[key], margin + 5, yPos);
+                        yPos += 5;
+                    }
+                });
+                
+                // Texto personalizado
+                if (observacoesEditaveis && yPos < 270) {
+                    yPos += 5;
+                    doc.setFont(undefined, 'bold');
+                    doc.text('INFORMAÇÕES ADICIONAIS:', margin, yPos);
+                    yPos += 5;
+                    doc.setFont(undefined, 'normal');
+                    const splitText = doc.splitTextToSize(observacoesEditaveis, pageWidth - 2 * margin);
+                    doc.text(splitText, margin, yPos);
+                }
+                
+                // Data e assinatura
+                yPos = 250;
+                doc.setFontSize(9);
+                doc.text('Data: _________________________', margin, yPos);
+                yPos += 15;
+                doc.text('Assinatura do Responsável:', margin, yPos);
+                yPos += 20;
+                doc.line(margin, yPos, margin + 80, yPos);
+                doc.text('Nome do Responsável', margin, yPos + 5);
+                
+                // Salvar PDF
+                const nomeArquivo = `orcamento-contabil-${Date.now()}.pdf`;
+                doc.save(nomeArquivo);
+                
+                return nomeArquivo;
+            };
+
+            // Atualizar status do orçamento
+            const atualizarStatusOrcamento = (id, status) => {
+                setOrcamentosGerados(prev => 
+                    prev.map(orcamento => 
+                        orcamento.id === id ? { ...orcamento, status } : orcamento
+                    )
+                );
+                mostrarToast('success', `Orçamento ${status} com sucesso!`);
+            };
+
+            // Excluir orçamento
+            const excluirOrcamento = (id) => {
+                setOrcamentosGerados(prev => prev.filter(orcamento => orcamento.id !== id));
+                mostrarToast('info', 'Orçamento excluído com sucesso!');
+            };
+
+            // Carregar orçamento para edição
+            const carregarOrcamentoParaEdicao = (orcamento) => {
+                setTipoEmpresa(orcamento.tipoEmpresa);
+                setQuantidadeFuncionarios(orcamento.quantidadeFuncionarios);
+                setServicosSelecionados(orcamento.servicosSelecionados);
+                setQuantidadesServicos(orcamento.quantidadesServicos);
+                setShowHistoricoOrcamentos(false);
+                setActiveTab('calculator');
+                
+                // Scroll para o topo
+                window.scrollTo(0, 0);
+                mostrarToast('info', 'Orçamento carregado para edição.');
+            };
+
+            // Estatísticas dos orçamentos
+            const estatisticasOrcamentos = useMemo(() => {
+                const total = orcamentosGerados.length;
+                const aprovados = orcamentosGerados.filter(o => o.status === 'aprovado').length;
+                const rejeitados = orcamentosGerados.filter(o => o.status === 'rejeitado').length;
+                const pendentes = orcamentosGerados.filter(o => o.status === 'pendente').length;
+                
+                return {
+                    total,
+                    aprovados,
+                    rejeitados,
+                    pendentes
+                };
+            }, [orcamentosGerados]);
+
+            // Renderizar a calculadora
+            const renderCalculator = () => (
+                <div className="fade-in">
+                    {/* Card de Estatísticas de Orçamentos */}
+                    <div className="calculator-card compact-card mb-4">
+                        <div className="flex justify-between items-center mb-3">
+                            <h3 className="compact-title font-semibold text-gray-800">Estatísticas de Orçamentos</h3>
+                            <button 
+                                className="btn-primary text-white py-1 px-3 rounded-lg compact-text flex items-center"
+                                onClick={() => setShowHistoricoOrcamentos(true)}
+                            >
+                                <i className="fas fa-history mr-1"></i>
+                                Ver Histórico
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="bg-blue-50 p-3 rounded-lg text-center">
+                                <div className="text-2xl font-bold text-blue-600">{estatisticasOrcamentos.total}</div>
+                                <div className="compact-text text-blue-700">Total Gerados</div>
+                            </div>
+                            <div className="bg-green-50 p-3 rounded-lg text-center">
+                                <div className="text-2xl font-bold text-green-600">{estatisticasOrcamentos.aprovados}</div>
+                                <div className="compact-text text-green-700">Aprovados</div>
+                            </div>
+                            <div className="bg-red-50 p-3 rounded-lg text-center">
+                                <div className="text-2xl font-bold text-red-600">{estatisticasOrcamentos.rejeitados}</div>
+                                <div className="compact-text text-red-700">Rejeitados</div>
+                            </div>
+                            <div className="bg-yellow-50 p-3 rounded-lg text-center">
+                                <div className="text-2xl font-bold text-yellow-600">{estatisticasOrcamentos.pendentes}</div>
+                                <div className="compact-text text-yellow-700">Pendentes</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Calculadora de Honorários */}
+                    <div className="calculator-card compact-card mb-4">
+                        <h2 className="compact-title font-bold text-gray-800 mb-3">Calculadora de Honorários</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Seleção do tipo de empresa */}
+                            <div>
+                                <label className="block compact-text font-medium text-gray-700 mb-1">Tipo de Empresa</label>
+                                <select 
+                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 compact-text"
+                                    value={tipoEmpresa}
+                                    onChange={(e) => setTipoEmpresa(e.target.value)}
+                                >
+                                    {honorariosData.tiposEmpresa.map(tipo => (
+                                        <option key={tipo.id} value={tipo.id}>{tipo.nome}</option>
+                                    ))}
+                                </select>
+                                
+                                <div className="mt-3">
+                                    <label className="block compact-text font-medium text-gray-700 mb-1">
+                                        Quantidade de Funcionários
+                                    </label>
+                                    <input 
+                                        type="number" 
+                                        min="0"
+                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 compact-text"
+                                        value={quantidadeFuncionarios}
+                                        onChange={(e) => setQuantidadeFuncionarios(parseInt(e.target.value) || 0)}
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Resumo dos valores */}
+                            <div className="result-card p-3 rounded-lg">
+                                <h3 className="compact-title font-semibold mb-2">Resumo dos Honorários</h3>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between">
+                                        <span className="compact-text">Base Mensal:</span>
+                                        <span className="compact-text font-semibold">R$ {calcularHonorariosMensais.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="compact-text">Serviços Adicionais:</span>
+                                        <span className="compact-text font-semibold">R$ {calcularServicosAdicionais.toFixed(2)}</span>
+                                    </div>
+                                    <div className="border-t border-white/30 pt-2 mt-2">
+                                        <div className="flex justify-between compact-title font-bold">
+                                            <span>Total:</span>
+                                            <span>R$ {totalGeral.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    className="w-full mt-3 bg-white text-green-700 py-2 px-3 rounded-lg compact-text font-semibold hover:bg-gray-100 transition-colors"
+                                    onClick={() => setShowDadosCliente(true)}
+                                >
+                                    Gerar Orçamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Serviços em Abas - MAIS COMPACTOS */}
+                    <div className="calculator-card compact-card">
+                        <div className="border-b border-gray-200 mb-3">
+                            <div className="flex space-x-3">
+                                <button 
+                                    className={`tab-button ${servicosTab === 'empresariais' ? 'active' : ''}`}
+                                    onClick={() => setServicosTab('empresariais')}
+                                >
+                                    Serviços Empresariais
+                                </button>
+                                <button 
+                                    className={`tab-button ${servicosTab === 'extras' ? 'active' : ''}`}
+                                    onClick={() => setServicosTab('extras')}
+                                >
+                                    Serviços Extras
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Conteúdo das abas */}
+                        <div className={`tab-content ${servicosTab === 'empresariais' ? 'active' : ''}`}>
+                            <div className="service-grid">
+                                {honorariosData.servicosEmpresariais.map(servico => (
+                                    <div 
+                                        key={servico.id}
+                                        className={`toggle-service border rounded-lg ${servicosSelecionados[servico.id] ? 'selected border-blue-500' : 'border-gray-200'}`}
+                                        onClick={() => toggleServico(servico.id)}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                                <h4 className="compact-text font-medium text-gray-800">{servico.nome}</h4>
+                                                <p className="compact-text text-gray-600 mt-1">{servico.descricao}</p>
+                                                <p className="text-xs text-gray-500 mt-1">{servico.observacoes}</p>
+                                            </div>
+                                            <div className="text-right ml-2">
+                                                <div className="price-tag compact-text">
+                                                    R$ {servico.valorMin} - {servico.valorMax}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className={`tab-content ${servicosTab === 'extras' ? 'active' : ''}`}>
+                            <div className="service-grid service-extras">
+                                {honorariosData.servicosExtras.map(servico => (
+                                    <div 
+                                        key={servico.id}
+                                        className={`toggle-service border rounded-lg ${servicosSelecionados[servico.id] ? 'selected border-blue-500' : 'border-gray-200'}`}
+                                        onClick={() => toggleServico(servico.id)}
+                                    >
+                                        <div className="flex justify-between items-start mb-1">
+                                            <div>
+                                                <span className={`service-badge service-${servico.categoria}`}>
+                                                    {servico.categoria}
+                                                </span>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="price-tag compact-text">
+                                                    {servico.valorMin === servico.valorMax ? 
+                                                        `R$ ${servico.valorMin}` : 
+                                                        `R$ ${servico.valorMin} - ${servico.valorMax}`
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <h4 className="compact-text font-medium text-gray-800">{servico.nome}</h4>
+                                        <p className="text-xs text-gray-500 mt-1">{servico.observacoes}</p>
+                                        
+                                        {servicosSelecionados[servico.id] && servico.unidade && servico.unidade !== 'servico' && (
+                                            <div className="mt-2">
+                                                <label className="text-xs text-gray-600">Quantidade:</label>
+                                                <input 
+                                                    type="number" 
+                                                    min="1"
+                                                    className="w-full p-1 border border-gray-300 rounded text-xs"
+                                                    value={quantidadesServicos[servico.id] || 1}
+                                                    onChange={(e) => atualizarQuantidadeServico(servico.id, e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // Renderizar tabela de honorários
+            const renderTabelaHonorarios = () => (
+                <div className="fade-in">
+                    <div className="calculator-card compact-card">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="compact-title font-bold text-gray-800">Tabela de Honorários</h2>
+                            <div className="flex space-x-2">
+                                <button 
+                                    onClick={() => setEditingTable(editingTable === 'tipos' ? null : 'tipos')}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                                >
+                                    <i className="fas fa-edit mr-2"></i>
+                                    {editingTable === 'tipos' ? 'Parar Edição' : 'Editar Tipos'}
+                                </button>
+                                <button 
+                                    onClick={() => setEditingTable(editingTable === 'empresariais' ? null : 'empresariais')}
+                                    className="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                                >
+                                    <i className="fas fa-edit mr-2"></i>
+                                    {editingTable === 'empresariais' ? 'Parar Edição' : 'Editar Empresariais'}
+                                </button>
+                                <button 
+                                    onClick={() => setEditingTable(editingTable === 'extras' ? null : 'extras')}
+                                    className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
+                                >
+                                    <i className="fas fa-edit mr-2"></i>
+                                    {editingTable === 'extras' ? 'Parar Edição' : 'Editar Extras'}
+                                </button>
+                                <button 
+                                    onClick={() => setShowImportExport(true)}
+                                    className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
+                                >
+                                    <i className="fas fa-file-export mr-2"></i>
+                                    Importar/Exportar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Tabela de Tipos de Empresa */}
+                        <div className="mb-8">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="compact-title font-semibold text-gray-700">Tipos de Empresa</h3>
+                                {editingTable === 'tipos' && (
+                                    <button 
+                                        onClick={addTipoEmpresa}
+                                        className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors"
+                                    >
+                                        <i className="fas fa-plus mr-1"></i>
+                                        Adicionar
+                                    </button>
+                                )}
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse border border-gray-300 editable-table">
+                                    <thead>
+                                        <tr className="bg-gray-50">
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Tipo</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Base Mensal (R$)</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Acréscimo/Func (R$)</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Observações</th>
+                                            {editingTable === 'tipos' && <th className="border border-gray-300 px-4 py-2 text-left compact-text">Ações</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {honorariosData.tiposEmpresa.map((tipo, index) => (
+                                            <tr key={tipo.id} className="table-row hover:bg-gray-50">
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'tipos' ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={tipo.nome}
+                                                            onChange={(e) => updateTipoEmpresa(index, 'nome', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        tipo.nome
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'tipos' ? (
+                                                        <input 
+                                                            type="number" 
+                                                            value={tipo.baseMensal}
+                                                            onChange={(e) => updateTipoEmpresa(index, 'baseMensal', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        tipo.baseMensal
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'tipos' ? (
+                                                        <input 
+                                                            type="number" 
+                                                            value={tipo.acrescimoFuncionario}
+                                                            onChange={(e) => updateTipoEmpresa(index, 'acrescimoFuncionario', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        tipo.acrescimoFuncionario
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'tipos' ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={tipo.observacoes}
+                                                            onChange={(e) => updateTipoEmpresa(index, 'observacoes', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        tipo.observacoes
+                                                    )}
+                                                </td>
+                                                {editingTable === 'tipos' && (
+                                                    <td className="border border-gray-300 px-4 py-2">
+                                                        <div className="table-actions flex space-x-2">
+                                                            <button 
+                                                                onClick={() => removeTipoEmpresa(index)}
+                                                                className="text-red-500 hover:text-red-700"
+                                                            >
+                                                                <i className="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Tabela de Serviços Empresariais */}
+                        <div className="mb-8">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="compact-title font-semibold text-gray-700">Serviços Empresariais</h3>
+                                {editingTable === 'empresariais' && (
+                                    <button 
+                                        onClick={addServicoEmpresarial}
+                                        className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors"
+                                    >
+                                        <i className="fas fa-plus mr-1"></i>
+                                        Adicionar
+                                    </button>
+                                )}
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse border border-gray-300 editable-table">
+                                    <thead>
+                                        <tr className="bg-gray-50">
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Serviço</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Descrição</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Valor Mín (R$)</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Valor Máx (R$)</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Observações</th>
+                                            {editingTable === 'empresariais' && <th className="border border-gray-300 px-4 py-2 text-left compact-text">Ações</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {honorariosData.servicosEmpresariais.map((servico, index) => (
+                                            <tr key={servico.id} className="table-row hover:bg-gray-50">
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'empresariais' ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={servico.nome}
+                                                            onChange={(e) => updateServicoEmpresarial(index, 'nome', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.nome
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'empresariais' ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={servico.descricao}
+                                                            onChange={(e) => updateServicoEmpresarial(index, 'descricao', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.descricao
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'empresariais' ? (
+                                                        <input 
+                                                            type="number" 
+                                                            value={servico.valorMin}
+                                                            onChange={(e) => updateServicoEmpresarial(index, 'valorMin', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.valorMin
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'empresariais' ? (
+                                                        <input 
+                                                            type="number" 
+                                                            value={servico.valorMax}
+                                                            onChange={(e) => updateServicoEmpresarial(index, 'valorMax', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.valorMax
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'empresariais' ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={servico.observacoes}
+                                                            onChange={(e) => updateServicoEmpresarial(index, 'observacoes', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.observacoes
+                                                    )}
+                                                </td>
+                                                {editingTable === 'empresariais' && (
+                                                    <td className="border border-gray-300 px-4 py-2">
+                                                        <div className="table-actions flex space-x-2">
+                                                            <button 
+                                                                onClick={() => removeServicoEmpresarial(index)}
+                                                                className="text-red-500 hover:text-red-700"
+                                                            >
+                                                                <i className="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Tabela de Serviços Extras */}
+                        <div>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="compact-title font-semibold text-gray-700">Serviços Extras</h3>
+                                {editingTable === 'extras' && (
+                                    <button 
+                                        onClick={addServicoExtra}
+                                        className="bg-purple-500 text-white px-3 py-1 rounded text-sm hover:bg-purple-600 transition-colors"
+                                    >
+                                        <i className="fas fa-plus mr-1"></i>
+                                        Adicionar
+                                    </button>
+                                )}
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse border border-gray-300 editable-table">
+                                    <thead>
+                                        <tr className="bg-gray-50">
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Serviço</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Categoria</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Valor Mín (R$)</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Valor Máx (R$)</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Observações</th>
+                                            <th className="border border-gray-300 px-4 py-2 text-left compact-text">Unidade</th>
+                                            {editingTable === 'extras' && <th className="border border-gray-300 px-4 py-2 text-left compact-text">Ações</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {honorariosData.servicosExtras.map((servico, index) => (
+                                            <tr key={servico.id} className="table-row hover:bg-gray-50">
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'extras' ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={servico.nome}
+                                                            onChange={(e) => updateServicoExtra(index, 'nome', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.nome
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'extras' ? (
+                                                        <select 
+                                                            value={servico.categoria}
+                                                            onChange={(e) => updateServicoExtra(index, 'categoria', e.target.value)}
+                                                            className="w-full"
+                                                        >
+                                                            <option value="fiscal">Fiscal</option>
+                                                            <option value="trabalhista">Trabalhista</option>
+                                                            <option value="tributaria">Tributária</option>
+                                                            <option value="contabil">Contábil</option>
+                                                            <option value="administrativo">Administrativo</option>
+                                                            <option value="gerencial">Gerencial</option>
+                                                            <option value="pessoal">Pessoal</option>
+                                                            <option value="digital">Digital</option>
+                                                            <option value="operacional">Operacional</option>
+                                                        </select>
+                                                    ) : (
+                                                        <span className={`service-badge service-${servico.categoria}`}>
+                                                            {servico.categoria}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'extras' ? (
+                                                        <input 
+                                                            type="number" 
+                                                            value={servico.valorMin}
+                                                            onChange={(e) => updateServicoExtra(index, 'valorMin', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.valorMin
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'extras' ? (
+                                                        <input 
+                                                            type="number" 
+                                                            value={servico.valorMax}
+                                                            onChange={(e) => updateServicoExtra(index, 'valorMax', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.valorMax
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'extras' ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={servico.observacoes}
+                                                            onChange={(e) => updateServicoExtra(index, 'observacoes', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.observacoes
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-2 compact-text">
+                                                    {editingTable === 'extras' ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={servico.unidade}
+                                                            onChange={(e) => updateServicoExtra(index, 'unidade', e.target.value)}
+                                                            className="w-full"
+                                                        />
+                                                    ) : (
+                                                        servico.unidade
+                                                    )}
+                                                </td>
+                                                {editingTable === 'extras' && (
+                                                    <td className="border border-gray-300 px-4 py-2">
+                                                        <div className="table-actions flex space-x-2">
+                                                            <button 
+                                                                onClick={() => removeServicoExtra(index)}
+                                                                className="text-red-500 hover:text-red-700"
+                                                            >
+                                                                <i className="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // Modal de dados do cliente
+            const renderDadosClienteModal = () => (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+                        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                            <h2 className="compact-title font-bold text-gray-800">Dados do Cliente</h2>
+                            <button 
+                                className="text-gray-500 hover:text-gray-700"
+                                onClick={() => setShowDadosCliente(false)}
+                            >
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <div className="p-4">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">Nome/Razão Social *</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosCliente.nome}
+                                            onChange={(e) => setDadosCliente(prev => ({ ...prev, nome: e.target.value }))}
+                                            placeholder="Nome completo ou razão social"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">CNPJ/CPF *</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosCliente.cnpj}
+                                            onChange={(e) => setDadosCliente(prev => ({ ...prev, cnpj: e.target.value }))}
+                                            placeholder="00.000.000/0000-00"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">Endereço</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosCliente.endereco}
+                                            onChange={(e) => setDadosCliente(prev => ({ ...prev, endereco: e.target.value }))}
+                                            placeholder="Rua, número, bairro"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">Cidade</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosCliente.cidade}
+                                            onChange={(e) => setDadosCliente(prev => ({ ...prev, cidade: e.target.value }))}
+                                            placeholder="Cidade"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">Telefone</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosCliente.telefone}
+                                            onChange={(e) => setDadosCliente(prev => ({ ...prev, telefone: e.target.value }))}
+                                            placeholder="(00) 00000-0000"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">E-mail</label>
+                                        <input 
+                                            type="email" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosCliente.email}
+                                            onChange={(e) => setDadosCliente(prev => ({ ...prev, email: e.target.value }))}
+                                            placeholder="email@exemplo.com"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                {/* Checklist de Observações dos Serviços */}
+                                {obterObservacoesServicos.length > 0 && (
+                                    <div className="border border-gray-200 rounded-lg p-3">
+                                        <h3 className="compact-title font-semibold text-gray-800 mb-2">Observações dos Serviços Selecionados</h3>
+                                        <p className="compact-text text-gray-600 mb-2">Estas observações são baseadas nos serviços que você selecionou:</p>
+                                        
+                                        <div className="space-y-1 max-h-40 overflow-y-auto">
+                                            {obterObservacoesServicos.map((observacao, index) => (
+                                                <div key={index} className="checklist-item">
+                                                    <div className="w-4 h-4 mt-0.5 mr-2 flex-shrink-0">
+                                                        <i className="fas fa-check text-green-500 text-xs"></i>
+                                                    </div>
+                                                    <label className="checklist-label">
+                                                        {observacao}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* Checklist de Observações Gerais */}
+                                <div className="border border-gray-200 rounded-lg p-3">
+                                    <h3 className="compact-title font-semibold text-gray-800 mb-2">Observações Gerais do Orçamento</h3>
+                                    <p className="compact-text text-gray-600 mb-2">Selecione as observações que deseja incluir no PDF:</p>
+                                    
+                                    <div className="space-y-1 mb-3">
+                                        {observacoesPadrao.map((observacao, index) => (
+                                            <div key={index} className="checklist-item">
+                                                <input 
+                                                    type="checkbox" 
+                                                    id={`obs-${index}`}
+                                                    className="checklist-checkbox"
+                                                    checked={observacoesSelecionadas[index] || false}
+                                                    onChange={() => toggleObservacao(index)}
+                                                />
+                                                <label htmlFor={`obs-${index}`} className="checklist-label">
+                                                    {observacao}
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    {/* Observações Editáveis */}
+                                    <div className="mt-3">
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">
+                                            Observações Adicionais (Editável)
+                                        </label>
+                                        <textarea 
+                                            className="observacao-textarea"
+                                            value={observacoesEditaveis}
+                                            onChange={(e) => setObservacoesEditaveis(e.target.value)}
+                                            placeholder="Digite aqui observações adicionais personalizadas..."
+                                        ></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-blue-50 p-3 rounded-lg">
+                                    <p className="compact-text text-blue-700">
+                                        <i className="fas fa-info-circle mr-2"></i>
+                                        Campos marcados com * são obrigatórios. Todas as observações selecionadas serão incluídas no PDF.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-end space-x-3 mt-6">
+                                <button 
+                                    className="btn-warning text-white py-2 px-4 rounded-lg compact-text"
+                                    onClick={() => setShowDadosCliente(false)}
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    className="btn-success text-white py-2 px-4 rounded-lg compact-text flex items-center"
+                                    onClick={gerarOrcamentoComCliente}
+                                >
+                                    <i className="fas fa-file-pdf mr-1"></i>
+                                    Gerar Orçamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // Modal de configurações
+            const renderConfiguracoesModal = () => (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+                        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                            <h2 className="compact-title font-bold text-gray-800">Configurações do Orçamento</h2>
+                            <button 
+                                className="text-gray-500 hover:text-gray-700"
+                                onClick={() => setShowConfiguracoes(false)}
+                            >
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <div className="p-4">
+                            {/* Dados da empresa */}
+                            <div className="mb-6">
+                                <h3 className="compact-title font-semibold text-gray-800 mb-3">Dados da Empresa</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">Nome da Empresa</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosEmpresa.nome}
+                                            onChange={(e) => setDadosEmpresa(prev => ({ ...prev, nome: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">CNPJ</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosEmpresa.cnpj}
+                                            onChange={(e) => setDadosEmpresa(prev => ({ ...prev, cnpj: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">Endereço</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosEmpresa.endereco}
+                                            onChange={(e) => setDadosEmpresa(prev => ({ ...prev, endereco: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">Telefone</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosEmpresa.telefone}
+                                            onChange={(e) => setDadosEmpresa(prev => ({ ...prev, telefone: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block compact-text font-medium text-gray-700 mb-1">E-mail</label>
+                                        <input 
+                                            type="email" 
+                                            className="w-full p-2 border border-gray-300 rounded-lg compact-text"
+                                            value={dadosEmpresa.email}
+                                            onChange={(e) => setDadosEmpresa(prev => ({ ...prev, email: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Logo da empresa */}
+                            <div className="mb-6">
+                                <h3 className="compact-title font-semibold text-gray-800 mb-3">Logo da Empresa</h3>
+                                <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                                    <div>
+                                        {logoEmpresa ? (
+                                            <div className="relative">
+                                                <img src={logoEmpresa} alt="Logo" className="logo-preview" />
+                                                <button 
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                                                    onClick={removerLogo}
+                                                >
+                                                    <i className="fas fa-times text-xs"></i>
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="logo-placeholder">
+                                                <span>Nenhuma logo carregada</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <input 
+                                            type="file" 
+                                            id="logoUpload"
+                                            accept="image/*"
+                                            onChange={handleLogoUpload}
+                                            className="hidden"
+                                        />
+                                        <label 
+                                            htmlFor="logoUpload"
+                                            className="btn-primary text-white py-2 px-3 rounded-lg compact-text inline-flex items-center cursor-pointer"
+                                        >
+                                            <i className="fas fa-upload mr-1"></i>
+                                            {logoEmpresa ? 'Alterar Logo' : 'Carregar Logo'}
+                                        </label>
+                                        <p className="text-xs text-gray-500 mt-2">Formatos: JPG, PNG, GIF. Tamanho máximo: 160x80px</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Texto personalizado */}
+                            <div className="mb-4">
+                                <h3 className="compact-title font-semibold text-gray-800 mb-3">Texto Personalizado</h3>
+                                <p className="compact-text text-gray-600 mb-2">Este texto será incluído no final do orçamento em PDF.</p>
+                                <textarea 
+                                    className="w-full p-2 border border-gray-300 rounded-lg h-24 compact-text"
+                                    value={textoPersonalizado}
+                                    onChange={(e) => setTextoPersonalizado(e.target.value)}
+                                    placeholder="Digite aqui o texto personalizado que aparecerá no orçamento..."
+                                ></textarea>
+                            </div>
+                            
+                            <div className="flex justify-end">
+                                <button 
+                                    className="btn-warning text-white py-2 px-4 rounded-lg compact-text"
+                                    onClick={() => setShowConfiguracoes(false)}
+                                >
+                                    Fechar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // Modal de histórico de orçamentos
+            const renderHistoricoOrcamentosModal = () => (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+                        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                            <h2 className="compact-title font-bold text-gray-800">Histórico de Orçamentos</h2>
+                            <button 
+                                className="text-gray-500 hover:text-gray-700"
+                                onClick={() => setShowHistoricoOrcamentos(false)}
+                            >
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <div className="p-4">
+                            {orcamentosGerados.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <i className="fas fa-file-invoice-dollar text-4xl text-gray-300 mb-3"></i>
+                                    <p className="compact-text text-gray-500">Nenhum orçamento gerado ainda.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-gray-100">
+                                            <tr>
+                                                <th className="p-2 text-left compact-text">Data</th>
+                                                <th className="p-2 text-left compact-text">Cliente</th>
+                                                <th className="p-2 text-left compact-text">Valor (R$)</th>
+                                                <th className="p-2 text-left compact-text">Status</th>
+                                                <th className="p-2 text-left compact-text">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {orcamentosGerados.map(orcamento => (
+                                                <tr key={orcamento.id} className="border-b border-gray-200">
+                                                    <td className="p-2 compact-text">{orcamento.data}</td>
+                                                    <td className="p-2 compact-text">{orcamento.cliente.nome}</td>
+                                                    <td className="p-2 compact-text font-medium">R$ {orcamento.valor.toFixed(2)}</td>
+                                                    <td className="p-2">
+                                                        {orcamento.status === 'aprovado' && (
+                                                            <span className="status-aprovado">Aprovado</span>
+                                                        )}
+                                                        {orcamento.status === 'rejeitado' && (
+                                                            <span className="status-rejeitado">Rejeitado</span>
+                                                        )}
+                                                        {orcamento.status === 'pendente' && (
+                                                            <span className="status-pendente">Pendente</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <div className="flex space-x-2">
+                                                            <button 
+                                                                className="text-blue-600 hover:text-blue-800"
+                                                                onClick={() => gerarPDF(orcamento)}
+                                                                title="Gerar PDF"
+                                                            >
+                                                                <i className="fas fa-file-pdf"></i>
+                                                            </button>
+                                                            <button 
+                                                                className="text-green-600 hover:text-green-800"
+                                                                onClick={() => carregarOrcamentoParaEdicao(orcamento)}
+                                                                title="Editar Orçamento"
+                                                            >
+                                                                <i className="fas fa-edit"></i>
+                                                            </button>
+                                                            {orcamento.status === 'pendente' && (
+                                                                <>
+                                                                    <button 
+                                                                        className="text-green-600 hover:text-green-800"
+                                                                        onClick={() => atualizarStatusOrcamento(orcamento.id, 'aprovado')}
+                                                                        title="Marcar como Aprovado"
+                                                                    >
+                                                                        <i className="fas fa-check"></i>
+                                                                    </button>
+                                                                    <button 
+                                                                        className="text-red-600 hover:text-red-800"
+                                                                        onClick={() => atualizarStatusOrcamento(orcamento.id, 'rejeitado')}
+                                                                        title="Marcar como Rejeitado"
+                                                                    >
+                                                                        <i className="fas fa-times"></i>
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            <button 
+                                                                className="text-red-500 hover:text-red-700"
+                                                                onClick={() => excluirOrcamento(orcamento.id)}
+                                                                title="Excluir Orçamento"
+                                                            >
+                                                                <i className="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                            
+                            <div className="flex justify-end mt-4">
+                                <button 
+                                    className="btn-warning text-white py-2 px-4 rounded-lg compact-text"
+                                    onClick={() => setShowHistoricoOrcamentos(false)}
+                                >
+                                    Fechar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // Modal Importar/Exportar
+            const renderImportExportModal = () => (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-gray-800">Importar/Exportar Dados</h3>
+                                <button 
+                                    onClick={() => setShowImportExport(false)}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h4 className="font-medium text-blue-800 mb-2">Exportar para Excel</h4>
+                                    <p className="text-sm text-blue-600 mb-3">
+                                        Exporte a tabela de honorários para um arquivo Excel.
+                                    </p>
+                                    <button 
+                                        onClick={exportToExcel}
+                                        className="btn-success text-white px-4 py-2 rounded-lg text-sm font-medium"
+                                    >
+                                        <i className="fas fa-file-excel mr-2"></i>
+                                        Exportar Excel
+                                    </button>
+                                </div>
+                                
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                    <h4 className="font-medium text-green-800 mb-2">Importar do Excel</h4>
+                                    <p className="text-sm text-green-600 mb-3">
+                                        Importe dados de um arquivo Excel para a tabela.
+                                    </p>
+                                    <input 
+                                        type="file" 
+                                        id="importExcel"
+                                        accept=".xlsx, .xls"
+                                        onChange={importFromExcel}
+                                        className="hidden"
+                                    />
+                                    <label 
+                                        htmlFor="importExcel"
+                                        className="btn-warning text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer inline-block"
+                                    >
+                                        <i className="fas fa-file-import mr-2"></i>
+                                        Importar Excel
+                                    </label>
+                                </div>
+                                
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                    <h4 className="font-medium text-gray-800 mb-2">Redefinir Dados</h4>
+                                    <p className="text-sm text-gray-600 mb-3">
+                                        Volte para os valores padrão da tabela de honorários.
+                                    </p>
+                                    <button 
+                                        onClick={() => {
+                                            setHonorariosData(defaultHonorariosData);
+                                            mostrarToast('info', 'Dados redefinidos para os valores padrão!');
+                                        }}
+                                        className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
+                                    >
+                                        <i className="fas fa-undo mr-2"></i>
+                                        Redefinir
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-end mt-6">
+                                <button 
+                                    onClick={() => setShowImportExport(false)}
+                                    className="btn-primary text-white px-4 py-2 rounded-lg font-medium"
+                                >
+                                    Fechar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="max-w-7xl mx-auto">
+                    {/* Header FIXO */}
+                    <header className="sticky-header bg-white rounded-xl shadow-lg p-4 mb-4">
+                        <div className="flex flex-col md:flex-row justify-between items-center">
+                            <div className="flex items-center mb-3 md:mb-0">
+                                <div className="bg-blue-500 text-white p-2 rounded-lg mr-3">
+                                    <i className="fas fa-calculator text-xl"></i>
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold text-gray-800">EmailPro Contabilidade</h1>
+                                    <p className="compact-text text-gray-600">Calculadora de Honorários Contábeis</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                                <button 
+                                    className="btn-primary text-white py-1 px-3 rounded-lg compact-text flex items-center"
+                                    onClick={() => setShowConfiguracoes(true)}
+                                >
+                                    <i className="fas fa-cog mr-1"></i>
+                                    Configurações
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+                    
+                    <div className="flex flex-col md:flex-row gap-4">
+                        {/* Sidebar */}
+                        <div className="w-full md:w-56 flex-shrink-0">
+                            <div className="bg-white rounded-xl shadow-lg p-3 sticky top-20">
+                                <nav>
+                                    <ul className="space-y-1">
+                                        <li>
+                                            <button 
+                                                className={`w-full text-left p-2 rounded-lg sidebar-item compact-text ${activeTab === 'calculator' ? 'active' : ''}`}
+                                                onClick={() => setActiveTab('calculator')}
+                                            >
+                                                <i className="fas fa-calculator mr-2 text-blue-500"></i>
+                                                Calculadora
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button 
+                                                className={`w-full text-left p-2 rounded-lg sidebar-item compact-text ${activeTab === 'tables' ? 'active' : ''}`}
+                                                onClick={() => setActiveTab('tables')}
+                                            >
+                                                <i className="fas fa-table mr-2 text-green-500"></i>
+                                                Tabela de Honorários
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                                
+                                <div className="mt-4 pt-3 border-t border-gray-200">
+                                    <h3 className="text-xs font-semibold text-gray-500 uppercase mb-1">Informações</h3>
+                                    <div className="text-xs text-gray-600 space-y-1">
+                                        <p>Os valores são referências para orçamentos.</p>
+                                        <p>Personalize conforme sua tabela de honorários.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Main Content */}
+                        <div className="flex-1">
+                            {activeTab === 'calculator' && renderCalculator()}
+                            {activeTab === 'tables' && renderTabelaHonorarios()}
+                        </div>
+                    </div>
+                    
+                    {/* Modals */}
+                    {showDadosCliente && renderDadosClienteModal()}
+                    {showConfiguracoes && renderConfiguracoesModal()}
+                    {showHistoricoOrcamentos && renderHistoricoOrcamentosModal()}
+                    {showImportExport && renderImportExportModal()}
+                    
+                    {/* Footer */}
+                    <footer className="mt-6 text-center compact-text text-gray-500">
+                        <p>EmailPro Contabilidade - Sistema de Cálculo de Honorários</p>
+                        <p className="mt-1">Desenvolvido para otimizar o processo de orçamentação</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
+</body>
+</html>
