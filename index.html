@@ -123,7 +123,7 @@
 
         .tools-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
             max-width: 100%;
             margin: 0 auto;
@@ -491,6 +491,12 @@
         }
 
         /* Layout responsivo */
+        @media screen and (max-width: 1200px) {
+            .tools-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media screen and (max-width: 992px) {
             .tools-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -658,6 +664,19 @@
                         <h3>Gestor de Planilhas</h3>
                         <p>Controle e gerencie lançamentos financeiros em planilhas</p>
                         <a href="lancamentos.html" class="tool-button">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            Acessar Gestor
+                        </a>
+                    </div>
+
+                    <!-- Card Orçamentos -->
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <h3>Orçamentos</h3>
+                        <p>Controle e planejamento orçamentário empresarial</p>
+                        <a href="orcamentos.html" class="tool-button">
                             <i class="fas fa-external-link-alt me-2"></i>
                             Acessar Gestor
                         </a>
