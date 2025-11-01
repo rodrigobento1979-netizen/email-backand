@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Tributário - Comparação de Regimes</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .configuracao {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .config-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .config-card h3 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .lucro-real-fields {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px dashed #3498db;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--success) 0%, #219a52 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--primary) 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--warning) 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        /* Resultados Compactos */
+        .results-container {
+            padding: 20px;
+        }
+
+        .resumo-mudanca {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .regime-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .regime-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 160px;
+            border: 2px solid;
+        }
+
+        .regime-atual {
+            background: #e3f2fd;
+            border-color: var(--primary);
+        }
+
+        .regime-futuro {
+            background: #e8f5e8;
+            border-color: var(--success);
+        }
+
+        .regime-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 0.8em;
+        }
+
+        .tag-simples { background: var(--primary); color: white; }
+        .tag-presumido { background: var(--warning); color: white; }
+        .tag-real { background: var(--danger); color: white; }
+
+        .arrow-mudanca {
+            font-size: 1.5em;
+            color: var(--primary);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .comparison-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .comparison-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+        .neutral { color: #7f8c8d; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 200px;
+            margin-top: 10px;
+        }
+
+        .compact-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 0.85em;
+        }
+
+        .compact-table th {
+            background: var(--dark);
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+        }
+
+        .compact-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        /* Detalhamento Tributário */
+        .tributos-detalhados {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 15px 0;
+        }
+
+        .tributos-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .tributo-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .tributo-valor {
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--dark);
+        }
+
+        .close-modal:hover {
+            color: var(--danger);
+        }
+
+        .modal-section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-section h3 {
+            color: var(--dark);
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .info-box, .warning-box {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 0.85em;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+        }
+
+        .tabela-simples-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .tabela-simples {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 0.8em;
+        }
+
+        .tabela-simples th {
+            background: var(--primary);
+            color: white;
+            padding: 8px 6px;
+            text-align: center;
+        }
+
+        .tabela-simples td {
+            padding: 6px;
+            border-bottom: 1px solid #ecf0f1;
+            text-align: center;
+        }
+
+        .faixa-atual {
+            background: #d4edda !important;
+            font-weight: bold;
+        }
+
+        .export-section {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        /* Faróis para pontos positivos e negativos */
+        .farol {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .farol-verde {
+            background-color: var(--success);
+        }
+
+        .farol-vermelho {
+            background-color: var(--danger);
+        }
+
+        /* Layout de duas colunas para o modal */
+        .duas-colunas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .config-grid, .comparison-grid, .charts-grid, .tributos-grid, .duas-colunas {
+                grid-template-columns: 1fr;
+            }
+            
+            .regime-display {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .container {
+                margin: 5px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Simulador Tributário Avançado</h1>
+            <p>Análise e Projeção da Reforma Tributária</p>
+        </div>
+
+        <div class="configuracao">
+            <div class="config-grid">
+                <div class="config-card">
+                    <h3>📋 Regime Atual</h3>
+                    <div class="form-group">
+                        <label>Regime Tributário</label>
+                        <select id="regimeAtual" onchange="atualizarConfiguracaoAtual()">
+                            <option value="simples">Simples Nacional</option>
+                            <option value="presumido">Lucro Presumido</option>
+                            <option value="real">Lucro Real</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Setor</label>
+                        <select id="setorAtual" onchange="atualizarAliquotaAtual()">
+                            <option value="comercio">Comércio</option>
+                            <option value="industria">Indústria</option>
+                            <option value="servicos">Serviços</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Faturamento Mensal (R$)</label>
+                        <input type="number" id="fatAtual" value="50000" oninput="atualizarAliquotaAtual()">
+                    </div>
+                    <div class="form-group">
+                        <label>Alíquota Efetiva (%)</label>
+                        <input type="number" id="aliquotaAtual" step="0.1" readonly>
+                    </div>
+                </div>
+
+                <div class="config-card">
+                    <h3>🚀 Regime Pretendido</h3>
+                    <div class="form-group">
+                        <label>Regime Tributário</label>
+                        <select id="regimeFuturo" onchange="atualizarConfiguracaoFuturo()">
+                            <option value="simples">Simples Nacional</option>
+                            <option value="presumido">Lucro Presumido</option>
+                            <option value="real" selected>Lucro Real</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Setor</label>
+                        <select id="setorFuturo" onchange="atualizarAliquotaFuturo()">
+                            <option value="comercio">Comércio</option>
+                            <option value="industria">Indústria</option>
+                            <option value="servicos">Serviços</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Faturamento Projetado (R$)</label>
+                        <input type="number" id="fatFuturo" value="50000" oninput="atualizarAliquotaFuturo()">
+                    </div>
+
+                    <!-- Campos específicos para Lucro Real -->
+                    <div id="lucroRealFields" class="lucro-real-fields">
+                        <div class="form-group">
+                            <label>Despesas Dedutíveis Mensais (R$)</label>
+                            <input type="number" id="despesasDedutiveis" value="30000" placeholder="Salários, aluguel, etc.">
+                        </div>
+                        <div class="form-group">
+                            <label>Folha de Pagamento Mensal (R$)</label>
+                            <input type="number" id="folhaPagamento" value="20000" placeholder="Salários + encargos">
+                        </div>
+                        <div class="form-group">
+                            <label>Outras Despesas (R$)</label>
+                            <input type="number" id="outrasDespesas" value="10000" placeholder="Materiais, serviços, etc.">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Alíquota Projetada (%)</label>
+                        <input type="number" id="aliquotaFuturo" step="0.1" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="simularMudanca()">
+                    🔄 Simular Mudança
+                </button>
+                <button class="btn btn-secondary" onclick="toggleTabelaSimples()">
+                    📈 Ver Tabela Simples
+                </button>
+                <button class="btn btn-info" onclick="abrirModal()">
+                    📝 Notas Importantes
+                </button>
+            </div>
+
+            <div id="tabelaSimplesContainer" class="tabela-simples-container hidden">
+                <h4 style="margin-bottom: 10px;">Tabela Progressiva do Simples Nacional</h4>
+                <table class="tabela-simples" id="tabelaProgressiva">
+                    <!-- Preenchida via JavaScript -->
+                </table>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Calculando...</p>
+        </div>
+
+        <div id="results" class="results-container hidden">
+            <!-- Resultados dinâmicos -->
+        </div>
+    </div>
+
+    <!-- Modal para Notas Importantes -->
+    <div id="modalNotas" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharModal()">&times;</span>
+            <h2 style="text-align: center; margin-bottom: 20px;">📋 Informações Importantes</h2>
+            
+            <div class="modal-section">
+                <div class="warning-box">
+                    <h3>⚠️ AVISO LEGAL - Esta é uma SIMULAÇÃO</h3>
+                    <p>Esta ferramenta fornece estimativas baseadas em projeções e não substitui consultoria contábil profissional.</p>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>Valores baseados em alíquotas médias e projeções</li>
+                        <li>Não considera benefícios fiscais específicos</li>
+                        <li>Não inclui tributos municipais variáveis</li>
+                        <li>Reforma tributária sujeita a alterações legislativas</li>
+                        <li>Consulte sempre um contador para decisões fiscais</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📊 Análise Comparativa dos Regimes</h3>
+                <div class="duas-colunas">
+                    <div>
+                        <h4>Simples Nacional - Pontos Fortes e Fracos</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 15px;">
+                            <li><strong>Pontos Fortes:</strong>
+                                <ul style="padding-left: 20px;">
+                                    <li><span class="farol farol-verde"></span>Menor burocracia e obrigações acessórias</li>
+                                    <li><span class="farol farol-verde"></span>Pagamento unificado de tributos</li>
+                                    <li><span class="farol farol-verde"></span>Ideal para pequenos negócios</li>
+                                    <li><span class="farol farol-verde"></span>Alíquotas progressivas (paga conforme fatura)</li>
+                                    <li><span class="farol farol-verde"></span>Menor custo com contabilidade</li>
+                                </ul>
+                            </li>
+                            <li><strong>Pontos Fracos:</strong>
+                                <ul style="padding-left: 20px;">
+                                    <li><span class="farol farol-vermelho"></span>Limite de faturamento (R$ 4,8 m/ano)</li>
+                                    <li><span class="farol farol-vermelho"></span>Não permite compensar prejuízos</li>
+                                    <li><span class="farol farol-vermelho"></span>Restrições por tipo de atividade</li>
+                                    <li><span class="farol farol-vermelho"></span>Não aceita sócios no exterior</li>
+                                    <li><span class="farol farol-vermelho"></span>Pouca flexibilidade para planejamento</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4>Lucro Real - Pontos Fortes e Fracos</h4>
+                        <ul style="padding-left: 20px;">
+                            <li><strong>Pontos Fortes:</strong>
+                                <ul style="padding-left: 20px;">
+                                    <li><span class="farol farol-verde"></span>Compensação de prejuízos fiscais</li>
+                                    <li><span class="farol farol-verde"></span>Ideal para margens baixas ou negativas</li>
+                                    <li><span class="farol farol-verde"></span>Maior flexibilidade para planejamento</li>
+                                    <li><span class="farol farol-verde"></span>Sem limite de faturamento</li>
+                                    <li><span class="farol farol-verde"></span>Melhor para empresas com investimentos</li>
+                                </ul>
+                            </li>
+                            <li><strong>Pontos Fracos:</strong>
+                                <ul style="padding-left: 20px;">
+                                    <li><span class="farol farol-vermelho"></span>Alta complexidade e burocracia</li>
+                                    <li><span class="farol farol-vermelho"></span>Custo contábil significativo</li>
+                                    <li><span class="farol farol-vermelho"></span>Necessidade de contabilidade completa</li>
+                                    <li><span class="farol farol-vermelho"></span>Prazos rigorosos e multas elevadas</li>
+                                    <li><span class="farol farol-vermelho"></span>Exige controle patrimonial detalhado</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>💡 Dicas para Tomada de Decisão</h3>
+                <ul style="padding-left: 20px;">
+                    <li><strong>Análise além dos números:</strong> Considere complexidade, burocracia e custos contábeis</li>
+                    <li><strong>Projeção de crescimento:</strong> Sua empresa vai crescer? Isso pode mudar a equação</li>
+                    <li><strong>Sazonalidade:</strong> Se seu faturamento é irregular, isso impacta a escolha</li>
+                    <li><strong>Benefícios específicos:</strong> Alguns regimes têm incentivos para determinados setores</li>
+                    <li><strong>Reforma tributária:</strong> As regras vão mudar - pense no longo prazo</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="fecharModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados compactos
+        const baseAliquotas = {
+            'simples': {
+                'comercio': { atual: 10.7, posReforma: 11.0 },
+                'industria': { atual: 11.2, posReforma: 11.5 },
+                'servicos': { atual: 12.7, posReforma: 13.0 }
+            },
+            'presumido': {
+                'comercio': { atual: 15.8, posReforma: 16.5 },
+                'industria': { atual: 16.2, posReforma: 16.8 },
+                'servicos': { atual: 21.5, posReforma: 22.0 }
+            },
+            'real': {
+                'comercio': { atual: 28.5, posReforma: 26.0 },
+                'industria': { atual: 29.0, posReforma: 24.5 },
+                'servicos': { atual: 32.0, posReforma: 27.0 }
+            }
+        };
+
+        // Alíquotas específicas para Lucro Real
+        const aliquotasLucroReal = {
+            'irpj': 15, // IRPJ sobre lucro
+            'csll': 9,  // CSLL sobre lucro
+            'pis': 1.65, // PIS sobre faturamento
+            'cofins': 7.6, // COFINS sobre faturamento
+            'ibc': 0.15 // Contribuição social sobre folha (estimado)
+        };
+
+        // Impostos da Reforma Tributária (CBS, IBS e IS)
+        const impostosReforma = {
+            'cbs': 1.0, // Contribuição sobre Bens e Serviços
+            'ibs': 25.0, // Imposto sobre Bens e Serviços
+            'is': 1.5 // Imposto Seletivo
+        };
+
+        const tabelasSimples = {
+            'comercio': [
+                { limite: 180000, aliquota: 4.00 },
+                { limite: 360000, aliquota: 7.30 },
+                { limite: 720000, aliquota: 9.50 },
+                { limite: 1800000, aliquota: 10.70 },
+                { limite: 3600000, aliquota: 14.30 },
+                { limite: 4800000, aliquota: 19.00 }
+            ],
+            'industria': [
+                { limite: 180000, aliquota: 4.50 },
+                { limite: 360000, aliquota: 7.80 },
+                { limite: 720000, aliquota: 10.00 },
+                { limite: 1800000, aliquota: 11.20 },
+                { limite: 3600000, aliquota: 14.70 },
+                { limite: 4800000, aliquota: 30.00 }
+            ],
+            'servicos': [
+                { limite: 180000, aliquota: 6.00 },
+                { limite: 360000, aliquota: 9.30 },
+                { limite: 720000, aliquota: 11.50 },
+                { limite: 1800000, aliquota: 12.70 },
+                { limite: 3600000, aliquota: 16.50 },
+                { limite: 4800000, aliquota: 33.00 }
+            ]
+        };
+
+        const nomesRegimes = {
+            'simples': 'Simples Nacional',
+            'presumido': 'Lucro Presumido', 
+            'real': 'Lucro Real'
+        };
+
+        const coresRegimes = {
+            'simples': 'tag-simples',
+            'presumido': 'tag-presumido',
+            'real': 'tag-real'
+        };
+
+        // Função para calcular alíquota do Simples Nacional baseada no faturamento
+        function calcularAliquotaSimples(faturamentoAnual, setor) {
+            const tabela = tabelasSimples[setor];
+            for (let i = 0; i < tabela.length; i++) {
+                if (faturamentoAnual <= tabela[i].limite) {
+                    return tabela[i].aliquota;
+                }
+            }
+            // Se ultrapassar o último limite, usa a última alíquota
+            return tabela[tabela.length - 1].aliquota;
+        }
+
+        // Funções principais
+        function toggleTabelaSimples() {
+            const container = document.getElementById('tabelaSimplesContainer');
+            container.classList.toggle('hidden');
+            if (!container.classList.contains('hidden')) {
+                atualizarTabelaSimples();
+            }
+        }
+
+        function atualizarConfiguracaoFuturo() {
+            const regime = document.getElementById('regimeFuturo').value;
+            document.getElementById('lucroRealFields').classList.toggle('hidden', regime !== 'real');
+            atualizarAliquotaFuturo();
+        }
+
+        function calcularLucroRealDetalhado(faturamento, despesas, folhaPagamento) {
+            const baseCalculo = faturamento - despesas;
+            const lucroTributavel = Math.max(0, baseCalculo); // Não permite lucro negativo para simplicidade
+            
+            // Tributos sobre faturamento
+            const pis = faturamento * (aliquotasLucroReal.pis / 100);
+            const cofins = faturamento * (aliquotasLucroReal.cofins / 100);
+            
+            // Tributos sobre lucro
+            const irpj = lucroTributavel * (aliquotasLucroReal.irpj / 100);
+            const csll = lucroTributavel * (aliquotasLucroReal.csll / 100);
+            
+            // Tributos sobre folha (estimado)
+            const contribSocial = folhaPagamento * aliquotasLucroReal.ibc;
+            
+            const totalTributos = pis + cofins + irpj + csll + contribSocial;
+            const aliquotaEfetiva = (totalTributos / faturamento) * 100;
+            
+            return {
+                pis,
+                cofins,
+                irpj,
+                csll,
+                contribSocial,
+                totalTributos,
+                aliquotaEfetiva,
+                lucroTributavel
+            };
+        }
+
+        function calcularReformaTributaria(faturamento, setor) {
+            // Simulação da Reforma Tributária com CBS, IBS e IS
+            const cbs = faturamento * (impostosReforma.cbs / 100);
+            const ibs = faturamento * (impostosReforma.ibs / 100);
+            const is = faturamento * (impostosReforma.is / 100);
+            
+            const totalTributos = cbs + ibs + is;
+            const aliquotaEfetiva = (totalTributos / faturamento) * 100;
+            
+            return {
+                cbs,
+                ibs,
+                is,
+                totalTributos,
+                aliquotaEfetiva,
+                detalhes: {
+                    'CBS': cbs,
+                    'IBS': ibs,
+                    'IS': is
+                }
+            };
+        }
+
+        function atualizarTabelaSimples() {
+            const tabela = document.getElementById('tabelaProgressiva');
+            const setor = document.getElementById('setorAtual').value;
+            const faturamentoAnual = parseFloat(document.getElementById('fatAtual').value) * 12;
+            
+            let html = `
+                <tr>
+                    <th>Faixa de Faturamento</th>
+                    <th>Alíquota</th>
+                    <th>Sua Faixa</th>
+                </tr>
+            `;
+
+            const tabelaSetor = tabelasSimples[setor];
+            for (let i = 0; i < tabelaSetor.length; i++) {
+                const faixa = tabelaSetor[i];
+                const limiteAnterior = i === 0 ? 0 : tabelaSetor[i-1].limite;
+                const faixaTexto = i === 0 
+                    ? `Até R$ ${(faixa.limite/1000).toFixed(0)}k/ano` 
+                    : `R$ ${(limiteAnterior/1000).toFixed(0)}k - R$ ${(faixa.limite/1000).toFixed(0)}k/ano`;
+                
+                const isFaixaAtual = faturamentoAnual <= faixa.limite && 
+                    (i === 0 || faturamentoAnual > tabelaSetor[i-1].limite);
+                const classe = isFaixaAtual ? 'faixa-atual' : '';
+                
+                html += `
+                    <tr class="${classe}">
+                        <td>${faixaTexto}</td>
+                        <td>${faixa.aliquota}%</td>
+                        <td>${isFaixaAtual ? '📍' : ''}</td>
+                    </tr>
+                `;
+            }
+
+            tabela.innerHTML = html;
+        }
+
+        function atualizarConfiguracaoAtual() {
+            atualizarAliquotaAtual();
+        }
+
+        function atualizarAliquotaAtual() {
+            const regime = document.getElementById('regimeAtual').value;
+            const setor = document.getElementById('setorAtual').value;
+            const faturamentoMensal = parseFloat(document.getElementById('fatAtual').value) || 0;
+            const faturamentoAnual = faturamentoMensal * 12;
+            
+            if (regime === 'simples') {
+                // Para Simples Nacional, calculamos baseado na tabela progressiva
+                const aliquota = calcularAliquotaSimples(faturamentoAnual, setor);
+                document.getElementById('aliquotaAtual').value = aliquota.toFixed(2);
+            } else {
+                if (baseAliquotas[regime] && baseAliquotas[regime][setor]) {
+                    document.getElementById('aliquotaAtual').value = baseAliquotas[regime][setor].atual;
+                }
+            }
+        }
+
+        function atualizarAliquotaFuturo() {
+            const regime = document.getElementById('regimeFuturo').value;
+            const setor = document.getElementById('setorFuturo').value;
+            const faturamentoMensal = parseFloat(document.getElementById('fatFuturo').value) || 0;
+            const faturamentoAnual = faturamentoMensal * 12;
+            
+            if (regime === 'simples') {
+                // Para Simples Nacional, calculamos baseado na tabela progressiva
+                const aliquota = calcularAliquotaSimples(faturamentoAnual, setor);
+                document.getElementById('aliquotaFuturo').value = aliquota.toFixed(2);
+            } else if (regime === 'real') {
+                // Para Lucro Real, calculamos baseado nas despesas
+                const faturamento = parseFloat(document.getElementById('fatFuturo').value);
+                const despesas = parseFloat(document.getElementById('despesasDedutiveis').value);
+                const folha = parseFloat(document.getElementById('folhaPagamento').value);
+                
+                const calculo = calcularLucroRealDetalhado(faturamento, despesas, folha);
+                document.getElementById('aliquotaFuturo').value = calculo.aliquotaEfetiva.toFixed(2);
+            } else {
+                if (baseAliquotas[regime] && baseAliquotas[regime][setor]) {
+                    document.getElementById('aliquotaFuturo').value = baseAliquotas[regime][setor].posReforma;
+                }
+            }
+        }
+
+        async function simularMudanca() {
+            const regimeAtual = document.getElementById('regimeAtual').value;
+            const setorAtual = document.getElementById('setorAtual').value;
+            const fatAtual = parseFloat(document.getElementById('fatAtual').value);
+            const aliquotaAtual = parseFloat(document.getElementById('aliquotaAtual').value) / 100;
+            
+            const regimeFuturo = document.getElementById('regimeFuturo').value;
+            const setorFuturo = document.getElementById('setorFuturo').value;
+            const fatFuturo = parseFloat(document.getElementById('fatFuturo').value);
+
+            if (!fatAtual || !fatFuturo) {
+                alert('Preencha o faturamento!');
+                return;
+            }
+
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            const resultados = calcularMudancaDetalhada(
+                regimeAtual, setorAtual, fatAtual, aliquotaAtual,
+                regimeFuturo, setorFuturo, fatFuturo
+            );
+            
+            exibirResultadosDetalhados(resultados);
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function calcularMudancaDetalhada(regimeAtual, setorAtual, fatAtual, aliquotaAtual,
+                                       regimeFuturo, setorFuturo, fatFuturo) {
+            
+            // Cálculo do regime atual
+            const tributosMensaisAtual = fatAtual * aliquotaAtual;
+
+            // Cálculo do regime futuro
+            let tributosMensaisFuturo;
+            let detalhesTributarios = null;
+            let reformaTributaria = null;
+
+            if (regimeFuturo === 'real') {
+                const despesas = parseFloat(document.getElementById('despesasDedutiveis').value);
+                const folha = parseFloat(document.getElementById('folhaPagamento').value);
+                detalhesTributarios = calcularLucroRealDetalhado(fatFuturo, despesas, folha);
+                tributosMensaisFuturo = detalhesTributarios.totalTributos;
+                
+                // Calcular também projeção da Reforma Tributária
+                reformaTributaria = calcularReformaTributaria(fatFuturo, setorFuturo);
+            } else {
+                const aliquotaFuturo = parseFloat(document.getElementById('aliquotaFuturo').value) / 100;
+                tributosMensaisFuturo = fatFuturo * aliquotaFuturo;
+                reformaTributaria = calcularReformaTributaria(fatFuturo, setorFuturo);
+            }
+
+            const diferencaMensal = tributosMensaisFuturo - tributosMensaisAtual;
+            const variacaoPercentual = ((tributosMensaisFuturo - tributosMensaisAtual) / tributosMensaisAtual) * 100;
+
+            const anos = [2024, 2025, 2026, 2027, 2028];
+            const projecaoAtual = [];
+            const projecaoFuturo = [];
+
+            anos.forEach(ano => {
+                let tributosProjAtual = tributosMensaisAtual;
+                let tributosProjFuturo = tributosMensaisAtual;
+
+                if (ano >= 2026) {
+                    const anosTransicao = ano - 2025;
+                    const reducaoMaxima = tributosMensaisAtual - tributosMensaisFuturo;
+                    const reducaoAplicada = reducaoMaxima * Math.min(anosTransicao / 3, 1);
+                    tributosProjFuturo = tributosMensaisAtual - reducaoAplicada;
+                } else if (ano === 2025) {
+                    tributosProjFuturo = regimeFuturo === 'real' ? 
+                        detalhesTributarios.totalTributos : 
+                        fatFuturo * (parseFloat(document.getElementById('aliquotaFuturo').value) / 100);
+                }
+
+                projecaoAtual.push({
+                    ano,
+                    tributosMensais: tributosProjAtual,
+                    regime: nomesRegimes[regimeAtual]
+                });
+
+                projecaoFuturo.push({
+                    ano,
+                    tributosMensais: tributosProjFuturo,
+                    regime: nomesRegimes[regimeFuturo]
+                });
+            });
+
+            let recomendacao = '';
+            let corRecomendacao = '';
+            
+            if (diferencaMensal < 0) {
+                recomendacao = 'MUDANÇA RECOMENDADA 💰';
+                corRecomendacao = '#27ae60';
+            } else if (Math.abs(diferencaMensal) < (fatAtual * 0.01)) {
+                recomendacao = 'INDIFERENTE ⚖️';
+                corRecomendacao = '#f39c12';
+            } else {
+                recomendacao = 'MANTER ATUAL 🔄';
+                corRecomendacao = '#e74c3c';
+            }
+
+            return {
+                resumo: {
+                    recomendacao,
+                    corRecomendacao,
+                    economiaMensal: -diferencaMensal,
+                    economiaAnual: -diferencaMensal * 12,
+                    variacaoAliquota: variacaoPercentual,
+                    impactoLucro: (diferencaMensal / (fatAtual * 0.2)) * 100
+                },
+                projecao: {
+                    atual: projecaoAtual,
+                    futuro: projecaoFuturo
+                },
+                config: {
+                    regimeAtual, setorAtual, fatAtual, aliquotaAtual,
+                    regimeFuturo, setorFuturo, fatFuturo,
+                    tributosMensaisAtual, tributosMensaisFuturo
+                },
+                detalhesTributarios,
+                reformaTributaria
+            };
+        }
+
+        function exibirResultadosDetalhados(resultados) {
+            const { resumo, projecao, config, detalhesTributarios, reformaTributaria } = resultados;
+
+            let detalhesTributosHTML = '';
+            if (detalhesTributarios) {
+                detalhesTributosHTML = `
+                    <div class="tributos-detalhados">
+                        <h4>📋 Detalhamento Tributário - Lucro Real</h4>
+                        <div class="tributos-grid">
+                            <div>
+                                <h5>Tributos Atuais</h5>
+                                <div class="tributo-item">
+                                    <span>PIS:</span>
+                                    <span class="tributo-valor">R$ ${detalhesTributarios.pis.toFixed(2)}</span>
+                                </div>
+                                <div class="tributo-item">
+                                    <span>COFINS:</span>
+                                    <span class="tributo-valor">R$ ${detalhesTributarios.cofins.toFixed(2)}</span>
+                                </div>
+                                <div class="tributo-item">
+                                    <span>IRPJ:</span>
+                                    <span class="tributo-valor">R$ ${detalhesTributarios.irpj.toFixed(2)}</span>
+                                </div>
+                                <div class="tributo-item">
+                                    <span>CSLL:</span>
+                                    <span class="tributo-valor">R$ ${detalhesTributarios.csll.toFixed(2)}</span>
+                                </div>
+                                <div class="tributo-item">
+                                    <span>Contrib. Social:</span>
+                                    <span class="tributo-valor">R$ ${detalhesTributarios.contribSocial.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h5>Projeção com Reforma</h5>
+                                <div class="tributo-item">
+                                    <span>CBS:</span>
+                                    <span class="tributo-valor">R$ ${reformaTributaria.cbs.toFixed(2)}</span>
+                                </div>
+                                <div class="tributo-item">
+                                    <span>IBS:</span>
+                                    <span class="tributo-valor">R$ ${reformaTributaria.ibs.toFixed(2)}</span>
+                                </div>
+                                <div class="tributo-item">
+                                    <span>IS:</span>
+                                    <span class="tributo-valor">R$ ${reformaTributaria.is.toFixed(2)}</span>
+                                </div>
+                                <div class="info-box">
+                                    <strong>Economia com Reforma:</strong><br>
+                                    R$ ${(detalhesTributarios.totalTributos - reformaTributaria.totalTributos).toFixed(2)}/mês
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const resultsHTML = `
+                <div class="export-section">
+                    <button class="btn btn-secondary" onclick="exportToPDF()">
+                        📄 Exportar para PDF
+                    </button>
+                </div>
+
+                <div class="resumo-mudanca">
+                    <div class="regime-display">
+                        <div class="regime-card regime-atual">
+                            <div class="regime-tag ${coresRegimes[config.regimeAtual]}">
+                                ${nomesRegimes[config.regimeAtual]}
+                            </div>
+                            <div style="font-size: 1.1em; font-weight: bold;">
+                                R$ ${config.tributosMensaisAtual.toFixed(2)}/mês
+                            </div>
+                        </div>
+                        
+                        <div class="arrow-mudanca">→</div>
+                        
+                        <div class="regime-card regime-futuro">
+                            <div class="regime-tag ${coresRegimes[config.regimeFuturo]}">
+                                ${nomesRegimes[config.regimeFuturo]}
+                            </div>
+                            <div style="font-size: 1.1em; font-weight: bold;">
+                                R$ ${config.tributosMensaisFuturo.toFixed(2)}/mês
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="font-size: 1.3em; font-weight: bold; color: ${resumo.corRecomendacao}; margin: 15px 0;">
+                        ${resumo.recomendacao}
+                    </div>
+                </div>
+
+                <div class="comparison-grid">
+                    <div class="comparison-card">
+                        <h4>💸 Impacto Mensal</h4>
+                        <div class="comparison-value ${resumo.economiaMensal >= 0 ? 'positive' : 'negative'}">
+                            ${resumo.economiaMensal >= 0 ? '+' : ''}R$ ${Math.abs(resumo.economiaMensal).toFixed(2)}
+                        </div>
+                        <small>${resumo.economiaMensal >= 0 ? 'Economia' : 'Custo'}/mês</small>
+                    </div>
+                    
+                    <div class="comparison-card">
+                        <h4>📈 Impacto Anual</h4>
+                        <div class="comparison-value ${resumo.economiaAnual >= 0 ? 'positive' : 'negative'}">
+                            ${resumo.economiaAnual >= 0 ? '+' : ''}R$ ${Math.abs(resumo.economiaAnual).toFixed(2)}
+                        </div>
+                        <small>${resumo.economiaAnual >= 0 ? 'Economia' : 'Custo'}/ano</small>
+                    </div>
+
+                    <div class="comparison-card">
+                        <h4>💰 Variação</h4>
+                        <div class="comparison-value ${resumo.variacaoAliquota <= 0 ? 'positive' : 'negative'}">
+                            ${resumo.variacaoAliquota >= 0 ? '+' : ''}${resumo.variacaoAliquota.toFixed(1)}%
+                        </div>
+                        <small>Alíquota</small>
+                    </div>
+
+                    <div class="comparison-card">
+                        <h4>🎯 Lucro</h4>
+                        <div class="comparison-value ${resumo.impactoLucro >= 0 ? 'positive' : 'negative'}">
+                            ${resumo.impactoLucro >= 0 ? '+' : ''}${resumo.impactoLucro.toFixed(1)}%
+                        </div>
+                        <small>Impacto</small>
+                    </div>
+                </div>
+
+                ${detalhesTributosHTML}
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h4>📊 Comparação Direta</h4>
+                        <div class="chart-wrapper">
+                            <canvas id="graficoComparativo"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h4>📅 Projeção 2024-2028</h4>
+                        <div class="chart-wrapper">
+                            <canvas id="graficoProjecao"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h4>📋 Evolução Detalhada</h4>
+                    <table class="compact-table">
+                        <thead>
+                            <tr>
+                                <th>Ano</th>
+                                <th>Manter Atual</th>
+                                <th>Mudar</th>
+                                <th>Diferença</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${projecao.atual.map((item, index) => {
+                                const itemFuturo = projecao.futuro[index];
+                                const diferenca = item.tributosMensais - itemFuturo.tributosMensais;
+                                
+                                return `
+                                    <tr>
+                                        <td><strong>${item.ano}</strong></td>
+                                        <td>R$ ${item.tributosMensais.toFixed(2)}</td>
+                                        <td>R$ ${itemFuturo.tributosMensais.toFixed(2)}</td>
+                                        <td style="color: ${diferenca >= 0 ? '#27ae60' : '#e74c3c'}">
+                                            R$ ${Math.abs(diferenca).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            document.getElementById('results').innerHTML = resultsHTML;
+            document.getElementById('results').classList.remove('hidden');
+
+            gerarGraficosCompactos(projecao, config);
+        }
+
+        function gerarGraficosCompactos(projecao, config) {
+            // Gráfico Comparativo
+            const ctxComp = document.getElementById('graficoComparativo').getContext('2d');
+            new Chart(ctxComp, {
+                type: 'bar',
+                data: {
+                    labels: [nomesRegimes[config.regimeAtual], nomesRegimes[config.regimeFuturo]],
+                    datasets: [{
+                        data: [config.tributosMensaisAtual, config.tributosMensaisFuturo],
+                        backgroundColor: ['#3498db', '#27ae60'],
+                        borderColor: ['#2980b9', '#219a52'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Gráfico de Projeção
+            const ctxProj = document.getElementById('graficoProjecao').getContext('2d');
+            new Chart(ctxProj, {
+                type: 'line',
+                data: {
+                    labels: projecao.atual.map(d => d.ano),
+                    datasets: [
+                        {
+                            label: `Manter ${nomesRegimes[config.regimeAtual]}`,
+                            data: projecao.atual.map(d => d.tributosMensais),
+                            borderColor: '#3498db',
+                            tension: 0.4
+                        },
+                        {
+                            label: `Mudar para ${nomesRegimes[config.regimeFuturo]}`,
+                            data: projecao.futuro.map(d => d.tributosMensais),
+                            borderColor: '#27ae60',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Funções utilitárias
+        function abrirModal() {
+            document.getElementById('modalNotas').style.display = 'block';
+        }
+
+        function fecharModal() {
+            document.getElementById('modalNotas').style.display = 'none';
+        }
+
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Dados da simulação
+            const regimeAtual = document.getElementById('regimeAtual').value;
+            const setorAtual = document.getElementById('setorAtual').value;
+            const fatAtual = document.getElementById('fatAtual').value;
+            const aliquotaAtual = document.getElementById('aliquotaAtual').value;
+            const regimeFuturo = document.getElementById('regimeFuturo').value;
+            const setorFuturo = document.getElementById('setorFuturo').value;
+            const fatFuturo = document.getElementById('fatFuturo').value;
+            const aliquotaFuturo = document.getElementById('aliquotaFuturo').value;
+            
+            // Calcular faixa atual do Simples
+            let faixaAtual = '';
+            if (regimeAtual === 'simples') {
+                const faturamentoAnual = parseFloat(fatAtual) * 12;
+                const tabela = tabelasSimples[setorAtual];
+                for (let i = 0; i < tabela.length; i++) {
+                    if (faturamentoAnual <= tabela[i].limite) {
+                        const limiteAnterior = i === 0 ? 0 : tabela[i-1].limite;
+                        faixaAtual = i === 0 
+                            ? `Até R$ ${(tabela[i].limite/1000).toFixed(0)}k/ano` 
+                            : `R$ ${(limiteAnterior/1000).toFixed(0)}k - R$ ${(tabela[i].limite/1000).toFixed(0)}k/ano`;
+                        break;
+                    }
+                }
+            }
+            
+            // Página 1: Configurações (formulário inicial)
+            doc.setFillColor(44, 62, 80);
+            doc.rect(0, 0, 210, 30, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.text('Simulador Tributário Avançado', 105, 15, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text('Análise e Projeção da Reforma Tributária', 105, 22, { align: 'center' });
+            
+            // Configurações atuais
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(16);
+            doc.text('📋 Regime Atual', 20, 45);
+            
+            doc.setFontSize(12);
+            doc.text(`Regime Tributário: ${nomesRegimes[regimeAtual]}`, 20, 55);
+            doc.text(`Setor: ${setorAtual.charAt(0).toUpperCase() + setorAtual.slice(1)}`, 20, 62);
+            doc.text(`Faturamento Mensal: R$ ${parseFloat(fatAtual).toLocaleString('pt-BR')}`, 20, 69);
+            doc.text(`Alíquota Efetiva: ${aliquotaAtual}%`, 20, 76);
+            if (faixaAtual) {
+                doc.text(`Faixa Simples: ${faixaAtual}`, 20, 83);
+            }
+            
+            // Configurações futuras
+            doc.setFontSize(16);
+            doc.text('🚀 Regime Pretendido', 20, 100);
+            
+            doc.setFontSize(12);
+            doc.text(`Regime Tributário: ${nomesRegimes[regimeFuturo]}`, 20, 110);
+            doc.text(`Setor: ${setorFuturo.charAt(0).toUpperCase() + setorFuturo.slice(1)}`, 20, 117);
+            doc.text(`Faturamento Projetado: R$ ${parseFloat(fatFuturo).toLocaleString('pt-BR')}`, 20, 124);
+            
+            // Campos específicos para Lucro Real
+            if (regimeFuturo === 'real') {
+                const despesasDedutiveis = document.getElementById('despesasDedutiveis').value;
+                const folhaPagamento = document.getElementById('folhaPagamento').value;
+                const outrasDespesas = document.getElementById('outrasDespesas').value;
+                
+                doc.text(`Despesas Dedutíveis: R$ ${parseFloat(despesasDedutiveis).toLocaleString('pt-BR')}`, 20, 131);
+                doc.text(`Folha de Pagamento: R$ ${parseFloat(folhaPagamento).toLocaleString('pt-BR')}`, 20, 138);
+                doc.text(`Outras Despesas: R$ ${parseFloat(outrasDespesas).toLocaleString('pt-BR')}`, 20, 145);
+            }
+            
+            doc.text(`Alíquota Projetada: ${aliquotaFuturo}%`, 20, 152);
+            
+            // Linha divisória
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, 160, 190, 160);
+            
+            // Botões simulados
+            doc.setFillColor(39, 174, 96);
+            doc.roundedRect(20, 165, 50, 10, 2, 2, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.text('🔄 Simular Mudança', 45, 171, { align: 'center' });
+            
+            doc.setFillColor(52, 152, 219);
+            doc.roundedRect(80, 165, 50, 10, 2, 2, 'F');
+            doc.text('📈 Ver Tabela Simples', 105, 171, { align: 'center' });
+            
+            doc.setFillColor(243, 156, 18);
+            doc.roundedRect(140, 165, 50, 10, 2, 2, 'F');
+            doc.text('📝 Notas Importantes', 165, 171, { align: 'center' });
+            
+            // Aviso legal
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(8);
+            doc.text('⚠️ AVISO LEGAL - Esta é uma SIMULAÇÃO. Consulte sempre um contador para decisões fiscais.', 105, 185, { align: 'center' });
+            
+            // Página 2: Resultados da simulação
+            doc.addPage();
+            
+            // Capturar o conteúdo dos resultados
+            const element = document.getElementById('results');
+            if (element) {
+                const canvas = await html2canvas(element);
+                const imgData = canvas.toDataURL('image/png');
+                
+                // Adicionar ao PDF
+                doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
+            }
+            
+            // Salvar o PDF
+            doc.save('relatorio-simulacao-tributaria.pdf');
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarAliquotaAtual();
+            atualizarAliquotaFuturo();
+            atualizarConfiguracaoFuturo();
+            
+            document.getElementById('fatAtual').addEventListener('input', function() {
+                document.getElementById('fatFuturo').value = this.value;
+                atualizarAliquotaAtual();
+            });
+
+            document.getElementById('fatFuturo').addEventListener('input', function() {
+                document.getElementById('fatAtual').value = this.value;
+                atualizarAliquotaFuturo();
+            });
+
+            // Atualizar cálculo do Lucro Real quando campos mudarem
+            document.getElementById('despesasDedutiveis').addEventListener('input', atualizarAliquotaFuturo);
+            document.getElementById('folhaPagamento').addEventListener('input', atualizarAliquotaFuturo);
+            document.getElementById('outrasDespesas').addEventListener('input', atualizarAliquotaFuturo);
+        });
+    </script>
+</body>
+</html>
