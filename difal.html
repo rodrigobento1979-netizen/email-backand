@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalcDIFAL - Sistema de Cálculo de Diferencial de Alíquota</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-calculate {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-calculate:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+        
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #f8fafc;
+            border-left: 3px solid #0ea5e9;
+        }
+        
+        .sidebar-item.active {
+            background-color: #f1f5f9;
+            border-left: 3px solid #0ea5e9;
+            color: #0ea5e9;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .compact-input {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .compact-button {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .calculation-step {
+            background: #f8fafc;
+            border-left: 4px solid #0ea5e9;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .tax-info {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #0ea5e9;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3">
+    <div id="app" class="max-w-7xl mx-auto">
+        <div class="text-center py-20">
+            <div class="bg-white rounded-2xl p-8 inline-block">
+                <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+                <p class="text-gray-600">Carregando CalcDIFAL...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        // Dados de alíquotas interestaduais por estado
+        const INTERESTADUAL_RATES = {
+            "AC": 12, "AL": 12, "AM": 12, "AP": 12, "BA": 12, "CE": 12, "DF": 12, 
+            "ES": 12, "GO": 12, "MA": 12, "MG": 7, "MS": 12, "MT": 12, "PA": 12, 
+            "PB": 12, "PE": 12, "PI": 12, "PR": 12, "RJ": 12, "RN": 12, "RO": 12, 
+            "RR": 12, "RS": 12, "SC": 12, "SE": 12, "SP": 7, "TO": 12
+        };
+
+        // Dados de alíquotas internas por estado
+        const INTERNAL_RATES = {
+            "AC": 17, "AL": 18, "AM": 18, "AP": 18, "BA": 18, "CE": 18, "DF": 18, 
+            "ES": 17, "GO": 17, "MA": 18, "MG": 18, "MS": 17, "MT": 17, "PA": 17, 
+            "PB": 18, "PE": 18, "PI": 18, "PR": 18, "RJ": 20, "RN": 18, "RO": 17.5, 
+            "RR": 17, "RS": 18, "SC": 17, "SE": 18, "SP": 18, "TO": 18
+        };
+
+        // Estados brasileiros
+        const BRAZILIAN_STATES = [
+            { value: "AC", label: "Acre" },
+            { value: "AL", label: "Alagoas" },
+            { value: "AP", label: "Amapá" },
+            { value: "AM", label: "Amazonas" },
+            { value: "BA", label: "Bahia" },
+            { value: "CE", label: "Ceará" },
+            { value: "DF", label: "Distrito Federal" },
+            { value: "ES", label: "Espírito Santo" },
+            { value: "GO", label: "Goiás" },
+            { value: "MA", label: "Maranhão" },
+            { value: "MT", label: "Mato Grosso" },
+            { value: "MS", label: "Mato Grosso do Sul" },
+            { value: "MG", label: "Minas Gerais" },
+            { value: "PA", label: "Pará" },
+            { value: "PB", label: "Paraíba" },
+            { value: "PR", label: "Paraná" },
+            { value: "PE", label: "Pernambuco" },
+            { value: "PI", label: "Piauí" },
+            { value: "RJ", label: "Rio de Janeiro" },
+            { value: "RN", label: "Rio Grande do Norte" },
+            { value: "RS", label: "Rio Grande do Sul" },
+            { value: "RO", label: "Rondônia" },
+            { value: "RR", label: "Roraima" },
+            { value: "SC", label: "Santa Catarina" },
+            { value: "SP", label: "São Paulo" },
+            { value: "SE", label: "Sergipe" },
+            { value: "TO", label: "Tocantins" }
+        ];
+
+        // CFOPs completos para operações interestaduais (entrada e saída)
+        const CFOP_OPTIONS = [
+            // CFOPs de ENTRADA (Operações interestaduais)
+            { value: "1101", label: "1101 - Compra para industrialização", type: "entrada" },
+            { value: "1102", label: "1102 - Compra para comercialização", type: "entrada" },
+            { value: "1251", label: "1251 - Compra para uso/consumo", type: "entrada" },
+            { value: "1401", label: "1401 - Compra para industrialização de bem para ativo imobilizado", type: "entrada" },
+            { value: "1403", label: "1403 - Compra para comercialização de bem para ativo imobilizado", type: "entrada" },
+            { value: "1551", label: "1551 - Transferência para industrialização", type: "entrada" },
+            { value: "1552", label: "1552 - Transferência para comercialização", type: "entrada" },
+            { value: "1556", label: "1556 - Transferência para uso/consumo", type: "entrada" },
+            { value: "2101", label: "2101 - Compra para industrialização", type: "entrada" },
+            { value: "2102", label: "2102 - Compra para comercialização", type: "entrada" },
+            { value: "2251", label: "2251 - Compra para uso/consumo", type: "entrada" },
+            { value: "2401", label: "2401 - Compra para industrialização de bem para ativo imobilizado", type: "entrada" },
+            { value: "2403", label: "2403 - Compra para comercialização de bem para ativo imobilizado", type: "entrada" },
+            { value: "2551", label: "2551 - Transferência para industrialização", type: "entrada" },
+            { value: "2552", label: "2552 - Transferência para comercialização", type: "entrada" },
+            { value: "2556", label: "2556 - Transferência para uso/consumo", type: "entrada" },
+            { value: "3101", label: "3101 - Compra para industrialização", type: "entrada" },
+            { value: "3102", label: "3102 - Compra para comercialização", type: "entrada" },
+            { value: "3126", label: "3126 - Compra para utilização na prestação de serviço", type: "entrada" },
+            { value: "3127", label: "3127 - Compra para industrialização sob regime de drawback", type: "entrada" },
+            { value: "3251", label: "3251 - Compra para uso/consumo", type: "entrada" },
+            { value: "3401", label: "3401 - Compra para industrialização de bem para ativo imobilizado", type: "entrada" },
+            { value: "3403", label: "3403 - Compra para comercialização de bem para ativo imobilizado", type: "entrada" },
+            { value: "3551", label: "3551 - Transferência para industrialização", type: "entrada" },
+            { value: "3552", label: "3552 - Transferência para comercialização", type: "entrada" },
+            { value: "3556", label: "3556 - Transferência para uso/consumo", type: "entrada" },
+            
+            // CFOPs de SAÍDA (Operações interestaduais)
+            { value: "5101", label: "5101 - Venda de produção do estabelecimento", type: "saida" },
+            { value: "5102", label: "5102 - Venda de mercadoria adquirida ou recebida de terceiros", type: "saida" },
+            { value: "5103", label: "5103 - Venda de produção do estabelecimento efetuada fora do estabelecimento", type: "saida" },
+            { value: "5104", label: "5104 - Venda de mercadoria adquirida ou recebida de terceiros efetuada fora do estabelecimento", type: "saida" },
+            { value: "5105", label: "5105 - Venda de produção do estabelecimento que não deva por ele transitar", type: "saida" },
+            { value: "5106", label: "5106 - Venda de mercadoria adquirida ou recebida de terceiros, que não deva por ele transitar", type: "saida" },
+            { value: "5109", label: "5109 - Venda de produção do estabelecimento destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
+            { value: "5110", label: "5110 - Venda de mercadoria adquirida ou recebida de terceiros destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
+            { value: "5111", label: "5111 - Venda de produção do estabelecimento destinada ao exterior", type: "saida" },
+            { value: "5112", label: "5112 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao exterior", type: "saida" },
+            { value: "5113", label: "5113 - Venda de produção do estabelecimento destinada a não contribuinte", type: "saida" },
+            { value: "5114", label: "5114 - Venda de mercadoria adquirida ou recebida de terceiros destinada a não contribuinte", type: "saida" },
+            { value: "5115", label: "5115 - Venda de produção do estabelecimento destinada a contribuinte", type: "saida" },
+            { value: "5116", label: "5116 - Venda de mercadoria adquirida ou recebida de terceiros destinada a contribuinte", type: "saida" },
+            { value: "5117", label: "5117 - Venda de produção do estabelecimento destinada ao interior", type: "saida" },
+            { value: "5118", label: "5118 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao interior", type: "saida" },
+            { value: "5119", label: "5119 - Venda de produção do estabelecimento com suspensão do ICMS", type: "saida" },
+            { value: "5120", label: "5120 - Venda de mercadoria adquirida ou recebida de terceiros com suspensão do ICMS", type: "saida" },
+            { value: "5122", label: "5122 - Venda de produção do estabelecimento para industrialização", type: "saida" },
+            { value: "5123", label: "5123 - Venda de mercadoria adquirida ou recebida de terceiros para industrialização", type: "saida" },
+            { value: "5124", label: "5124 - Venda de produção do estabelecimento para comercialização", type: "saida" },
+            { value: "5125", label: "5125 - Venda de mercadoria adquirida ou recebida de terceiros para comercialização", type: "saida" },
+            { value: "5126", label: "5126 - Venda de produção do estabelecimento para uso/consumo", type: "saida" },
+            { value: "5127", label: "5127 - Venda de mercadoria adquirida ou recebida de terceiros para uso/consumo", type: "saida" },
+            { value: "5128", label: "5128 - Venda de produção do estabelecimento para ativo imobilizado", type: "saida" },
+            { value: "5129", label: "5129 - Venda de mercadoria adquirida ou recebida de terceiros para ativo imobilizado", type: "saida" },
+            { value: "5131", label: "5131 - Venda de produção do estabelecimento por encomenda", type: "saida" },
+            { value: "5132", label: "5132 - Venda de mercadoria adquirida ou recebida de terceiros por encomenda", type: "saida" },
+            { value: "5133", label: "5133 - Venda de produção do estabelecimento para exportação", type: "saida" },
+            { value: "5134", label: "5134 - Venda de mercadoria adquirida ou recebida de terceiros para exportação", type: "saida" },
+            { value: "5135", label: "5135 - Venda de produção do estabelecimento com redução de base de cálculo", type: "saida" },
+            { value: "5136", label: "5136 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo", type: "saida" },
+            { value: "5137", label: "5137 - Venda de produção do estabelecimento com isenção do ICMS", type: "saida" },
+            { value: "5138", label: "5138 - Venda de mercadoria adquirida ou recebida de terceiros com isenção do ICMS", type: "saida" },
+            { value: "5139", label: "5139 - Venda de produção do estabelecimento com não-incidência do ICMS", type: "saida" },
+            { value: "5140", label: "5140 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência do ICMS", type: "saida" },
+            { value: "5141", label: "5141 - Venda de produção do estabelecimento com imunidade do ICMS", type: "saida" },
+            { value: "5142", label: "5142 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade do ICMS", type: "saida" },
+            { value: "5143", label: "5143 - Venda de produção do estabelecimento com diferimento do ICMS", type: "saida" },
+            { value: "5144", label: "5144 - Venda de mercadoria adquirida ou recebida de terceiros com diferimento do ICMS", type: "saida" },
+            { value: "5145", label: "5145 - Venda de produção do estabelecimento com redução de alíquota", type: "saida" },
+            { value: "5146", label: "5146 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota", type: "saida" },
+            { value: "5147", label: "5147 - Venda de produção do estabelecimento com substituição tributária", type: "saida" },
+            { value: "5148", label: "5148 - Venda de mercadoria adquirida ou recebida de terceiros com substituição tributária", type: "saida" },
+            { value: "5149", label: "5149 - Venda de produção do estabelecimento para o Simples Nacional", type: "saida" },
+            { value: "5150", label: "5150 - Venda de mercadoria adquirida ou recebida de terceiros para o Simples Nacional", type: "saida" },
+            { value: "5151", label: "5151 - Venda de produção do estabelecimento com redução de base de cálculo e substituição tributária", type: "saida" },
+            { value: "5152", label: "5152 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo e substituição tributária", type: "saida" },
+            { value: "5153", label: "5153 - Venda de produção do estabelecimento com isenção e substituição tributária", type: "saida" },
+            { value: "5154", label: "5154 - Venda de mercadoria adquirida ou recebida de terceiros com isenção e substituição tributária", type: "saida" },
+            { value: "5155", label: "5155 - Venda de produção do estabelecimento com não-incidência e substituição tributária", type: "saida" },
+            { value: "5156", label: "5156 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência e substituição tributária", type: "saida" },
+            { value: "5157", label: "5157 - Venda de produção do estabelecimento com imunidade e substituição tributária", type: "saida" },
+            { value: "5158", label: "5158 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade e substituição tributária", type: "saida" },
+            { value: "5159", label: "5159 - Venda de produção do estabelecimento com redução de alíquota e substituição tributária", type: "saida" },
+            { value: "5160", label: "5160 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota e substituição tributária", type: "saida" },
+            { value: "6101", label: "6101 - Venda de produção do estabelecimento", type: "saida" },
+            { value: "6102", label: "6102 - Venda de mercadoria adquirida ou recebida de terceiros", type: "saida" },
+            { value: "6103", label: "6103 - Venda de produção do estabelecimento efetuada fora do estabelecimento", type: "saida" },
+            { value: "6104", label: "6104 - Venda de mercadoria adquirida ou recebida de terceiros efetuada fora do estabelecimento", type: "saida" },
+            { value: "6105", label: "6105 - Venda de produção do estabelecimento que não deva por ele transitar", type: "saida" },
+            { value: "6106", label: "6106 - Venda de mercadoria adquirida ou recebida de terceiros, que não deva por ele transitar", type: "saida" },
+            { value: "6107", label: "6107 - Venda de produção do estabelecimento destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
+            { value: "6108", label: "6108 - Venda de mercadoria adquirida ou recebida de terceiros destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
+            { value: "6109", label: "6109 - Venda de produção do estabelecimento destinada ao exterior", type: "saida" },
+            { value: "6110", label: "6110 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao exterior", type: "saida" },
+            { value: "6111", label: "6111 - Venda de produção do estabelecimento destinada a não contribuinte", type: "saida" },
+            { value: "6112", label: "6112 - Venda de mercadoria adquirida ou recebida de terceiros destinada a não contribuinte", type: "saida" },
+            { value: "6113", label: "6113 - Venda de produção do estabelecimento destinada a contribuinte", type: "saida" },
+            { value: "6114", label: "6114 - Venda de mercadoria adquirida ou recebida de terceiros destinada a contribuinte", type: "saida" },
+            { value: "6115", label: "6115 - Venda de produção do estabelecimento destinada ao interior", type: "saida" },
+            { value: "6116", label: "6116 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao interior", type: "saida" },
+            { value: "6117", label: "6117 - Venda de produção do estabelecimento com suspensão do ICMS", type: "saida" },
+            { value: "6118", label: "6118 - Venda de mercadoria adquirida ou recebida de terceiros com suspensão do ICMS", type: "saida" },
+            { value: "6120", label: "6120 - Venda de produção do estabelecimento para industrialização", type: "saida" },
+            { value: "6121", label: "6121 - Venda de mercadoria adquirida ou recebida de terceiros para industrialização", type: "saida" },
+            { value: "6122", label: "6122 - Venda de produção do estabelecimento para comercialização", type: "saida" },
+            { value: "6123", label: "6123 - Venda de mercadoria adquirida ou recebida de terceiros para comercialização", type: "saida" },
+            { value: "6124", label: "6124 - Venda de produção do estabelecimento para uso/consumo", type: "saida" },
+            { value: "6125", label: "6125 - Venda de mercadoria adquirida ou recebida de terceiros para uso/consumo", type: "saida" },
+            { value: "6126", label: "6126 - Venda de produção do estabelecimento para ativo imobilizado", type: "saida" },
+            { value: "6127", label: "6127 - Venda de mercadoria adquirida ou recebida de terceiros para ativo imobilizado", type: "saida" },
+            { value: "6129", label: "6129 - Venda de produção do estabelecimento por encomenda", type: "saida" },
+            { value: "6130", label: "6130 - Venda de mercadoria adquirida ou recebida de terceiros por encomenda", type: "saida" },
+            { value: "6131", label: "6131 - Venda de produção do estabelecimento para exportação", type: "saida" },
+            { value: "6132", label: "6132 - Venda de mercadoria adquirida ou recebida de terceiros para exportação", type: "saida" },
+            { value: "6133", label: "6133 - Venda de produção do estabelecimento com redução de base de cálculo", type: "saida" },
+            { value: "6134", label: "6134 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo", type: "saida" },
+            { value: "6135", label: "6135 - Venda de produção do estabelecimento com isenção do ICMS", type: "saida" },
+            { value: "6136", label: "6136 - Venda de mercadoria adquirida ou recebida de terceiros com isenção do ICMS", type: "saida" },
+            { value: "6137", label: "6137 - Venda de produção do estabelecimento com não-incidência do ICMS", type: "saida" },
+            { value: "6138", label: "6138 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência do ICMS", type: "saida" },
+            { value: "6139", label: "6139 - Venda de produção do estabelecimento com imunidade do ICMS", type: "saida" },
+            { value: "6140", label: "6140 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade do ICMS", type: "saida" },
+            { value: "6141", label: "6141 - Venda de produção do estabelecimento com diferimento do ICMS", type: "saida" },
+            { value: "6142", label: "6142 - Venda de mercadoria adquirida ou recebida de terceiros com diferimento do ICMS", type: "saida" },
+            { value: "6143", label: "6143 - Venda de produção do estabelecimento com redução de alíquota", type: "saida" },
+            { value: "6144", label: "6144 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota", type: "saida" },
+            { value: "6145", label: "6145 - Venda de produção do estabelecimento com substituição tributária", type: "saida" },
+            { value: "6146", label: "6146 - Venda de mercadoria adquirida ou recebida de terceiros com substituição tributária", type: "saida" },
+            { value: "6147", label: "6147 - Venda de produção do estabelecimento para o Simples Nacional", type: "saida" },
+            { value: "6148", label: "6148 - Venda de mercadoria adquirida ou recebida de terceiros para o Simples Nacional", type: "saida" },
+            { value: "6149", label: "6149 - Venda de produção do estabelecimento com redução de base de cálculo e substituição tributária", type: "saida" },
+            { value: "6150", label: "6150 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo e substituição tributária", type: "saida" },
+            { value: "6151", label: "6151 - Venda de produção do estabelecimento com isenção e substituição tributária", type: "saida" },
+            { value: "6152", label: "6152 - Venda de mercadoria adquirida ou recebida de terceiros com isenção e substituição tributária", type: "saida" },
+            { value: "6153", label: "6153 - Venda de produção do estabelecimento com não-incidência e substituição tributária", type: "saida" },
+            { value: "6154", label: "6154 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência e substituição tributária", type: "saida" },
+            { value: "6155", label: "6155 - Venda de produção do estabelecimento com imunidade e substituição tributária", type: "saida" },
+            { value: "6156", label: "6156 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade e substituição tributária", type: "saida" },
+            { value: "6157", label: "6157 - Venda de produção do estabelecimento com redução de alíquota e substituição tributária", type: "saida" },
+            { value: "6158", label: "6158 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota e substituição tributária", type: "saida" },
+            { value: "7101", label: "7101 - Venda de produção do estabelecimento", type: "saida" },
+            { value: "7102", label: "7102 - Venda de mercadoria adquirida ou recebida de terceiros", type: "saida" },
+            { value: "7105", label: "7105 - Venda de produção do estabelecimento que não deva por ele transitar", type: "saida" },
+            { value: "7106", label: "7106 - Venda de mercadoria adquirida ou recebida de terceiros, que não deva por ele transitar", type: "saida" },
+            { value: "7107", label: "7107 - Venda de produção do estabelecimento destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
+            { value: "7108", label: "7108 - Venda de mercadoria adquirida ou recebida de terceiros destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
+            { value: "7109", label: "7109 - Venda de produção do estabelecimento destinada ao exterior", type: "saida" },
+            { value: "7110", label: "7110 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao exterior", type: "saida" },
+            { value: "7111", label: "7111 - Venda de produção do estabelecimento destinada a não contribuinte", type: "saida" },
+            { value: "7112", label: "7112 - Venda de mercadoria adquirida ou recebida de terceiros destinada a não contribuinte", type: "saida" },
+            { value: "7113", label: "7113 - Venda de produção do estabelecimento destinada a contribuinte", type: "saida" },
+            { value: "7114", label: "7114 - Venda de mercadoria adquirida ou recebida de terceiros destinada a contribuinte", type: "saida" },
+            { value: "7115", label: "7115 - Venda de produção do estabelecimento destinada ao interior", type: "saida" },
+            { value: "7116", label: "7116 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao interior", type: "saida" },
+            { value: "7117", label: "7117 - Venda de produção do estabelecimento com suspensão do ICMS", type: "saida" },
+            { value: "7118", label: "7118 - Venda de mercadoria adquirida ou recebida de terceiros com suspensão do ICMS", type: "saida" },
+            { value: "7120", label: "7120 - Venda de produção do estabelecimento para industrialização", type: "saida" },
+            { value: "7121", label: "7121 - Venda de mercadoria adquirida ou recebida de terceiros para industrialização", type: "saida" },
+            { value: "7122", label: "7122 - Venda de produção do estabelecimento para comercialização", type: "saida" },
+            { value: "7123", label: "7123 - Venda de mercadoria adquirida ou recebida de terceiros para comercialização", type: "saida" },
+            { value: "7124", label: "7124 - Venda de produção do estabelecimento para uso/consumo", type: "saida" },
+            { value: "7125", label: "7125 - Venda de mercadoria adquirida ou recebida de terceiros para uso/consumo", type: "saida" },
+            { value: "7126", label: "7126 - Venda de produção do estabelecimento para ativo imobilizado", type: "saida" },
+            { value: "7127", label: "7127 - Venda de mercadoria adquirida ou recebida de terceiros para ativo imobilizado", type: "saida" },
+            { value: "7129", label: "7129 - Venda de produção do estabelecimento por encomenda", type: "saida" },
+            { value: "7130", label: "7130 - Venda de mercadoria adquirida ou recebida de terceiros por encomenda", type: "saida" },
+            { value: "7131", label: "7131 - Venda de produção do estabelecimento para exportação", type: "saida" },
+            { value: "7132", label: "7132 - Venda de mercadoria adquirida ou recebida de terceiros para exportação", type: "saida" },
+            { value: "7133", label: "7133 - Venda de produção do estabelecimento com redução de base de cálculo", type: "saida" },
+            { value: "7134", label: "7134 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo", type: "saida" },
+            { value: "7135", label: "7135 - Venda de produção do estabelecimento com isenção do ICMS", type: "saida" },
+            { value: "7136", label: "7136 - Venda de mercadoria adquirida ou recebida de terceiros com isenção do ICMS", type: "saida" },
+            { value: "7137", label: "7137 - Venda de produção do estabelecimento com não-incidência do ICMS", type: "saida" },
+            { value: "7138", label: "7138 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência do ICMS", type: "saida" },
+            { value: "7139", label: "7139 - Venda de produção do estabelecimento com imunidade do ICMS", type: "saida" },
+            { value: "7140", label: "7140 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade do ICMS", type: "saida" },
+            { value: "7141", label: "7141 - Venda de produção do estabelecimento com diferimento do ICMS", type: "saida" },
+            { value: "7142", label: "7142 - Venda de mercadoria adquirida ou recebida de terceiros com diferimento do ICMS", type: "saida" },
+            { value: "7143", label: "7143 - Venda de produção do estabelecimento com redução de alíquota", type: "saida" },
+            { value: "7144", label: "7144 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota", type: "saida" },
+            { value: "7145", label: "7145 - Venda de produção do estabelecimento com substituição tributária", type: "saida" },
+            { value: "7146", label: "7146 - Venda de mercadoria adquirida ou recebida de terceiros com substituição tributária", type: "saida" },
+            { value: "7147", label: "7147 - Venda de produção do estabelecimento para o Simples Nacional", type: "saida" },
+            { value: "7148", label: "7148 - Venda de mercadoria adquirida ou recebida de terceiros para o Simples Nacional", type: "saida" },
+            { value: "7149", label: "7149 - Venda de produção do estabelecimento com redução de base de cálculo e substituição tributária", type: "saida" },
+            { value: "7150", label: "7150 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo e substituição tributária", type: "saida" },
+            { value: "7151", label: "7151 - Venda de produção do estabelecimento com isenção e substituição tributária", type: "saida" },
+            { value: "7152", label: "7152 - Venda de mercadoria adquirida ou recebida de terceiros com isenção e substituição tributária", type: "saida" },
+            { value: "7153", label: "7153 - Venda de produção do estabelecimento com não-incidência e substituição tributária", type: "saida" },
+            { value: "7154", label: "7154 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência e substituição tributária", type: "saida" },
+            { value: "7155", label: "7155 - Venda de produção do estabelecimento com imunidade e substituição tributária", type: "saida" },
+            { value: "7156", label: "7156 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade e substituição tributária", type: "saida" },
+            { value: "7157", label: "7157 - Venda de produção do estabelecimento com redução de alíquota e substituição tributária", type: "saida" },
+            { value: "7158", label: "7158 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota e substituição tributária", type: "saida" }
+        ];
+
+        const ToastManager = {
+            show: (message, type = 'info', duration = 5000) => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                const bgColors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    warning: 'bg-yellow-500',
+                    info: 'bg-blue-500'
+                };
+                
+                toast.className = `toast ${bgColors[type]} text-white px-6 py-3 rounded-lg shadow-lg mb-2 flex items-center justify-between min-w-80`;
+                toast.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-white hover:text-gray-200 ml-4">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, duration);
+            }
+        };
+
+        function App() {
+            const [currentView, setCurrentView] = useState('calculator');
+            const [isLoading, setIsLoading] = useState(true);
+            
+            // Dados do formulário
+            const [originState, setOriginState] = useState('');
+            const [destinationState, setDestinationState] = useState('');
+            const [totalValue, setTotalValue] = useState('');
+            const [cfop, setCfop] = useState('');
+            const [fcpRate, setFcpRate] = useState('');
+            const [calculationType, setCalculationType] = useState('por_dentro'); // 'por_dentro' ou 'por_fora'
+            
+            // Resultados do cálculo
+            const [calculationResult, setCalculationResult] = useState(null);
+            const [calculationSteps, setCalculationSteps] = useState([]);
+            const [calculationHistory, setCalculationHistory] = useState([]);
+            
+            // Carregar histórico do localStorage
+            useEffect(() => {
+                const loadHistory = () => {
+                    try {
+                        const historyData = localStorage.getItem('difalHistory');
+                        if (historyData) {
+                            setCalculationHistory(JSON.parse(historyData));
+                        }
+                    } catch (error) {
+                        console.error('Erro ao carregar histórico:', error);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+                
+                loadHistory();
+            }, []);
+            
+            // Salvar histórico no localStorage
+            const saveHistory = (newHistory) => {
+                try {
+                    localStorage.setItem('difalHistory', JSON.stringify(newHistory));
+                } catch (error) {
+                    console.error('Erro ao salvar histórico:', error);
+                }
+            };
+            
+            // Validar dados de entrada
+            const validateInputs = () => {
+                if (!originState) {
+                    ToastManager.show('Selecione o estado de origem', 'warning');
+                    return false;
+                }
+                
+                if (!destinationState) {
+                    ToastManager.show('Selecione o estado de destino', 'warning');
+                    return false;
+                }
+                
+                if (originState === destinationState) {
+                    ToastManager.show('Os estados de origem e destino devem ser diferentes', 'warning');
+                    return false;
+                }
+                
+                if (!totalValue || parseFloat(totalValue) <= 0) {
+                    ToastManager.show('Informe um valor total válido', 'warning');
+                    return false;
+                }
+                
+                if (!cfop) {
+                    ToastManager.show('Selecione um CFOP', 'warning');
+                    return false;
+                }
+                
+                if (!fcpRate || parseFloat(fcpRate) < 0) {
+                    ToastManager.show('Informe uma alíquota FCP válida', 'warning');
+                    return false;
+                }
+                
+                return true;
+            };
+            
+            // Calcular DIFAL
+            const calculateDifal = () => {
+                if (!validateInputs()) return;
+                
+                const value = parseFloat(totalValue);
+                const fcp = parseFloat(fcpRate) / 100;
+                
+                // Obter alíquotas
+                const interstateRate = INTERESTADUAL_RATES[originState] / 100;
+                const internalRate = INTERNAL_RATES[destinationState] / 100;
+                
+                let icmsBase, interstateIcms, internalIcms, fcpValue, difal;
+                
+                if (calculationType === 'por_dentro') {
+                    // Cálculo por dentro (base de cálculo inclui o ICMS)
+                    icmsBase = value / (1 - interstateRate);
+                    interstateIcms = icmsBase * interstateRate;
+                    internalIcms = icmsBase * internalRate;
+                    fcpValue = icmsBase * fcp;
+                    difal = internalIcms - interstateIcms;
+                } else {
+                    // Cálculo por fora (base de cálculo não inclui o ICMS)
+                    icmsBase = value;
+                    interstateIcms = icmsBase * interstateRate;
+                    internalIcms = icmsBase * internalRate;
+                    fcpValue = icmsBase * fcp;
+                    difal = internalIcms - interstateIcms;
+                }
+                
+                // Preparar resultado
+                const result = {
+                    originState,
+                    destinationState,
+                    totalValue: value,
+                    cfop,
+                    fcpRate: fcp,
+                    interstateRate,
+                    internalRate,
+                    icmsBase,
+                    interstateIcms,
+                    internalIcms,
+                    fcpValue,
+                    difal,
+                    totalToPay: difal + fcpValue,
+                    calculationType,
+                    calculationDate: new Date().toISOString()
+                };
+                
+                // Preparar passos do cálculo
+                const steps = [
+                    {
+                        title: "Base de Cálculo do ICMS",
+                        description: calculationType === 'por_dentro' 
+                            ? `Valor da operação / (1 - Alíquota Interestadual)` 
+                            : `Valor da operação (cálculo por fora)`,
+                        calculation: calculationType === 'por_dentro'
+                            ? `R$ ${value.toFixed(2)} / (1 - ${(interstateRate * 100).toFixed(2)}%)`
+                            : `R$ ${value.toFixed(2)}`,
+                        result: `R$ ${icmsBase.toFixed(2)}`
+                    },
+                    {
+                        title: "ICMS Interestadual",
+                        description: `Base de Cálculo × Alíquota Interestadual`,
+                        calculation: `R$ ${icmsBase.toFixed(2)} × ${(interstateRate * 100).toFixed(2)}%`,
+                        result: `R$ ${interstateIcms.toFixed(2)}`
+                    },
+                    {
+                        title: "ICMS Interno",
+                        description: `Base de Cálculo × Alíquota Interna do Estado de Destino`,
+                        calculation: `R$ ${icmsBase.toFixed(2)} × ${(internalRate * 100).toFixed(2)}%`,
+                        result: `R$ ${internalIcms.toFixed(2)}`
+                    },
+                    {
+                        title: "Fundo de Combate à Pobreza (FCP)",
+                        description: `Base de Cálculo × Alíquota FCP`,
+                        calculation: `R$ ${icmsBase.toFixed(2)} × ${(fcp * 100).toFixed(2)}%`,
+                        result: `R$ ${fcpValue.toFixed(2)}`
+                    },
+                    {
+                        title: "DIFAL (Diferencial de Alíquota)",
+                        description: `ICMS Interno - ICMS Interestadual`,
+                        calculation: `R$ ${internalIcms.toFixed(2)} - R$ ${interstateIcms.toFixed(2)}`,
+                        result: `R$ ${difal.toFixed(2)}`
+                    },
+                    {
+                        title: "Total a Recolher",
+                        description: `DIFAL + FCP`,
+                        calculation: `R$ ${difal.toFixed(2)} + R$ ${fcpValue.toFixed(2)}`,
+                        result: `R$ ${(difal + fcpValue).toFixed(2)}`
+                    }
+                ];
+                
+                setCalculationResult(result);
+                setCalculationSteps(steps);
+                
+                // Adicionar ao histórico
+                const newHistoryItem = {
+                    id: Date.now(),
+                    ...result
+                };
+                
+                const updatedHistory = [newHistoryItem, ...calculationHistory.slice(0, 49)]; // Manter apenas os 50 últimos
+                setCalculationHistory(updatedHistory);
+                saveHistory(updatedHistory);
+                
+                ToastManager.show('Cálculo realizado com sucesso!', 'success');
+            };
+            
+            // Limpar formulário
+            const clearForm = () => {
+                setOriginState('');
+                setDestinationState('');
+                setTotalValue('');
+                setCfop('');
+                setFcpRate('');
+                setCalculationResult(null);
+                setCalculationSteps([]);
+            };
+            
+            // Limpar histórico
+            const clearHistory = () => {
+                setCalculationHistory([]);
+                localStorage.removeItem('difalHistory');
+                ToastManager.show('Histórico limpo com sucesso', 'success');
+            };
+            
+            // Exportar histórico
+            const exportHistory = () => {
+                const dataStr = JSON.stringify(calculationHistory, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `difal-history-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                setTimeout(() => URL.revokeObjectURL(link.href), 100);
+                ToastManager.show('Histórico exportado com sucesso', 'success');
+            };
+            
+            // Formatar moeda
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(value);
+            };
+            
+            // Formatar porcentagem
+            const formatPercentage = (value) => {
+                return `${(value * 100).toFixed(2)}%`;
+            };
+            
+            // Obter CFOPs filtrados por tipo
+            const getFilteredCfops = (type) => {
+                return CFOP_OPTIONS.filter(cfop => cfop.type === type);
+            };
+            
+            if (isLoading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="bg-white rounded-2xl p-8 text-center">
+                            <i className="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+                            <p className="text-gray-600">Carregando CalcDIFAL...</p>
+                        </div>
+                    </div>
+                );
+            }
+            
+            return (
+                <div className="fade-in">
+                    {/* Header */}
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 mb-6 p-4 card-hover">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+                                    <i className="fas fa-calculator text-xl text-white"></i>
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold text-gray-800">CalcDIFAL</h1>
+                                    <p className="text-gray-600 text-xs">Sistema de Cálculo de Diferencial de Alíquota</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <div className="bg-gray-50 rounded-full p-1 px-3 border border-gray-200">
+                                    <div className="flex items-center gap-1">
+                                        <i className="fas fa-history text-blue-600 text-sm"></i>
+                                        <span className="text-gray-700 font-semibold text-sm">
+                                            {calculationHistory.length} cálculos
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        {/* Sidebar */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3">
+                                <nav className="space-y-1">
+                                    {[
+                                        { id: 'calculator', icon: 'fa-calculator', label: 'Calculadora DIFAL' },
+                                        { id: 'history', icon: 'fa-history', label: `Histórico (${calculationHistory.length})` },
+                                        { id: 'info', icon: 'fa-info-circle', label: 'Informações' }
+                                    ].map(item => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setCurrentView(item.id)}
+                                            className={`w-full text-left p-2 rounded-lg transition-all duration-200 sidebar-item text-sm ${
+                                                currentView === item.id ? 'active' : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <i className={`fas ${item.icon} w-4 text-center ${currentView === item.id ? 'text-blue-600' : 'text-gray-400'}`}></i>
+                                                <span className="font-medium">{item.label}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </nav>
+
+                                {/* Informações sobre DIFAL */}
+                                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <h4 className="font-semibold text-blue-800 text-sm mb-2">Sobre o DIFAL</h4>
+                                    <p className="text-blue-700 text-xs">
+                                        O Diferencial de Alíquota (DIFAL) é o valor correspondente à diferença entre a alíquota interna do estado de destino e a alíquota interestadual.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="lg:col-span-3">
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                <div className="p-4">
+                                    {/* Calculator View */}
+                                    {currentView === 'calculator' && (
+                                        <div className="space-y-4 fade-in">
+                                            <div className="mb-4">
+                                                <h2 className="text-lg font-bold text-gray-800 mb-2">
+                                                    Calculadora DIFAL
+                                                </h2>
+                                                <p className="text-gray-600 text-sm">
+                                                    Calcule o diferencial de alíquota entre estados brasileiros
+                                                </p>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Estado de Origem
+                                                        </label>
+                                                        <select
+                                                            value={originState}
+                                                            onChange={(e) => setOriginState(e.target.value)}
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                                        >
+                                                            <option value="">Selecione o estado de origem</option>
+                                                            {BRAZILIAN_STATES.map(state => (
+                                                                <option key={state.value} value={state.value}>
+                                                                    {state.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {originState && (
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                Alíquota interestadual: {INTERESTADUAL_RATES[originState]}%
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Estado de Destino
+                                                        </label>
+                                                        <select
+                                                            value={destinationState}
+                                                            onChange={(e) => setDestinationState(e.target.value)}
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                                        >
+                                                            <option value="">Selecione o estado de destino</option>
+                                                            {BRAZILIAN_STATES.map(state => (
+                                                                <option key={state.value} value={state.value}>
+                                                                    {state.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {destinationState && (
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                Alíquota interna: {INTERNAL_RATES[destinationState]}%
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Valor Total da Nota (R$)
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            value={totalValue}
+                                                            onChange={(e) => setTotalValue(e.target.value)}
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                                            placeholder="0,00"
+                                                            step="0.01"
+                                                            min="0"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            CFOP
+                                                        </label>
+                                                        <select
+                                                            value={cfop}
+                                                            onChange={(e) => setCfop(e.target.value)}
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                                        >
+                                                            <option value="">Selecione o CFOP</option>
+                                                            <optgroup label="CFOPs de Entrada">
+                                                                {getFilteredCfops('entrada').map(cfop => (
+                                                                    <option key={cfop.value} value={cfop.value}>
+                                                                        {cfop.label}
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                            <optgroup label="CFOPs de Saída">
+                                                                {getFilteredCfops('saida').map(cfop => (
+                                                                    <option key={cfop.value} value={cfop.value}>
+                                                                        {cfop.label}
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Alíquota FCP (%)
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            value={fcpRate}
+                                                            onChange={(e) => setFcpRate(e.target.value)}
+                                                            className="w-full px-3 py-2 compact-input bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                                                            placeholder="0,00"
+                                                            step="0.01"
+                                                            min="0"
+                                                            max="100"
+                                                        />
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            Fundo de Combate à Pobreza
+                                                        </p>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Tipo de Cálculo
+                                                        </label>
+                                                        <div className="flex items-center gap-3">
+                                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                                <input
+                                                                    type="radio"
+                                                                    value="por_dentro"
+                                                                    checked={calculationType === 'por_dentro'}
+                                                                    onChange={(e) => setCalculationType(e.target.value)}
+                                                                    className="text-blue-600 focus:ring-blue-500"
+                                                                />
+                                                                <span className="text-sm text-gray-700">Por Dentro</span>
+                                                            </label>
+                                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                                <input
+                                                                    type="radio"
+                                                                    value="por_fora"
+                                                                    checked={calculationType === 'por_fora'}
+                                                                    onChange={(e) => setCalculationType(e.target.value)}
+                                                                    className="text-blue-600 focus:ring-blue-500"
+                                                                />
+                                                                <span className="text-sm text-gray-700">Por Fora</span>
+                                                            </label>
+                                                        </div>
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            {calculationType === 'por_dentro' 
+                                                                ? 'Base de cálculo inclui o ICMS (método mais comum)' 
+                                                                : 'Base de cálculo não inclui o ICMS'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex gap-3 mt-6">
+                                                        <button
+                                                            onClick={calculateDifal}
+                                                            className="flex-1 btn-calculate text-white py-2.5 rounded-lg font-semibold text-sm card-hover transition-all duration-300 flex items-center justify-center gap-2"
+                                                        >
+                                                            <i className="fas fa-calculator"></i>
+                                                            Calcular DIFAL
+                                                        </button>
+                                                        
+                                                        <button
+                                                            onClick={clearForm}
+                                                            className="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg font-semibold text-sm card-hover transition-all duration-300 flex items-center justify-center gap-2"
+                                                        >
+                                                            <i className="fas fa-eraser"></i>
+                                                            Limpar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Resultado do Cálculo */}
+                                            {calculationResult && (
+                                                <div className="mt-6 fade-in">
+                                                    <div className="result-card">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <h3 className="text-lg font-bold">Resultado do Cálculo</h3>
+                                                                <p className="text-sm opacity-90">
+                                                                    {BRAZILIAN_STATES.find(s => s.value === calculationResult.originState)?.label} → 
+                                                                    {BRAZILIAN_STATES.find(s => s.value === calculationResult.destinationState)?.label}
+                                                                </p>
+                                                                <p className="text-xs opacity-80 mt-1">
+                                                                    Método: {calculationResult.calculationType === 'por_dentro' ? 'Por Dentro' : 'Por Fora'}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-sm opacity-90">Total a Recolher</p>
+                                                                <div className="result-value">
+                                                                    {formatCurrency(calculationResult.totalToPay)}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                                            <p className="text-xs text-blue-700 font-semibold">DIFAL</p>
+                                                            <p className="text-lg text-blue-800 font-bold">
+                                                                {formatCurrency(calculationResult.difal)}
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                                            <p className="text-xs text-green-700 font-semibold">FCP</p>
+                                                            <p className="text-lg text-green-800 font-bold">
+                                                                {formatCurrency(calculationResult.fcpValue)}
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                                            <p className="text-xs text-purple-700 font-semibold">Base de Cálculo</p>
+                                                            <p className="text-lg text-purple-800 font-bold">
+                                                                {formatCurrency(calculationResult.icmsBase)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Passo a Passo do Cálculo */}
+                                                    <div className="mt-6">
+                                                        <h4 className="text-md font-bold text-gray-800 mb-3">Passo a Passo do Cálculo</h4>
+                                                        <div className="space-y-3">
+                                                            {calculationSteps.map((step, index) => (
+                                                                <div key={index} className="calculation-step">
+                                                                    <div className="flex justify-between items-start">
+                                                                        <div>
+                                                                            <h5 className="font-semibold text-gray-800 text-sm">
+                                                                                {index + 1}. {step.title}
+                                                                            </h5>
+                                                                            <p className="text-xs text-gray-600 mt-1">
+                                                                                {step.description}
+                                                                            </p>
+                                                                            <p className="text-xs text-gray-700 mt-1 font-mono">
+                                                                                {step.calculation}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className="text-sm font-bold text-blue-700">
+                                                                                {step.result}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* History View */}
+                                    {currentView === 'history' && (
+                                        <div className="fade-in">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div>
+                                                    <h2 className="text-lg font-bold text-gray-800 mb-1">
+                                                        Histórico de Cálculos
+                                                    </h2>
+                                                    <p className="text-gray-600 text-sm">
+                                                        Total de {calculationHistory.length} cálculo(s) realizados
+                                                    </p>
+                                                </div>
+                                                {calculationHistory.length > 0 && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={exportHistory}
+                                                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm card-hover transition flex items-center gap-2"
+                                                        >
+                                                            <i className="fas fa-download"></i>
+                                                            Exportar
+                                                        </button>
+                                                        <button
+                                                            onClick={clearHistory}
+                                                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm card-hover transition flex items-center gap-2"
+                                                        >
+                                                            <i className="fas fa-trash"></i>
+                                                            Limpar
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {calculationHistory.length === 0 ? (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    <i className="fas fa-history text-4xl mb-3"></i>
+                                                    <p className="text-sm">Nenhum cálculo realizado ainda</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                                                    {calculationHistory.map((item) => (
+                                                        <div key={item.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 card-hover">
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <i className="fas fa-exchange-alt text-blue-500 text-sm"></i>
+                                                                        <span className="font-semibold text-gray-800 text-sm">
+                                                                            {BRAZILIAN_STATES.find(s => s.value === item.originState)?.label} → 
+                                                                            {BRAZILIAN_STATES.find(s => s.value === item.destinationState)?.label}
+                                                                        </span>
+                                                                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                                                            CFOP: {item.cfop}
+                                                                        </span>
+                                                                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                                                                            {item.calculationType === 'por_dentro' ? 'Por Dentro' : 'Por Fora'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-xs text-gray-700 mb-1">
+                                                                        Valor: {formatCurrency(item.totalValue)}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                                        <div className="flex items-center gap-1">
+                                                                            <i className="fas fa-calculator"></i>
+                                                                            <span>DIFAL: {formatCurrency(item.difal)}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <i className="fas fa-hand-holding-usd"></i>
+                                                                            <span>Total: {formatCurrency(item.totalToPay)}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <i className="fas fa-clock"></i>
+                                                                            <span>{new Date(item.calculationDate).toLocaleString('pt-BR')}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Info View */}
+                                    {currentView === 'info' && (
+                                        <div className="fade-in">
+                                            <div className="mb-4">
+                                                <h2 className="text-lg font-bold text-gray-800 mb-2">
+                                                    Informações sobre o DIFAL
+                                                </h2>
+                                                <p className="text-gray-600 text-sm">
+                                                    Entenda o que é e como funciona o Diferencial de Alíquota
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="tax-info">
+                                                    <h3 className="font-bold text-gray-800 text-sm mb-2">O que é o DIFAL?</h3>
+                                                    <p className="text-gray-700 text-sm">
+                                                        O Diferencial de Alíquota (DIFAL) é o valor correspondente à diferença entre a alíquota interna do estado de destino e a alíquota interestadual, aplicável nas operações interestaduais com mercadorias sujeitas ao regime normal de tributação.
+                                                    </p>
+                                                </div>
+
+                                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                                    <h3 className="font-bold text-blue-800 text-sm mb-2">Como é calculado?</h3>
+                                                    <p className="text-blue-700 text-sm mb-2">
+                                                        O cálculo do DIFAL pode ser feito de duas formas:
+                                                    </p>
+                                                    <div className="space-y-3">
+                                                        <div className="bg-white p-3 rounded border border-blue-100">
+                                                            <h4 className="font-semibold text-blue-800 text-sm mb-1">Cálculo por Dentro</h4>
+                                                            <p className="text-blue-700 text-xs">
+                                                                Base de Cálculo = Valor da Operação / (1 - Alíquota Interestadual)<br/>
+                                                                DIFAL = (Base de Cálculo × Alíquota Interna) - (Base de Cálculo × Alíquota Interestadual)
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-white p-3 rounded border border-blue-100">
+                                                            <h4 className="font-semibold text-blue-800 text-sm mb-1">Cálculo por Fora</h4>
+                                                            <p className="text-blue-700 text-xs">
+                                                                Base de Cálculo = Valor da Operação<br/>
+                                                                DIFAL = (Base de Cálculo × Alíquota Interna) - (Base de Cálculo × Alíquota Interestadual)
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                                    <h3 className="font-bold text-green-800 text-sm mb-2">Fundo de Combate à Pobreza (FCP)</h3>
+                                                    <p className="text-green-700 text-sm">
+                                                        O FCP é um adicional aplicado em algumas operações interestaduais, destinado a financiar programas de combate à pobreza. É calculado sobre a base de cálculo do ICMS.
+                                                    </p>
+                                                </div>
+
+                                                <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                                    <h3 className="font-bold text-purple-800 text-sm mb-2">Alíquotas Interestaduais</h3>
+                                                    <p className="text-purple-700 text-sm">
+                                                        As alíquotas interestaduais variam conforme os estados envolvidos na operação. Atualmente, a maioria dos estados aplica 12%, exceto Minas Gerais e São Paulo que aplicam 7% em operações entre si.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Renderizar a aplicação
+        ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
+</body>
+</html>

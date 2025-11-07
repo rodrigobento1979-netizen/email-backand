@@ -123,7 +123,7 @@
 
         .tools-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 15px;
             max-width: 100%;
             margin: 0 auto;
@@ -493,7 +493,7 @@
         /* Layout responsivo */
         @media screen and (max-width: 1200px) {
             .tools-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
             }
         }
 
@@ -630,7 +630,20 @@
             <h2><i class="fas fa-tools"></i> Ferramentas</h2>
             <div class="tools-section">
                 <div class="tools-grid">
-                    <!-- Card Simulado Tributário (substituindo Gestor de E-mails) -->
+                    <!-- Card Cálculo Difal -->
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <h3>Cálculo Difal</h3>
+                        <p>Calcule o Diferencial de Alíquota de forma rápida e precisa</p>
+                        <a href="difal.html" class="tool-button">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            Acessar Calculadora
+                        </a>
+                    </div>
+
+                    <!-- Card Simulado Tributário -->
                     <div class="tool-card">
                         <div class="tool-icon">
                             <i class="fas fa-calculator"></i>
