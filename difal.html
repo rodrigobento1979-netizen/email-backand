@@ -207,6 +207,32 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
+
+        /* Novos estilos para layout fixo */
+        .calculation-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 40;
+            border-bottom: 1px solid #e5e7eb;
+            margin: 0 -1rem;
+            padding: 1rem;
+        }
+
+        .calculation-content {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+
+        .sticky-results {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 30;
+            border-bottom: 1px solid #e5e7eb;
+            margin: 0 -1rem;
+            padding: 1rem;
+        }
     </style>
 </head>
 <body class="min-h-screen p-3">
@@ -1054,63 +1080,66 @@
                                             {/* Resultado do Cálculo */}
                                             {calculationResult && (
                                                 <div className="mt-6 fade-in">
-                                                    <div className="flex justify-between items-center mb-4">
-                                                        <h3 className="text-lg font-bold text-gray-800">Resultado do Cálculo</h3>
-                                                        <button
-                                                            onClick={() => exportToPDF(calculationResult, calculationSteps)}
-                                                            className="btn-pdf text-white px-4 py-2 rounded-lg font-semibold text-sm card-hover transition-all duration-300 flex items-center gap-2"
-                                                        >
-                                                            <i className="fas fa-file-pdf"></i>
-                                                            Exportar PDF
-                                                        </button>
-                                                    </div>
+                                                    {/* Cabeçalho Fixo */}
+                                                    <div className="calculation-header">
+                                                        <div className="flex justify-between items-center mb-4">
+                                                            <h3 className="text-lg font-bold text-gray-800">Resultado do Cálculo</h3>
+                                                            <button
+                                                                onClick={() => exportToPDF(calculationResult, calculationSteps)}
+                                                                className="btn-pdf text-white px-4 py-2 rounded-lg font-semibold text-sm card-hover transition-all duration-300 flex items-center gap-2"
+                                                            >
+                                                                <i className="fas fa-file-pdf"></i>
+                                                                Exportar PDF
+                                                            </button>
+                                                        </div>
 
-                                                    <div className="result-card">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h3 className="text-lg font-bold">Resultado do Cálculo</h3>
-                                                                <p className="text-sm opacity-90">
-                                                                    {BRAZILIAN_STATES.find(s => s.value === calculationResult.originState)?.label} → 
-                                                                    {BRAZILIAN_STATES.find(s => s.value === calculationResult.destinationState)?.label}
-                                                                </p>
-                                                                <p className="text-xs opacity-80 mt-1">
-                                                                    Método: {calculationResult.calculationType === 'por_dentro' ? 'Por Dentro' : 'Por Fora'}
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="text-sm opacity-90">Total a Recolher</p>
-                                                                <div className="result-value">
-                                                                    {formatCurrency(calculationResult.totalToPay)}
+                                                        <div className="result-card">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <h3 className="text-lg font-bold">Resultado do Cálculo</h3>
+                                                                    <p className="text-sm opacity-90">
+                                                                        {BRAZILIAN_STATES.find(s => s.value === calculationResult.originState)?.label} → 
+                                                                        {BRAZILIAN_STATES.find(s => s.value === calculationResult.destinationState)?.label}
+                                                                    </p>
+                                                                    <p className="text-xs opacity-80 mt-1">
+                                                                        Método: {calculationResult.calculationType === 'por_dentro' ? 'Por Dentro' : 'Por Fora'}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-sm opacity-90">Total a Recolher</p>
+                                                                    <div className="result-value">
+                                                                        {formatCurrency(calculationResult.totalToPay)}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                                            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                                                <p className="text-xs text-blue-700 font-semibold">DIFAL</p>
+                                                                <p className="text-lg text-blue-800 font-bold">
+                                                                    {formatCurrency(calculationResult.difal)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                                                <p className="text-xs text-green-700 font-semibold">FCP</p>
+                                                                <p className="text-lg text-green-800 font-bold">
+                                                                    {formatCurrency(calculationResult.fcpValue)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                                                <p className="text-xs text-purple-700 font-semibold">Base de Cálculo</p>
+                                                                <p className="text-lg text-purple-800 font-bold">
+                                                                    {formatCurrency(calculationResult.icmsBase)}
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                                            <p className="text-xs text-blue-700 font-semibold">DIFAL</p>
-                                                            <p className="text-lg text-blue-800 font-bold">
-                                                                {formatCurrency(calculationResult.difal)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                                                            <p className="text-xs text-green-700 font-semibold">FCP</p>
-                                                            <p className="text-lg text-green-800 font-bold">
-                                                                {formatCurrency(calculationResult.fcpValue)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                                                            <p className="text-xs text-purple-700 font-semibold">Base de Cálculo</p>
-                                                            <p className="text-lg text-purple-800 font-bold">
-                                                                {formatCurrency(calculationResult.icmsBase)}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Passo a Passo do Cálculo */}
-                                                    <div className="mt-6">
-                                                        <h4 className="text-md font-bold text-gray-800 mb-3">Passo a Passo do Cálculo</h4>
+                                                    {/* Área Rolável - Detalhamento do Cálculo */}
+                                                    <div className="calculation-content custom-scrollbar mt-4">
                                                         <div className="space-y-3">
+                                                            <h4 className="text-md font-bold text-gray-800 mb-3">Passo a Passo do Cálculo</h4>
                                                             {calculationSteps.map((step, index) => (
                                                                 <div key={index} className="calculation-step">
                                                                     <div className="flex justify-between items-start">
