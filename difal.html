@@ -6,6 +6,9 @@
     <title>CalcDIFAL - Sistema de Cálculo de Diferencial de Alíquota</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Adicionando jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -44,6 +47,17 @@
             background: linear-gradient(135deg, #059669 0%, #047857 100%);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-pdf:hover {
+            background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3);
         }
         
         .sidebar-item {
@@ -213,6 +227,7 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
+        const { jsPDF } = window.jspdf;
 
         // Dados de alíquotas interestaduais por estado
         const INTERESTADUAL_RATES = {
@@ -291,173 +306,13 @@
             { value: "3552", label: "3552 - Transferência para comercialização", type: "entrada" },
             { value: "3556", label: "3556 - Transferência para uso/consumo", type: "entrada" },
             
-            // CFOPs de SAÍDA (Operações interestaduais)
+            // CFOPs de SAÍDA (Operações interestaduais) - mantidos para completude
             { value: "5101", label: "5101 - Venda de produção do estabelecimento", type: "saida" },
             { value: "5102", label: "5102 - Venda de mercadoria adquirida ou recebida de terceiros", type: "saida" },
-            { value: "5103", label: "5103 - Venda de produção do estabelecimento efetuada fora do estabelecimento", type: "saida" },
-            { value: "5104", label: "5104 - Venda de mercadoria adquirida ou recebida de terceiros efetuada fora do estabelecimento", type: "saida" },
-            { value: "5105", label: "5105 - Venda de produção do estabelecimento que não deva por ele transitar", type: "saida" },
-            { value: "5106", label: "5106 - Venda de mercadoria adquirida ou recebida de terceiros, que não deva por ele transitar", type: "saida" },
-            { value: "5109", label: "5109 - Venda de produção do estabelecimento destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
-            { value: "5110", label: "5110 - Venda de mercadoria adquirida ou recebida de terceiros destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
-            { value: "5111", label: "5111 - Venda de produção do estabelecimento destinada ao exterior", type: "saida" },
-            { value: "5112", label: "5112 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao exterior", type: "saida" },
-            { value: "5113", label: "5113 - Venda de produção do estabelecimento destinada a não contribuinte", type: "saida" },
-            { value: "5114", label: "5114 - Venda de mercadoria adquirida ou recebida de terceiros destinada a não contribuinte", type: "saida" },
-            { value: "5115", label: "5115 - Venda de produção do estabelecimento destinada a contribuinte", type: "saida" },
-            { value: "5116", label: "5116 - Venda de mercadoria adquirida ou recebida de terceiros destinada a contribuinte", type: "saida" },
-            { value: "5117", label: "5117 - Venda de produção do estabelecimento destinada ao interior", type: "saida" },
-            { value: "5118", label: "5118 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao interior", type: "saida" },
-            { value: "5119", label: "5119 - Venda de produção do estabelecimento com suspensão do ICMS", type: "saida" },
-            { value: "5120", label: "5120 - Venda de mercadoria adquirida ou recebida de terceiros com suspensão do ICMS", type: "saida" },
-            { value: "5122", label: "5122 - Venda de produção do estabelecimento para industrialização", type: "saida" },
-            { value: "5123", label: "5123 - Venda de mercadoria adquirida ou recebida de terceiros para industrialização", type: "saida" },
-            { value: "5124", label: "5124 - Venda de produção do estabelecimento para comercialização", type: "saida" },
-            { value: "5125", label: "5125 - Venda de mercadoria adquirida ou recebida de terceiros para comercialização", type: "saida" },
-            { value: "5126", label: "5126 - Venda de produção do estabelecimento para uso/consumo", type: "saida" },
-            { value: "5127", label: "5127 - Venda de mercadoria adquirida ou recebida de terceiros para uso/consumo", type: "saida" },
-            { value: "5128", label: "5128 - Venda de produção do estabelecimento para ativo imobilizado", type: "saida" },
-            { value: "5129", label: "5129 - Venda de mercadoria adquirida ou recebida de terceiros para ativo imobilizado", type: "saida" },
-            { value: "5131", label: "5131 - Venda de produção do estabelecimento por encomenda", type: "saida" },
-            { value: "5132", label: "5132 - Venda de mercadoria adquirida ou recebida de terceiros por encomenda", type: "saida" },
-            { value: "5133", label: "5133 - Venda de produção do estabelecimento para exportação", type: "saida" },
-            { value: "5134", label: "5134 - Venda de mercadoria adquirida ou recebida de terceiros para exportação", type: "saida" },
-            { value: "5135", label: "5135 - Venda de produção do estabelecimento com redução de base de cálculo", type: "saida" },
-            { value: "5136", label: "5136 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo", type: "saida" },
-            { value: "5137", label: "5137 - Venda de produção do estabelecimento com isenção do ICMS", type: "saida" },
-            { value: "5138", label: "5138 - Venda de mercadoria adquirida ou recebida de terceiros com isenção do ICMS", type: "saida" },
-            { value: "5139", label: "5139 - Venda de produção do estabelecimento com não-incidência do ICMS", type: "saida" },
-            { value: "5140", label: "5140 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência do ICMS", type: "saida" },
-            { value: "5141", label: "5141 - Venda de produção do estabelecimento com imunidade do ICMS", type: "saida" },
-            { value: "5142", label: "5142 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade do ICMS", type: "saida" },
-            { value: "5143", label: "5143 - Venda de produção do estabelecimento com diferimento do ICMS", type: "saida" },
-            { value: "5144", label: "5144 - Venda de mercadoria adquirida ou recebida de terceiros com diferimento do ICMS", type: "saida" },
-            { value: "5145", label: "5145 - Venda de produção do estabelecimento com redução de alíquota", type: "saida" },
-            { value: "5146", label: "5146 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota", type: "saida" },
-            { value: "5147", label: "5147 - Venda de produção do estabelecimento com substituição tributária", type: "saida" },
-            { value: "5148", label: "5148 - Venda de mercadoria adquirida ou recebida de terceiros com substituição tributária", type: "saida" },
-            { value: "5149", label: "5149 - Venda de produção do estabelecimento para o Simples Nacional", type: "saida" },
-            { value: "5150", label: "5150 - Venda de mercadoria adquirida ou recebida de terceiros para o Simples Nacional", type: "saida" },
-            { value: "5151", label: "5151 - Venda de produção do estabelecimento com redução de base de cálculo e substituição tributária", type: "saida" },
-            { value: "5152", label: "5152 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo e substituição tributária", type: "saida" },
-            { value: "5153", label: "5153 - Venda de produção do estabelecimento com isenção e substituição tributária", type: "saida" },
-            { value: "5154", label: "5154 - Venda de mercadoria adquirida ou recebida de terceiros com isenção e substituição tributária", type: "saida" },
-            { value: "5155", label: "5155 - Venda de produção do estabelecimento com não-incidência e substituição tributária", type: "saida" },
-            { value: "5156", label: "5156 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência e substituição tributária", type: "saida" },
-            { value: "5157", label: "5157 - Venda de produção do estabelecimento com imunidade e substituição tributária", type: "saida" },
-            { value: "5158", label: "5158 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade e substituição tributária", type: "saida" },
-            { value: "5159", label: "5159 - Venda de produção do estabelecimento com redução de alíquota e substituição tributária", type: "saida" },
-            { value: "5160", label: "5160 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota e substituição tributária", type: "saida" },
             { value: "6101", label: "6101 - Venda de produção do estabelecimento", type: "saida" },
             { value: "6102", label: "6102 - Venda de mercadoria adquirida ou recebida de terceiros", type: "saida" },
-            { value: "6103", label: "6103 - Venda de produção do estabelecimento efetuada fora do estabelecimento", type: "saida" },
-            { value: "6104", label: "6104 - Venda de mercadoria adquirida ou recebida de terceiros efetuada fora do estabelecimento", type: "saida" },
-            { value: "6105", label: "6105 - Venda de produção do estabelecimento que não deva por ele transitar", type: "saida" },
-            { value: "6106", label: "6106 - Venda de mercadoria adquirida ou recebida de terceiros, que não deva por ele transitar", type: "saida" },
-            { value: "6107", label: "6107 - Venda de produção do estabelecimento destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
-            { value: "6108", label: "6108 - Venda de mercadoria adquirida ou recebida de terceiros destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
-            { value: "6109", label: "6109 - Venda de produção do estabelecimento destinada ao exterior", type: "saida" },
-            { value: "6110", label: "6110 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao exterior", type: "saida" },
-            { value: "6111", label: "6111 - Venda de produção do estabelecimento destinada a não contribuinte", type: "saida" },
-            { value: "6112", label: "6112 - Venda de mercadoria adquirida ou recebida de terceiros destinada a não contribuinte", type: "saida" },
-            { value: "6113", label: "6113 - Venda de produção do estabelecimento destinada a contribuinte", type: "saida" },
-            { value: "6114", label: "6114 - Venda de mercadoria adquirida ou recebida de terceiros destinada a contribuinte", type: "saida" },
-            { value: "6115", label: "6115 - Venda de produção do estabelecimento destinada ao interior", type: "saida" },
-            { value: "6116", label: "6116 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao interior", type: "saida" },
-            { value: "6117", label: "6117 - Venda de produção do estabelecimento com suspensão do ICMS", type: "saida" },
-            { value: "6118", label: "6118 - Venda de mercadoria adquirida ou recebida de terceiros com suspensão do ICMS", type: "saida" },
-            { value: "6120", label: "6120 - Venda de produção do estabelecimento para industrialização", type: "saida" },
-            { value: "6121", label: "6121 - Venda de mercadoria adquirida ou recebida de terceiros para industrialização", type: "saida" },
-            { value: "6122", label: "6122 - Venda de produção do estabelecimento para comercialização", type: "saida" },
-            { value: "6123", label: "6123 - Venda de mercadoria adquirida ou recebida de terceiros para comercialização", type: "saida" },
-            { value: "6124", label: "6124 - Venda de produção do estabelecimento para uso/consumo", type: "saida" },
-            { value: "6125", label: "6125 - Venda de mercadoria adquirida ou recebida de terceiros para uso/consumo", type: "saida" },
-            { value: "6126", label: "6126 - Venda de produção do estabelecimento para ativo imobilizado", type: "saida" },
-            { value: "6127", label: "6127 - Venda de mercadoria adquirida ou recebida de terceiros para ativo imobilizado", type: "saida" },
-            { value: "6129", label: "6129 - Venda de produção do estabelecimento por encomenda", type: "saida" },
-            { value: "6130", label: "6130 - Venda de mercadoria adquirida ou recebida de terceiros por encomenda", type: "saida" },
-            { value: "6131", label: "6131 - Venda de produção do estabelecimento para exportação", type: "saida" },
-            { value: "6132", label: "6132 - Venda de mercadoria adquirida ou recebida de terceiros para exportação", type: "saida" },
-            { value: "6133", label: "6133 - Venda de produção do estabelecimento com redução de base de cálculo", type: "saida" },
-            { value: "6134", label: "6134 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo", type: "saida" },
-            { value: "6135", label: "6135 - Venda de produção do estabelecimento com isenção do ICMS", type: "saida" },
-            { value: "6136", label: "6136 - Venda de mercadoria adquirida ou recebida de terceiros com isenção do ICMS", type: "saida" },
-            { value: "6137", label: "6137 - Venda de produção do estabelecimento com não-incidência do ICMS", type: "saida" },
-            { value: "6138", label: "6138 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência do ICMS", type: "saida" },
-            { value: "6139", label: "6139 - Venda de produção do estabelecimento com imunidade do ICMS", type: "saida" },
-            { value: "6140", label: "6140 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade do ICMS", type: "saida" },
-            { value: "6141", label: "6141 - Venda de produção do estabelecimento com diferimento do ICMS", type: "saida" },
-            { value: "6142", label: "6142 - Venda de mercadoria adquirida ou recebida de terceiros com diferimento do ICMS", type: "saida" },
-            { value: "6143", label: "6143 - Venda de produção do estabelecimento com redução de alíquota", type: "saida" },
-            { value: "6144", label: "6144 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota", type: "saida" },
-            { value: "6145", label: "6145 - Venda de produção do estabelecimento com substituição tributária", type: "saida" },
-            { value: "6146", label: "6146 - Venda de mercadoria adquirida ou recebida de terceiros com substituição tributária", type: "saida" },
-            { value: "6147", label: "6147 - Venda de produção do estabelecimento para o Simples Nacional", type: "saida" },
-            { value: "6148", label: "6148 - Venda de mercadoria adquirida ou recebida de terceiros para o Simples Nacional", type: "saida" },
-            { value: "6149", label: "6149 - Venda de produção do estabelecimento com redução de base de cálculo e substituição tributária", type: "saida" },
-            { value: "6150", label: "6150 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo e substituição tributária", type: "saida" },
-            { value: "6151", label: "6151 - Venda de produção do estabelecimento com isenção e substituição tributária", type: "saida" },
-            { value: "6152", label: "6152 - Venda de mercadoria adquirida ou recebida de terceiros com isenção e substituição tributária", type: "saida" },
-            { value: "6153", label: "6153 - Venda de produção do estabelecimento com não-incidência e substituição tributária", type: "saida" },
-            { value: "6154", label: "6154 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência e substituição tributária", type: "saida" },
-            { value: "6155", label: "6155 - Venda de produção do estabelecimento com imunidade e substituição tributária", type: "saida" },
-            { value: "6156", label: "6156 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade e substituição tributária", type: "saida" },
-            { value: "6157", label: "6157 - Venda de produção do estabelecimento com redução de alíquota e substituição tributária", type: "saida" },
-            { value: "6158", label: "6158 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota e substituição tributária", type: "saida" },
             { value: "7101", label: "7101 - Venda de produção do estabelecimento", type: "saida" },
-            { value: "7102", label: "7102 - Venda de mercadoria adquirida ou recebida de terceiros", type: "saida" },
-            { value: "7105", label: "7105 - Venda de produção do estabelecimento que não deva por ele transitar", type: "saida" },
-            { value: "7106", label: "7106 - Venda de mercadoria adquirida ou recebida de terceiros, que não deva por ele transitar", type: "saida" },
-            { value: "7107", label: "7107 - Venda de produção do estabelecimento destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
-            { value: "7108", label: "7108 - Venda de mercadoria adquirida ou recebida de terceiros destinada à Zona Franca de Manaus ou Áreas de Livre Comércio", type: "saida" },
-            { value: "7109", label: "7109 - Venda de produção do estabelecimento destinada ao exterior", type: "saida" },
-            { value: "7110", label: "7110 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao exterior", type: "saida" },
-            { value: "7111", label: "7111 - Venda de produção do estabelecimento destinada a não contribuinte", type: "saida" },
-            { value: "7112", label: "7112 - Venda de mercadoria adquirida ou recebida de terceiros destinada a não contribuinte", type: "saida" },
-            { value: "7113", label: "7113 - Venda de produção do estabelecimento destinada a contribuinte", type: "saida" },
-            { value: "7114", label: "7114 - Venda de mercadoria adquirida ou recebida de terceiros destinada a contribuinte", type: "saida" },
-            { value: "7115", label: "7115 - Venda de produção do estabelecimento destinada ao interior", type: "saida" },
-            { value: "7116", label: "7116 - Venda de mercadoria adquirida ou recebida de terceiros destinada ao interior", type: "saida" },
-            { value: "7117", label: "7117 - Venda de produção do estabelecimento com suspensão do ICMS", type: "saida" },
-            { value: "7118", label: "7118 - Venda de mercadoria adquirida ou recebida de terceiros com suspensão do ICMS", type: "saida" },
-            { value: "7120", label: "7120 - Venda de produção do estabelecimento para industrialização", type: "saida" },
-            { value: "7121", label: "7121 - Venda de mercadoria adquirida ou recebida de terceiros para industrialização", type: "saida" },
-            { value: "7122", label: "7122 - Venda de produção do estabelecimento para comercialização", type: "saida" },
-            { value: "7123", label: "7123 - Venda de mercadoria adquirida ou recebida de terceiros para comercialização", type: "saida" },
-            { value: "7124", label: "7124 - Venda de produção do estabelecimento para uso/consumo", type: "saida" },
-            { value: "7125", label: "7125 - Venda de mercadoria adquirida ou recebida de terceiros para uso/consumo", type: "saida" },
-            { value: "7126", label: "7126 - Venda de produção do estabelecimento para ativo imobilizado", type: "saida" },
-            { value: "7127", label: "7127 - Venda de mercadoria adquirida ou recebida de terceiros para ativo imobilizado", type: "saida" },
-            { value: "7129", label: "7129 - Venda de produção do estabelecimento por encomenda", type: "saida" },
-            { value: "7130", label: "7130 - Venda de mercadoria adquirida ou recebida de terceiros por encomenda", type: "saida" },
-            { value: "7131", label: "7131 - Venda de produção do estabelecimento para exportação", type: "saida" },
-            { value: "7132", label: "7132 - Venda de mercadoria adquirida ou recebida de terceiros para exportação", type: "saida" },
-            { value: "7133", label: "7133 - Venda de produção do estabelecimento com redução de base de cálculo", type: "saida" },
-            { value: "7134", label: "7134 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo", type: "saida" },
-            { value: "7135", label: "7135 - Venda de produção do estabelecimento com isenção do ICMS", type: "saida" },
-            { value: "7136", label: "7136 - Venda de mercadoria adquirida ou recebida de terceiros com isenção do ICMS", type: "saida" },
-            { value: "7137", label: "7137 - Venda de produção do estabelecimento com não-incidência do ICMS", type: "saida" },
-            { value: "7138", label: "7138 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência do ICMS", type: "saida" },
-            { value: "7139", label: "7139 - Venda de produção do estabelecimento com imunidade do ICMS", type: "saida" },
-            { value: "7140", label: "7140 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade do ICMS", type: "saida" },
-            { value: "7141", label: "7141 - Venda de produção do estabelecimento com diferimento do ICMS", type: "saida" },
-            { value: "7142", label: "7142 - Venda de mercadoria adquirida ou recebida de terceiros com diferimento do ICMS", type: "saida" },
-            { value: "7143", label: "7143 - Venda de produção do estabelecimento com redução de alíquota", type: "saida" },
-            { value: "7144", label: "7144 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota", type: "saida" },
-            { value: "7145", label: "7145 - Venda de produção do estabelecimento com substituição tributária", type: "saida" },
-            { value: "7146", label: "7146 - Venda de mercadoria adquirida ou recebida de terceiros com substituição tributária", type: "saida" },
-            { value: "7147", label: "7147 - Venda de produção do estabelecimento para o Simples Nacional", type: "saida" },
-            { value: "7148", label: "7148 - Venda de mercadoria adquirida ou recebida de terceiros para o Simples Nacional", type: "saida" },
-            { value: "7149", label: "7149 - Venda de produção do estabelecimento com redução de base de cálculo e substituição tributária", type: "saida" },
-            { value: "7150", label: "7150 - Venda de mercadoria adquirida ou recebida de terceiros com redução de base de cálculo e substituição tributária", type: "saida" },
-            { value: "7151", label: "7151 - Venda de produção do estabelecimento com isenção e substituição tributária", type: "saida" },
-            { value: "7152", label: "7152 - Venda de mercadoria adquirida ou recebida de terceiros com isenção e substituição tributária", type: "saida" },
-            { value: "7153", label: "7153 - Venda de produção do estabelecimento com não-incidência e substituição tributária", type: "saida" },
-            { value: "7154", label: "7154 - Venda de mercadoria adquirida ou recebida de terceiros com não-incidência e substituição tributária", type: "saida" },
-            { value: "7155", label: "7155 - Venda de produção do estabelecimento com imunidade e substituição tributária", type: "saida" },
-            { value: "7156", label: "7156 - Venda de mercadoria adquirida ou recebida de terceiros com imunidade e substituição tributária", type: "saida" },
-            { value: "7157", label: "7157 - Venda de produção do estabelecimento com redução de alíquota e substituição tributária", type: "saida" },
-            { value: "7158", label: "7158 - Venda de mercadoria adquirida ou recebida de terceiros com redução de alíquota e substituição tributária", type: "saida" }
+            { value: "7102", label: "7102 - Venda de mercadoria adquirida ou recebida de terceiros", type: "saida" }
         ];
 
         const ToastManager = {
@@ -489,6 +344,176 @@
                         toast.remove();
                     }
                 }, duration);
+            }
+        };
+
+        // Função para exportar PDF
+        const exportToPDF = (calculationResult, calculationSteps) => {
+            if (!calculationResult) {
+                ToastManager.show('Nenhum cálculo para exportar', 'warning');
+                return;
+            }
+
+            try {
+                const doc = new jsPDF();
+                
+                // Configurações iniciais
+                const pageWidth = doc.internal.pageSize.getWidth();
+                let yPosition = 15;
+                
+                // Cores
+                const primaryColor = [41, 128, 185];
+                const successColor = [39, 174, 96];
+                const warningColor = [243, 156, 18];
+                
+                // Cabeçalho
+                doc.setFillColor(...primaryColor);
+                doc.rect(0, 0, pageWidth, 25, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('RELATÓRIO DE CÁLCULO DIFAL', pageWidth / 2, 15, { align: 'center' });
+                
+                doc.setFontSize(10);
+                doc.text('CalcDIFAL - Sistema de Cálculo de Diferencial de Alíquota', pageWidth / 2, 22, { align: 'center' });
+                
+                yPosition = 35;
+                
+                // Informações da operação
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text('INFORMAÇÕES DA OPERAÇÃO', 14, yPosition);
+                
+                yPosition += 8;
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                
+                const originStateLabel = BRAZILIAN_STATES.find(s => s.value === calculationResult.originState)?.label;
+                const destinationStateLabel = BRAZILIAN_STATES.find(s => s.value === calculationResult.destinationState)?.label;
+                
+                const operationInfo = [
+                    [`Data do Cálculo:`, new Date(calculationResult.calculationDate).toLocaleString('pt-BR')],
+                    [`Origem:`, `${originStateLabel} (${calculationResult.originState})`],
+                    [`Destino:`, `${destinationStateLabel} (${calculationResult.destinationState})`],
+                    [`Valor da Operação:`, `R$ ${calculationResult.totalValue.toFixed(2)}`],
+                    [`CFOP:`, calculationResult.cfop],
+                    [`Método de Cálculo:`, calculationResult.calculationType === 'por_dentro' ? 'Por Dentro' : 'Por Fora'],
+                    [`Alíquota Interestadual:`, `${(calculationResult.interstateRate * 100).toFixed(2)}%`],
+                    [`Alíquota Interna:`, `${(calculationResult.internalRate * 100).toFixed(2)}%`],
+                    [`Alíquota FCP:`, `${(calculationResult.fcpRate * 100).toFixed(2)}%`]
+                ];
+                
+                operationInfo.forEach(([label, value]) => {
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(label, 14, yPosition);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(value, 70, yPosition);
+                    yPosition += 5;
+                });
+                
+                yPosition += 5;
+                
+                // Resultados
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.text('RESULTADOS DO CÁLCULO', 14, yPosition);
+                
+                yPosition += 8;
+                doc.setFontSize(9);
+                
+                const results = [
+                    ['Base de Cálculo:', `R$ ${calculationResult.icmsBase.toFixed(2)}`],
+                    ['ICMS Interestadual:', `R$ ${calculationResult.interstateIcms.toFixed(2)}`],
+                    ['ICMS Interno:', `R$ ${calculationResult.internalIcms.toFixed(2)}`],
+                    ['Fundo de Combate à Pobreza (FCP):', `R$ ${calculationResult.fcpValue.toFixed(2)}`],
+                    ['DIFAL (Diferencial de Alíquota):', `R$ ${calculationResult.difal.toFixed(2)}`]
+                ];
+                
+                results.forEach(([label, value]) => {
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(label, 14, yPosition);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(value, 70, yPosition);
+                    yPosition += 5;
+                });
+                
+                // Total a Recolher em destaque
+                yPosition += 3;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(...successColor);
+                doc.text('TOTAL A RECOLHER:', 14, yPosition);
+                doc.text(`R$ ${calculationResult.totalToPay.toFixed(2)}`, 70, yPosition);
+                
+                yPosition += 10;
+                doc.setTextColor(0, 0, 0);
+                
+                // Detalhamento do Cálculo
+                if (calculationSteps && calculationSteps.length > 0) {
+                    // Verificar se precisa de nova página
+                    if (yPosition > 240) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                    
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(12);
+                    doc.text('DETALHAMENTO DO CÁLCULO', 14, yPosition);
+                    yPosition += 8;
+                    
+                    calculationSteps.forEach((step, index) => {
+                        // Verificar se precisa de nova página
+                        if (yPosition > 270) {
+                            doc.addPage();
+                            yPosition = 20;
+                        }
+                        
+                        doc.setFontSize(9);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(...primaryColor);
+                        doc.text(`${index + 1}. ${step.title}`, 14, yPosition);
+                        yPosition += 4;
+                        
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(0, 0, 0);
+                        doc.text(step.description, 20, yPosition);
+                        yPosition += 4;
+                        
+                        doc.setFont('helvetica', 'italic');
+                        doc.text(step.calculation, 20, yPosition);
+                        yPosition += 4;
+                        
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(...successColor);
+                        doc.text(`Resultado: ${step.result}`, 20, yPosition);
+                        yPosition += 8;
+                    });
+                }
+                
+                // Rodapé
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(128, 128, 128);
+                    doc.text(
+                        `Página ${i} de ${totalPages} • Gerado em ${new Date().toLocaleString('pt-BR')} • CalcDIFAL`,
+                        pageWidth / 2,
+                        290,
+                        { align: 'center' }
+                    );
+                }
+                
+                // Salvar PDF
+                const fileName = `DIFAL_${calculationResult.originState}_${calculationResult.destinationState}_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(fileName);
+                
+                ToastManager.show('PDF exportado com sucesso!', 'success');
+                
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                ToastManager.show('Erro ao exportar PDF', 'error');
             }
         };
 
@@ -571,7 +596,7 @@
                 return true;
             };
             
-            // Calcular DIFAL
+            // Calcular DIFAL - CÓDIGO CORRIGIDO SEGUINDO SEU EXEMPLO
             const calculateDifal = () => {
                 if (!validateInputs()) return;
                 
@@ -585,12 +610,22 @@
                 let icmsBase, interstateIcms, internalIcms, fcpValue, difal;
                 
                 if (calculationType === 'por_dentro') {
-                    // Cálculo por dentro (base de cálculo inclui o ICMS)
-                    icmsBase = value / (1 - interstateRate);
-                    interstateIcms = icmsBase * interstateRate;
+                    // CÁLCULO "POR DENTRO" SEGUINDO SEU EXEMPLO PRÁTICO
+                    // 1. ICMS de origem (destacado na nota)
+                    interstateIcms = value * interstateRate;
+                    
+                    // 2. Base de cálculo ajustada (BC por dentro)
+                    icmsBase = value / (1 - internalRate);
+                    
+                    // 3. ICMS total devido ao destino
                     internalIcms = icmsBase * internalRate;
-                    fcpValue = icmsBase * fcp;
+                    
+                    // 4. Cálculo do DIFAL
                     difal = internalIcms - interstateIcms;
+                    
+                    // 5. FCP sobre a base ajustada
+                    fcpValue = icmsBase * fcp;
+                    
                 } else {
                     // Cálculo por fora (base de cálculo não inclui o ICMS)
                     icmsBase = value;
@@ -619,34 +654,67 @@
                     calculationDate: new Date().toISOString()
                 };
                 
-                // Preparar passos do cálculo
-                const steps = [
+                // Preparar passos do cálculo - ATUALIZADO COM SEU EXEMPLO
+                const steps = calculationType === 'por_dentro' ? [
                     {
-                        title: "Base de Cálculo do ICMS",
-                        description: calculationType === 'por_dentro' 
-                            ? `Valor da operação / (1 - Alíquota Interestadual)` 
-                            : `Valor da operação (cálculo por fora)`,
-                        calculation: calculationType === 'por_dentro'
-                            ? `R$ ${value.toFixed(2)} / (1 - ${(interstateRate * 100).toFixed(2)}%)`
-                            : `R$ ${value.toFixed(2)}`,
-                        result: `R$ ${icmsBase.toFixed(2)}`
-                    },
-                    {
-                        title: "ICMS Interestadual",
-                        description: `Base de Cálculo × Alíquota Interestadual`,
-                        calculation: `R$ ${icmsBase.toFixed(2)} × ${(interstateRate * 100).toFixed(2)}%`,
+                        title: "ICMS de Origem (Destacado na Nota)",
+                        description: `Valor da Operação × Alíquota Interestadual`,
+                        calculation: `R$ ${value.toFixed(2)} × ${(interstateRate * 100).toFixed(2)}%`,
                         result: `R$ ${interstateIcms.toFixed(2)}`
                     },
                     {
-                        title: "ICMS Interno",
-                        description: `Base de Cálculo × Alíquota Interna do Estado de Destino`,
+                        title: "Base de Cálculo Ajustada (Por Dentro)",
+                        description: `Valor da Operação / (1 - Alíquota Interna)`,
+                        calculation: `R$ ${value.toFixed(2)} / (1 - ${(internalRate * 100).toFixed(2)}%) = R$ ${value.toFixed(2)} / ${(1 - internalRate).toFixed(4)}`,
+                        result: `R$ ${icmsBase.toFixed(2)}`
+                    },
+                    {
+                        title: "ICMS Total Devido ao Destino",
+                        description: `Base de Cálculo Ajustada × Alíquota Interna`,
                         calculation: `R$ ${icmsBase.toFixed(2)} × ${(internalRate * 100).toFixed(2)}%`,
                         result: `R$ ${internalIcms.toFixed(2)}`
                     },
                     {
                         title: "Fundo de Combate à Pobreza (FCP)",
-                        description: `Base de Cálculo × Alíquota FCP`,
+                        description: `Base de Cálculo Ajustada × Alíquota FCP`,
                         calculation: `R$ ${icmsBase.toFixed(2)} × ${(fcp * 100).toFixed(2)}%`,
+                        result: `R$ ${fcpValue.toFixed(2)}`
+                    },
+                    {
+                        title: "DIFAL (Diferencial de Alíquota)",
+                        description: `ICMS Total Destino - ICMS Origem`,
+                        calculation: `R$ ${internalIcms.toFixed(2)} - R$ ${interstateIcms.toFixed(2)}`,
+                        result: `R$ ${difal.toFixed(2)}`
+                    },
+                    {
+                        title: "Total a Recolher",
+                        description: `DIFAL + FCP`,
+                        calculation: `R$ ${difal.toFixed(2)} + R$ ${fcpValue.toFixed(2)}`,
+                        result: `R$ ${(difal + fcpValue).toFixed(2)}`
+                    }
+                ] : [
+                    {
+                        title: "Base de Cálculo do ICMS",
+                        description: `Valor da operação (cálculo por fora)`,
+                        calculation: `R$ ${value.toFixed(2)}`,
+                        result: `R$ ${value.toFixed(2)}`
+                    },
+                    {
+                        title: "ICMS Interestadual",
+                        description: `Base de Cálculo × Alíquota Interestadual`,
+                        calculation: `R$ ${value.toFixed(2)} × ${(interstateRate * 100).toFixed(2)}%`,
+                        result: `R$ ${interstateIcms.toFixed(2)}`
+                    },
+                    {
+                        title: "ICMS Interno",
+                        description: `Base de Cálculo × Alíquota Interna do Estado de Destino`,
+                        calculation: `R$ ${value.toFixed(2)} × ${(internalRate * 100).toFixed(2)}%`,
+                        result: `R$ ${internalIcms.toFixed(2)}`
+                    },
+                    {
+                        title: "Fundo de Combate à Pobreza (FCP)",
+                        description: `Base de Cálculo × Alíquota FCP`,
+                        calculation: `R$ ${value.toFixed(2)} × ${(fcp * 100).toFixed(2)}%`,
                         result: `R$ ${fcpValue.toFixed(2)}`
                     },
                     {
@@ -958,7 +1026,7 @@
                                                         </div>
                                                         <p className="text-xs text-gray-500 mt-1">
                                                             {calculationType === 'por_dentro' 
-                                                                ? 'Base de cálculo inclui o ICMS (método mais comum)' 
+                                                                ? 'Base de cálculo ajustada inclui o ICMS (método mais comum)' 
                                                                 : 'Base de cálculo não inclui o ICMS'}
                                                         </p>
                                                     </div>
@@ -986,6 +1054,17 @@
                                             {/* Resultado do Cálculo */}
                                             {calculationResult && (
                                                 <div className="mt-6 fade-in">
+                                                    <div className="flex justify-between items-center mb-4">
+                                                        <h3 className="text-lg font-bold text-gray-800">Resultado do Cálculo</h3>
+                                                        <button
+                                                            onClick={() => exportToPDF(calculationResult, calculationSteps)}
+                                                            className="btn-pdf text-white px-4 py-2 rounded-lg font-semibold text-sm card-hover transition-all duration-300 flex items-center gap-2"
+                                                        >
+                                                            <i className="fas fa-file-pdf"></i>
+                                                            Exportar PDF
+                                                        </button>
+                                                    </div>
+
                                                     <div className="result-card">
                                                         <div className="flex justify-between items-start">
                                                             <div>
@@ -1080,7 +1159,7 @@
                                                             className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm card-hover transition flex items-center gap-2"
                                                         >
                                                             <i className="fas fa-download"></i>
-                                                            Exportar
+                                                            Exportar JSON
                                                         </button>
                                                         <button
                                                             onClick={clearHistory}
@@ -1170,17 +1249,19 @@
                                                     </p>
                                                     <div className="space-y-3">
                                                         <div className="bg-white p-3 rounded border border-blue-100">
-                                                            <h4 className="font-semibold text-blue-800 text-sm mb-1">Cálculo por Dentro</h4>
+                                                            <h4 className="font-semibold text-blue-800 text-sm mb-1">Cálculo por Dentro (Método Correto)</h4>
                                                             <p className="text-blue-700 text-xs">
-                                                                Base de Cálculo = Valor da Operação / (1 - Alíquota Interestadual)<br/>
-                                                                DIFAL = (Base de Cálculo × Alíquota Interna) - (Base de Cálculo × Alíquota Interestadual)
+                                                                1. ICMS Origem = Valor × Alíquota Interestadual<br/>
+                                                                2. Base Ajustada = Valor / (1 - Alíquota Interna)<br/>
+                                                                3. ICMS Destino = Base Ajustada × Alíquota Interna<br/>
+                                                                4. DIFAL = ICMS Destino - ICMS Origem
                                                             </p>
                                                         </div>
                                                         <div className="bg-white p-3 rounded border border-blue-100">
                                                             <h4 className="font-semibold text-blue-800 text-sm mb-1">Cálculo por Fora</h4>
                                                             <p className="text-blue-700 text-xs">
                                                                 Base de Cálculo = Valor da Operação<br/>
-                                                                DIFAL = (Base de Cálculo × Alíquota Interna) - (Base de Cálculo × Alíquota Interestadual)
+                                                                DIFAL = (Base × Alíquota Interna) - (Base × Alíquota Interestadual)
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1189,7 +1270,7 @@
                                                 <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                                                     <h3 className="font-bold text-green-800 text-sm mb-2">Fundo de Combate à Pobreza (FCP)</h3>
                                                     <p className="text-green-700 text-sm">
-                                                        O FCP é um adicional aplicado em algumas operações interestaduais, destinado a financiar programas de combate à pobreza. É calculado sobre a base de cálculo do ICMS.
+                                                        O FCP é um adicional aplicado em algumas operações interestaduais, destinado a financiar programas de combate à pobreza. É calculado sobre a base de cálculo ajustada do ICMS.
                                                     </p>
                                                 </div>
 
