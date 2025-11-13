@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador de Arquivos OFX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background: #dbeafe;
+        }
+
+        .summary-card {
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .compact-table {
+            font-size: 0.75rem;
+        }
+
+        .compact-table th {
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+        }
+
+        .compact-table td {
+            padding: 0.4rem 0.75rem;
+        }
+
+        .table-container {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .grid-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .rule-badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .rule-badge:hover {
+            background: #dbeafe;
+            transform: scale(1.05);
+        }
+
+        .rule-badge.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .filter-badge {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-badge:hover {
+            background: #e5e7eb;
+            transform: scale(1.05);
+        }
+
+        .filter-badge.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .pattern-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .pattern-text {
+            flex: 1;
+            font-size: 0.875rem;
+        }
+
+        .category-outros {
+            background: #fef3c7 !important;
+            color: #92400e !important;
+            border: 1px solid #fcd34d !important;
+        }
+
+        .transaction-not-grouped {
+            background: #fef3c7 !important;
+        }
+
+        .transaction-not-grouped:hover {
+            background: #fde68a !important;
+        }
+
+        .ungrouped-badge {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ungrouped-badge:hover {
+            background: #fde68a;
+            transform: scale(1.05);
+        }
+
+        .ungrouped-badge.active {
+            background: #d97706;
+            color: white;
+            border-color: #b45309;
+        }
+
+        .stats-badge {
+            background: #6b7280;
+            color: white;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .stats-badge.success {
+            background: #10b981;
+        }
+
+        .stats-badge.warning {
+            background: #f59e0b;
+        }
+
+        .stats-badge.danger {
+            background: #ef4444;
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #f8fafc;
+            border-left: 3px solid #0ea5e9;
+        }
+        
+        .sidebar-item.active {
+            background-color: #f1f5f9;
+            border-left: 3px solid #0ea5e9;
+            color: #0ea5e9;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-control-btn {
+            flex: 1;
+            padding: 0.4rem 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            background: white;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chart-control-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .chart-control-btn:hover:not(.active) {
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3">
+    <div id="app" class="max-w-7xl mx-auto">
+        <!-- Conteúdo será carregado via JavaScript -->
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // ToastManager
+        class ToastManager {
+            static show(message, type = 'info', duration = 3000) {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                
+                const toast = document.createElement('div');
+                
+                const typeConfigs = {
+                    success: { icon: 'fa-check-circle', class: 'border-green-500' },
+                    error: { icon: 'fa-exclamation-circle', class: 'border-red-500' },
+                    warning: { icon: 'fa-exclamation-triangle', class: 'border-yellow-500' },
+                    info: { icon: 'fa-info-circle', class: 'border-blue-500' }
+                };
+
+                const config = typeConfigs[type] || typeConfigs.info;
+
+                toast.className = `bg-white rounded-lg shadow-lg p-4 mb-2 border-l-4 ${config.class} flex items-center justify-between`;
+                toast.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas ${config.icon} mr-3"></i>
+                        <span class="text-sm font-medium">${message}</span>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-600 ml-4">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                const closeBtn = toast.querySelector('button');
+                closeBtn.addEventListener('click', () => toast.remove());
+
+                container.appendChild(toast);
+
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, duration);
+            }
+        }
+
+        // Sistema de Regras
+        class RuleManager {
+            constructor() {
+                this.rules = this.loadRules();
+            }
+
+            loadRules() {
+                try {
+                    const saved = localStorage.getItem('ofx-rules');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        return Array.isArray(parsed) ? parsed : [];
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar regras:', error);
+                }
+                return [];
+            }
+
+            saveRules() {
+                try {
+                    localStorage.setItem('ofx-rules', JSON.stringify(this.rules));
+                } catch (error) {
+                    console.error('Erro ao salvar regras:', error);
+                }
+            }
+
+            addRule(name, patterns, category) {
+                const newRule = {
+                    id: 'rule_' + Date.now(),
+                    name,
+                    patterns: Array.isArray(patterns) ? patterns : [patterns],
+                    category
+                };
+                this.rules.push(newRule);
+                this.saveRules();
+                return newRule;
+            }
+
+            updateRule(ruleId, name, patterns, category) {
+                const ruleIndex = this.rules.findIndex(rule => rule.id === ruleId);
+                if (ruleIndex !== -1) {
+                    this.rules[ruleIndex] = {
+                        ...this.rules[ruleIndex],
+                        name,
+                        patterns: Array.isArray(patterns) ? patterns : [patterns],
+                        category
+                    };
+                    this.saveRules();
+                    return this.rules[ruleIndex];
+                }
+                return null;
+            }
+
+            removeRule(ruleId) {
+                this.rules = this.rules.filter(rule => rule.id !== ruleId);
+                this.saveRules();
+            }
+
+            getRule(ruleId) {
+                return this.rules.find(rule => rule.id === ruleId);
+            }
+
+            categorizeTransaction(description) {
+                if (!this.rules || !Array.isArray(this.rules)) {
+                    return null;
+                }
+
+                const descUpper = description.toUpperCase();
+                for (const rule of this.rules) {
+                    if (!rule.patterns || !Array.isArray(rule.patterns)) continue;
+                    
+                    for (const pattern of rule.patterns) {
+                        if (pattern && descUpper.includes(pattern.toUpperCase())) {
+                            return rule;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            applyRulesToTransactions(transactions) {
+                if (!transactions || !Array.isArray(transactions)) {
+                    return [];
+                }
+
+                return transactions.map(transaction => {
+                    const rule = this.categorizeTransaction(transaction.memo || '');
+                    return {
+                        ...transaction,
+                        category: rule ? rule.name : 'Outros',
+                        ruleCategory: rule ? rule.category : 'Outros',
+                        ruleId: rule ? rule.id : null,
+                        isGrouped: !!rule
+                    };
+                });
+            }
+
+            getGroupingStats(transactions) {
+                if (!transactions || !Array.isArray(transactions)) {
+                    return { total: 0, grouped: 0, ungrouped: 0, percentage: 0 };
+                }
+
+                const categorized = this.applyRulesToTransactions(transactions);
+                const grouped = categorized.filter(t => t.isGrouped).length;
+                const total = categorized.length;
+                const ungrouped = total - grouped;
+                const percentage = total > 0 ? Math.round((grouped / total) * 100) : 0;
+
+                return {
+                    total,
+                    grouped,
+                    ungrouped,
+                    percentage
+                };
+            }
+        }
+
+        // Analisador OFX
+        class OFXAnalyzer {
+            constructor() {
+                this.ofxData = null;
+                this.ruleManager = new RuleManager();
+                this.activeRules = new Set();
+                this.currentFilters = {
+                    type: 'all',
+                    category: 'all',
+                    search: '',
+                    showUngrouped: false
+                };
+                this.editingRule = null;
+                this.chart = null;
+                this.chartType = 'doughnut';
+                this.chartView = 'count';
+                this.init();
+            }
+
+            init() {
+                this.renderApp();
+                this.setupEventListeners();
+            }
+
+            renderApp() {
+                const app = document.getElementById('app');
+                if (!app) return;
+
+                app.innerHTML = `
+                    <div class="fade-in">
+                        <!-- Header -->
+                        <div class="bg-white rounded-xl shadow-lg border border-gray-200 mb-6 p-4 card-hover">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+                                        <i class="fas fa-chart-line text-xl text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h1 class="text-lg font-bold text-gray-800">Analisador de Arquivos OFX</h1>
+                                        <p class="text-gray-600 text-xs">Análise detalhada de extratos bancários</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <button
+                                        onclick="window.location.href = 'documentos.html'"
+                                        class="bg-white text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 card-hover transition flex items-center gap-2 hover:border-blue-500 hover:text-blue-600 text-sm"
+                                    >
+                                        <i class="fas fa-file-alt"></i>
+                                        Sistema de Documentos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                            <!-- Sidebar com Gráfico -->
+                            <div class="lg:col-span-1">
+                                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4 mb-6">
+                                    <h2 class="text-lg font-bold text-gray-800 mb-4">Visão Geral</h2>
+                                    
+                                    <!-- Estatísticas de Agrupamento -->
+                                    <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                                        <h3 class="text-sm font-semibold text-blue-800 mb-2">Agrupamento</h3>
+                                        <div id="grouping-stats" class="space-y-2">
+                                            <!-- Estatísticas serão carregadas aqui -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Controles do Gráfico -->
+                                    <div class="mb-3">
+                                        <div class="chart-controls">
+                                            <button class="chart-control-btn ${this.chartType === 'doughnut' ? 'active' : ''}" data-chart-type="doughnut">
+                                                <i class="fas fa-chart-pie mr-1"></i>Pizza
+                                            </button>
+                                            <button class="chart-control-btn ${this.chartType === 'bar' ? 'active' : ''}" data-chart-type="bar">
+                                                <i class="fas fa-chart-bar mr-1"></i>Barras
+                                            </button>
+                                        </div>
+                                        <div class="chart-controls">
+                                            <button class="chart-control-btn ${this.chartView === 'count' ? 'active' : ''}" data-chart-view="count">
+                                                <i class="fas fa-list mr-1"></i>Quantidade
+                                            </button>
+                                            <button class="chart-control-btn ${this.chartView === 'amount' ? 'active' : ''}" data-chart-view="amount">
+                                                <i class="fas fa-dollar-sign mr-1"></i>Valor
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Gráfico de Agrupamentos -->
+                                    <div class="mb-4">
+                                        <h3 class="text-sm font-semibold text-gray-700 mb-2">Distribuição por Categoria</h3>
+                                        <div class="chart-container">
+                                            <canvas id="grouping-chart"></canvas>
+                                        </div>
+                                    </div>
+
+                                    <!-- Resumo Financeiro -->
+                                    <div class="bg-gray-50 p-3 rounded-lg">
+                                        <h3 class="text-sm font-semibold text-gray-700 mb-2">Resumo Financeiro</h3>
+                                        <div class="space-y-1 text-xs text-gray-600">
+                                            <div class="flex justify-between">
+                                                <span>Total Entradas:</span>
+                                                <span id="sidebar-income" class="font-medium text-green-600">R$ 0,00</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span>Total Saídas:</span>
+                                                <span id="sidebar-expenses" class="font-medium text-red-600">R$ 0,00</span>
+                                            </div>
+                                            <div class="flex justify-between border-t pt-1 mt-1">
+                                                <span class="font-semibold">Saldo:</span>
+                                                <span id="sidebar-balance" class="font-semibold">R$ 0,00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Navegação Rápida -->
+                                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+                                    <h3 class="text-sm font-semibold text-gray-700 mb-3">Navegação Rápida</h3>
+                                    <nav class="space-y-1">
+                                        <button class="sidebar-item w-full text-left p-2 rounded-lg transition-all duration-200 text-sm text-gray-600 hover:text-gray-900" data-nav="all">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fas fa-list w-4 text-center text-gray-400"></i>
+                                                <span class="font-medium">Todas as Transações</span>
+                                            </div>
+                                        </button>
+                                        <button class="sidebar-item w-full text-left p-2 rounded-lg transition-all duration-200 text-sm text-gray-600 hover:text-gray-900" data-nav="ungrouped">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fas fa-exclamation-triangle w-4 text-center text-yellow-400"></i>
+                                                <span class="font-medium">Não Agrupadas</span>
+                                            </div>
+                                        </button>
+                                        <button class="sidebar-item w-full text-left p-2 rounded-lg transition-all duration-200 text-sm text-gray-600 hover:text-gray-900" data-nav="grouped">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fas fa-chart-pie w-4 text-center text-blue-400"></i>
+                                                <span class="font-medium">Agrupamentos</span>
+                                            </div>
+                                        </button>
+                                    </nav>
+                                </div>
+                            </div>
+
+                            <!-- Conteúdo Principal -->
+                            <div class="lg:col-span-3">
+                                <div class="grid grid-cols-1 gap-6">
+                                    <!-- Área de Upload -->
+                                    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                        <div class="p-6">
+                                            <h2 class="text-lg font-bold text-gray-800 mb-4">Carregar Arquivo OFX</h2>
+                                            
+                                            <div id="file-upload-area" class="file-upload-area">
+                                                <input type="file" id="ofx-file" accept=".ofx,.txt" class="hidden">
+                                                <div class="flex flex-col items-center justify-center gap-4">
+                                                    <i class="fas fa-file-upload text-4xl text-gray-400"></i>
+                                                    <div>
+                                                        <p class="text-lg font-semibold text-gray-700">Clique ou arraste um arquivo OFX</p>
+                                                        <p class="text-sm text-gray-500 mt-1">Suporta arquivos OFX e TXT</p>
+                                                    </div>
+                                                </div>
+                                                <div id="file-info" class="file-info mt-4 text-sm text-gray-600">Nenhum arquivo selecionado</div>
+                                            </div>
+                                            
+                                            <div id="loading" class="hidden mt-6 space-y-3">
+                                                <div class="flex justify-between text-sm text-gray-600">
+                                                    <span>Processando arquivo OFX...</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                                    <div class="h-3 rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-purple-600 animate-pulse"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Resultados da Análise -->
+                                    <div id="analysis-results" class="hidden">
+                                        <!-- Cartões de Resumo -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                            <div class="summary-card card-hover" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                                <h3 class="text-sm font-medium text-white/90">Total de Entradas</h3>
+                                                <div class="text-2xl font-bold mt-2" id="total-income">R$ 0,00</div>
+                                                <p class="text-xs mt-2 text-white/80">Valor total recebido</p>
+                                            </div>
+                                            <div class="summary-card card-hover" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                                <h3 class="text-sm font-medium text-white/90">Total de Saídas</h3>
+                                                <div class="text-2xl font-bold mt-2" id="total-expenses">R$ 0,00</div>
+                                                <p class="text-xs mt-2 text-white/80">Valor total gasto</p>
+                                            </div>
+                                            <div class="summary-card card-hover" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                                                <h3 class="text-sm font-medium text-white/90">Saldo Final</h3>
+                                                <div class="text-2xl font-bold mt-2" id="final-balance">R$ 0,00</div>
+                                                <p class="text-xs mt-2 text-white/80">Diferença entre entradas e saídas</p>
+                                            </div>
+                                            <div class="summary-card card-hover" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                                                <h3 class="text-sm font-medium text-white/90">Total de Transações</h3>
+                                                <div class="text-2xl font-bold mt-2" id="total-transactions">0</div>
+                                                <p class="text-xs mt-2 text-white/80">Número total de transações</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Informações do Período -->
+                                        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4 mb-6">
+                                            <div class="flex justify-between items-center">
+                                                <h2 class="text-lg font-bold text-gray-800">Informações do Extrato</h2>
+                                                <div id="period-info" class="text-sm text-gray-600">Selecione um arquivo OFX para análise</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Sistema de Regras Manual -->
+                                        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6">
+                                            <div class="p-6">
+                                                <div class="flex justify-between items-center mb-4">
+                                                    <h2 class="text-lg font-bold text-gray-800">Criar Regras Manuais</h2>
+                                                    <button id="add-rule-btn" class="btn-primary text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm">
+                                                        <i class="fas fa-plus"></i>
+                                                        Nova Regra
+                                                    </button>
+                                                </div>
+
+                                                <!-- Regras Existentes -->
+                                                <div class="mb-4">
+                                                    <h3 class="text-sm font-semibold text-gray-700 mb-2">Regras Existentes:</h3>
+                                                    <div class="flex flex-wrap gap-2" id="rules-container">
+                                                        <!-- Regras serão carregadas aqui -->
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex flex-wrap gap-3 mb-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <label class="text-sm font-medium text-gray-700">Agrupar por:</label>
+                                                        <select id="group-by" class="px-3 py-1 border border-gray-300 rounded-lg text-sm">
+                                                            <option value="rule">Regras Aplicadas</option>
+                                                            <option value="category">Categorias</option>
+                                                            <option value="memo">Descrição (Texto)</option>
+                                                        </select>
+                                                    </div>
+                                                    <button id="apply-grouping" class="btn-primary text-white px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm">
+                                                        <i class="fas fa-chart-pie"></i>
+                                                        Aplicar Agrupamento
+                                                    </button>
+                                                </div>
+                                                
+                                                <div class="table-container custom-scrollbar">
+                                                    <table class="min-w-full divide-y divide-gray-200 compact-table">
+                                                        <thead class="grid-header">
+                                                            <tr>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Categoria/Descrição</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Quantidade</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Total</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Tipo</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="grouped-table" class="bg-white divide-y divide-gray-200">
+                                                            <tr>
+                                                                <td colspan="5" class="px-3 py-4 text-center text-gray-500">Nenhum dado para exibir</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Transações Detalhadas -->
+                                        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                            <div class="p-6">
+                                                <div class="flex justify-between items-center mb-4">
+                                                    <h2 class="text-lg font-bold text-gray-800">Transações Detalhadas</h2>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="text" id="search-transactions" placeholder="Buscar nas transações..." class="px-3 py-1 border border-gray-300 rounded-lg text-sm w-48">
+                                                    </div>
+                                                </div>
+
+                                                <!-- Filtros -->
+                                                <div class="flex flex-wrap gap-3 mb-4">
+                                                    <span class="text-sm font-medium text-gray-700 self-center">Filtrar por:</span>
+                                                    
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <button class="filter-badge active" data-filter-type="all">
+                                                            Todas
+                                                        </button>
+                                                        <button class="filter-badge" data-filter-type="income">
+                                                            Entradas
+                                                        </button>
+                                                        <button class="filter-badge" data-filter-type="expense">
+                                                            Saídas
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="flex flex-wrap gap-2" id="category-filters">
+                                                        <!-- Filtros de categoria serão gerados dinamicamente -->
+                                                    </div>
+
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <button class="ungrouped-badge" data-filter-ungrouped="false">
+                                                            <i class="fas fa-layer-group mr-1"></i>
+                                                            Todas as Transações
+                                                        </button>
+                                                        <button class="ungrouped-badge" data-filter-ungrouped="true">
+                                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                            Não Agrupadas
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="table-container custom-scrollbar">
+                                                    <table class="min-w-full divide-y divide-gray-200 compact-table">
+                                                        <thead class="grid-header">
+                                                            <tr>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Data</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Descrição</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Categoria</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Valor</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Tipo</th>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="transactions-table" class="bg-white divide-y divide-gray-200">
+                                                            <tr>
+                                                                <td colspan="6" class="px-3 py-4 text-center text-gray-500">Nenhum dado para exibir</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para Criar/Editar Regra -->
+                    <div id="rule-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+                        <div class="bg-white rounded-xl max-w-md w-full p-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4" id="rule-modal-title">Criar Nova Regra</h3>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Regra</label>
+                                    <input type="text" id="rule-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Ex: PIX Recebido">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Texto para Procurar</label>
+                                    <div class="space-y-2" id="patterns-container">
+                                        <!-- Padrões serão adicionados aqui -->
+                                    </div>
+                                    <div class="flex gap-2 mt-2">
+                                        <input type="text" id="new-pattern" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Digite o texto exato para procurar">
+                                        <button id="add-pattern" class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Digite o texto exato que aparece nas transações. A regra será aplicada quando a descrição contiver este texto.
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                                    <select id="rule-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="Receitas">Receitas</option>
+                                        <option value="Despesas">Despesas</option>
+                                        <option value="Movimentações">Movimentações</option>
+                                        <option value="Outros">Outros</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-2 mt-6">
+                                <button id="cancel-rule" class="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm">
+                                    Cancelar
+                                </button>
+                                <button id="save-rule" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm">
+                                    <span id="save-rule-text">Criar Regra</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    this.updateRulesDisplay();
+                }, 100);
+            }
+
+            setupEventListeners() {
+                // Upload de arquivo
+                const fileUpload = document.getElementById('ofx-file');
+                const fileUploadArea = document.getElementById('file-upload-area');
+                
+                if (fileUpload && fileUploadArea) {
+                    fileUpload.addEventListener('change', (e) => this.handleFileSelect(e));
+                    
+                    fileUploadArea.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        fileUploadArea.classList.add('dragover');
+                    });
+                    
+                    fileUploadArea.addEventListener('dragleave', () => {
+                        fileUploadArea.classList.remove('dragover');
+                    });
+                    
+                    fileUploadArea.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        fileUploadArea.classList.remove('dragover');
+                        this.handleFileDrop(e);
+                    });
+                    
+                    fileUploadArea.addEventListener('click', () => {
+                        fileUpload.click();
+                    });
+                }
+
+                // Sistema de regras manual
+                const addRuleBtn = document.getElementById('add-rule-btn');
+                if (addRuleBtn) {
+                    addRuleBtn.addEventListener('click', () => this.showRuleModal());
+                }
+
+                const addPatternBtn = document.getElementById('add-pattern');
+                if (addPatternBtn) {
+                    addPatternBtn.addEventListener('click', () => this.addPattern());
+                }
+
+                const newPatternInput = document.getElementById('new-pattern');
+                if (newPatternInput) {
+                    newPatternInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            this.addPattern();
+                        }
+                    });
+                }
+
+                // Agrupamento
+                const applyGroupingBtn = document.getElementById('apply-grouping');
+                if (applyGroupingBtn) {
+                    applyGroupingBtn.addEventListener('click', () => this.applyGrouping());
+                }
+
+                // Filtros
+                const searchInput = document.getElementById('search-transactions');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        this.currentFilters.search = e.target.value;
+                        this.updateTransactionsTable();
+                    });
+                }
+
+                // Filtros de tipo
+                document.querySelectorAll('[data-filter-type]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('[data-filter-type]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentFilters.type = e.target.dataset.filterType;
+                        this.updateTransactionsTable();
+                    });
+                });
+
+                // Filtros de agrupamento
+                document.querySelectorAll('[data-filter-ungrouped]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('[data-filter-ungrouped]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentFilters.showUngrouped = e.target.dataset.filterUngrouped === 'true';
+                        this.updateTransactionsTable();
+                    });
+                });
+
+                // Sistema de regras
+                const cancelRuleBtn = document.getElementById('cancel-rule');
+                if (cancelRuleBtn) {
+                    cancelRuleBtn.addEventListener('click', () => this.hideRuleModal());
+                }
+
+                const saveRuleBtn = document.getElementById('save-rule');
+                if (saveRuleBtn) {
+                    saveRuleBtn.addEventListener('click', () => this.saveRule());
+                }
+
+                // Controles do gráfico
+                document.querySelectorAll('[data-chart-type]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.chartType = e.target.dataset.chartType;
+                        document.querySelectorAll('[data-chart-type]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.updateChart();
+                    });
+                });
+
+                document.querySelectorAll('[data-chart-view]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.chartView = e.target.dataset.chartView;
+                        document.querySelectorAll('[data-chart-view]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.updateChart();
+                    });
+                });
+
+                // Navegação rápida
+                document.querySelectorAll('[data-nav]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const navType = e.target.closest('button').dataset.nav;
+                        this.handleNavigation(navType);
+                    });
+                });
+            }
+
+            handleNavigation(navType) {
+                switch(navType) {
+                    case 'all':
+                        this.currentFilters.showUngrouped = false;
+                        this.currentFilters.category = 'all';
+                        document.querySelectorAll('[data-filter-ungrouped]').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('[data-filter-ungrouped="false"]').forEach(b => b.classList.add('active'));
+                        break;
+                    case 'ungrouped':
+                        this.currentFilters.showUngrouped = true;
+                        document.querySelectorAll('[data-filter-ungrouped]').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('[data-filter-ungrouped="true"]').forEach(b => b.classList.add('active'));
+                        break;
+                    case 'grouped':
+                        this.currentFilters.showUngrouped = false;
+                        document.querySelectorAll('[data-filter-ungrouped]').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('[data-filter-ungrouped="false"]').forEach(b => b.classList.add('active'));
+                        break;
+                }
+                this.updateTransactionsTable();
+            }
+
+            showRuleModal(ruleId = null) {
+                const modal = document.getElementById('rule-modal');
+                const modalTitle = document.getElementById('rule-modal-title');
+                const saveRuleText = document.getElementById('save-rule-text');
+                const patternsContainer = document.getElementById('patterns-container');
+                const ruleName = document.getElementById('rule-name');
+                const ruleCategory = document.getElementById('rule-category');
+                const newPatternInput = document.getElementById('new-pattern');
+
+                if (!modal || !patternsContainer || !ruleName || !ruleCategory || !newPatternInput) return;
+
+                // Limpar campos
+                patternsContainer.innerHTML = '';
+                ruleName.value = '';
+                ruleCategory.value = 'Receitas';
+                newPatternInput.value = '';
+
+                if (ruleId) {
+                    // Modo edição
+                    this.editingRule = this.ruleManager.getRule(ruleId);
+                    if (this.editingRule) {
+                        modalTitle.textContent = 'Editar Regra';
+                        saveRuleText.textContent = 'Atualizar Regra';
+                        ruleName.value = this.editingRule.name;
+                        ruleCategory.value = this.editingRule.category;
+                        
+                        // Preencher padrões
+                        this.editingRule.patterns.forEach(pattern => {
+                            this.addPatternToContainer(pattern);
+                        });
+                    }
+                } else {
+                    // Modo criação
+                    this.editingRule = null;
+                    modalTitle.textContent = 'Criar Nova Regra';
+                    saveRuleText.textContent = 'Criar Regra';
+                }
+
+                modal.classList.remove('hidden');
+                newPatternInput.focus();
+            }
+
+            addPatternToContainer(patternText) {
+                const patternsContainer = document.getElementById('patterns-container');
+                if (!patternsContainer) return;
+
+                const patternElement = document.createElement('div');
+                patternElement.className = 'pattern-item';
+                patternElement.innerHTML = `
+                    <span class="pattern-text">${patternText}</span>
+                    <button class="text-red-500 hover:text-red-700 ml-2" data-pattern="${patternText}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                const removeBtn = patternElement.querySelector('button');
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    patternElement.remove();
+                });
+
+                patternsContainer.appendChild(patternElement);
+            }
+
+            addPattern() {
+                const newPatternInput = document.getElementById('new-pattern');
+                if (!newPatternInput) return;
+
+                const patternText = newPatternInput.value.trim();
+                if (!patternText) {
+                    ToastManager.show('Digite um texto para adicionar como padrão.', 'warning');
+                    return;
+                }
+
+                this.addPatternToContainer(patternText);
+                newPatternInput.value = '';
+                newPatternInput.focus();
+            }
+
+            getPatternsFromModal() {
+                const patternsContainer = document.getElementById('patterns-container');
+                if (!patternsContainer) return [];
+
+                const patternElements = patternsContainer.querySelectorAll('.pattern-item');
+                const patterns = [];
+                
+                patternElements.forEach(element => {
+                    const patternText = element.querySelector('.pattern-text').textContent;
+                    if (patternText) {
+                        patterns.push(patternText);
+                    }
+                });
+
+                return patterns;
+            }
+
+            hideRuleModal() {
+                const modal = document.getElementById('rule-modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+                this.editingRule = null;
+            }
+
+            saveRule() {
+                const name = document.getElementById('rule-name')?.value.trim();
+                const patterns = this.getPatternsFromModal();
+                const category = document.getElementById('rule-category')?.value;
+
+                if (!name) {
+                    ToastManager.show('Digite um nome para a regra.', 'error');
+                    return;
+                }
+
+                if (patterns.length === 0) {
+                    ToastManager.show('Adicione pelo menos um texto para procurar.', 'error');
+                    return;
+                }
+
+                if (this.editingRule) {
+                    // Atualizar regra existente
+                    this.ruleManager.updateRule(this.editingRule.id, name, patterns, category);
+                    ToastManager.show('Regra atualizada com sucesso!', 'success');
+                } else {
+                    // Criar nova regra
+                    this.ruleManager.addRule(name, patterns, category);
+                    ToastManager.show('Regra criada com sucesso!', 'success');
+                }
+
+                this.hideRuleModal();
+                this.updateRulesDisplay();
+                
+                // CORREÇÃO CRÍTICA: Recategorizar TODAS as transações quando uma regra é editada
+                if (this.ofxData && this.ofxData.transactions) {
+                    // Recriar completamente as transações categorizadas
+                    this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(this.ofxData.transactions);
+                    
+                    // Forçar atualização completa da UI
+                    this.updateCategoryFilters();
+                    this.updateTransactionsTable();
+                    this.applyGrouping();
+                    this.updateGroupingStats();
+                    this.updateChart();
+                }
+            }
+
+            updateGroupingStats() {
+                if (!this.ofxData || !this.ofxData.transactions) return;
+
+                const stats = this.ruleManager.getGroupingStats(this.ofxData.transactions);
+                const container = document.getElementById('grouping-stats');
+                if (!container) return;
+
+                let percentageClass = 'text-green-600';
+                if (stats.percentage < 50) {
+                    percentageClass = 'text-red-600';
+                } else if (stats.percentage < 80) {
+                    percentageClass = 'text-yellow-600';
+                }
+
+                container.innerHTML = `
+                    <div class="flex justify-between text-xs">
+                        <span>Total:</span>
+                        <span class="font-medium">${stats.total}</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span>Agrupadas:</span>
+                        <span class="font-medium text-green-600">${stats.grouped}</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span>Não Agrupadas:</span>
+                        <span class="font-medium text-yellow-600">${stats.ungrouped}</span>
+                    </div>
+                    <div class="flex justify-between text-xs font-semibold border-t pt-1 mt-1">
+                        <span>Percentual:</span>
+                        <span class="${percentageClass}">${stats.percentage}%</span>
+                    </div>
+                `;
+            }
+
+            updateChart() {
+                if (!this.ofxData || !this.ofxData.categorizedTransactions) return;
+
+                const transactions = this.ofxData.categorizedTransactions;
+                const categories = {};
+                
+                // CORREÇÃO: Calcular dados corretamente baseado na visualização selecionada
+                transactions.forEach(transaction => {
+                    const category = transaction.category || 'Outros';
+                    if (!categories[category]) {
+                        categories[category] = {
+                            count: 0,
+                            total: 0
+                        };
+                    }
+                    categories[category].count++;
+                    
+                    // CORREÇÃO: Para valor, usar o valor absoluto se for visualização de valor
+                    if (this.chartView === 'amount') {
+                        categories[category].total += Math.abs(transaction.amount);
+                    }
+                });
+
+                const labels = Object.keys(categories);
+                
+                // CORREÇÃO: Usar os dados corretos baseado na visualização
+                const data = this.chartView === 'count' 
+                    ? labels.map(label => categories[label].count)
+                    : labels.map(label => categories[label].total);
+
+                const ctx = document.getElementById('grouping-chart').getContext('2d');
+                
+                // Destruir gráfico anterior se existir
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+
+                // Configurações comuns
+                const commonOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // CORREÇÃO: Tooltip callback melhorado
+                const tooltipCallback = (context) => {
+                    const label = context.label || '';
+                    const value = context.raw || 0;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                    
+                    if (this.chartView === 'count') {
+                        return `${label}: ${value} transações (${percentage}%)`;
+                    } else {
+                        return `${label}: ${this.formatCurrency(value)} (${percentage}%)`;
+                    }
+                };
+
+                if (this.chartType === 'doughnut') {
+                    this.chart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: data,
+                                backgroundColor: [
+                                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                                    '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#64748b'
+                                ],
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            plugins: {
+                                ...commonOptions.plugins,
+                                tooltip: {
+                                    callbacks: {
+                                        label: tooltipCallback
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else if (this.chartType === 'bar') {
+                    this.chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: this.chartView === 'count' ? 'Quantidade de Transações' : 'Valor Total (R$)',
+                                data: data,
+                                backgroundColor: '#3b82f6',
+                                borderColor: '#2563eb',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        font: {
+                                            size: 10
+                                        },
+                                        // CORREÇÃO: Formatar eixos para valores monetários
+                                        callback: this.chartView === 'amount' ? function(value) {
+                                            return 'R$ ' + value.toLocaleString('pt-BR');
+                                        } : undefined
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        font: {
+                                            size: 9
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                ...commonOptions.plugins,
+                                tooltip: {
+                                    callbacks: {
+                                        label: tooltipCallback
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            updateRulesDisplay() {
+                const container = document.getElementById('rules-container');
+                if (!container) return;
+
+                container.innerHTML = '';
+
+                if (!this.ruleManager.rules || !Array.isArray(this.ruleManager.rules) || this.ruleManager.rules.length === 0) {
+                    container.innerHTML = '<span class="text-gray-500 text-sm">Nenhuma regra criada ainda</span>';
+                    return;
+                }
+
+                this.ruleManager.rules.forEach(rule => {
+                    const badge = document.createElement('div');
+                    badge.className = 'rule-badge';
+                    badge.title = `Padrões: ${rule.patterns.join(', ')}`;
+                    badge.innerHTML = `
+                        ${rule.name}
+                        <span class="text-xs text-gray-500 ml-1">(${rule.patterns.length})</span>
+                        <button class="ml-1 text-blue-500 hover:text-blue-700" data-rule-id="${rule.id}" title="Editar regra">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button class="ml-1 text-red-500 hover:text-red-700" data-rule-id="${rule.id}" title="Excluir regra">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    `;
+                    
+                    const editBtn = badge.querySelector('button[title="Editar regra"]');
+                    const deleteBtn = badge.querySelector('button[title="Excluir regra"]');
+                    
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showRuleModal(rule.id);
+                    });
+
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Deseja remover a regra "${rule.name}"?`)) {
+                            this.ruleManager.removeRule(rule.id);
+                            this.updateRulesDisplay();
+                            if (this.ofxData && this.ofxData.transactions) {
+                                this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(this.ofxData.transactions);
+                                this.updateUI();
+                            }
+                        }
+                    });
+
+                    badge.addEventListener('click', () => {
+                        badge.classList.toggle('active');
+                        if (badge.classList.contains('active')) {
+                            this.activeRules.add(rule.id);
+                        } else {
+                            this.activeRules.delete(rule.id);
+                        }
+                        this.applyGrouping();
+                    });
+
+                    container.appendChild(badge);
+                });
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                this.processFile(file);
+            }
+
+            handleFileDrop(e) {
+                const file = e.dataTransfer.files[0];
+                if (!file) return;
+                
+                if (!file.name.toLowerCase().endsWith('.ofx') && !file.name.toLowerCase().endsWith('.txt')) {
+                    ToastManager.show('Por favor, selecione um arquivo OFX válido.', 'error');
+                    return;
+                }
+                
+                this.processFile(file);
+            }
+
+            processFile(file) {
+                const fileInfo = document.getElementById('file-info');
+                if (fileInfo) {
+                    fileInfo.textContent = `Arquivo: ${file.name} (${this.formatFileSize(file.size)})`;
+                }
+                this.showLoading();
+                
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    try {
+                        const fileContent = e.target.result;
+                        this.ofxData = this.parseOFX(fileContent);
+                        this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(this.ofxData.transactions);
+                        this.hideLoading();
+                        ToastManager.show(`Arquivo processado com sucesso! ${this.ofxData.transactions.length} transações encontradas.`, 'success');
+                        this.showAnalysisResults();
+                        this.updateRulesDisplay();
+                        this.updateCategoryFilters();
+                        this.updateGroupingStats();
+                        this.updateChart();
+                        this.updateUI();
+                    } catch (error) {
+                        this.hideLoading();
+                        ToastManager.show(`Erro ao processar arquivo: ${error.message}`, 'error');
+                        console.error('Erro detalhado:', error);
+                    }
+                };
+                
+                reader.onerror = () => {
+                    this.hideLoading();
+                    ToastManager.show('Erro ao ler o arquivo. Tente novamente.', 'error');
+                };
+                
+                reader.readAsText(file);
+            }
+
+            parseOFX(content) {
+                const bankMatch = content.match(/<ORG>([^<]+)</);
+                const accountMatch = content.match(/<ACCTID>([^<]+)</);
+                const transactionMatches = content.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g) || [];
+                
+                const transactions = transactionMatches.map(transaction => {
+                    const typeMatch = transaction.match(/<TRNTYPE>([^<]+)</);
+                    const dateMatch = transaction.match(/<DTPOSTED>([^<]+)</);
+                    const amountMatch = transaction.match(/<TRNAMT>([^<]+)</);
+                    const memoMatch = transaction.match(/<MEMO>([^<]+)</);
+                    
+                    let amount = 0;
+                    if (amountMatch) {
+                        amount = parseFloat(amountMatch[1].replace(',', '.'));
+                    }
+                    
+                    let date = '';
+                    if (dateMatch) {
+                        date = dateMatch[1].substring(0, 8);
+                    }
+                    
+                    return {
+                        type: typeMatch ? typeMatch[1] : 'OTHER',
+                        date: date,
+                        amount: amount,
+                        memo: memoMatch ? memoMatch[1].trim() : ''
+                    };
+                });
+                
+                let startDate = null;
+                let endDate = null;
+                
+                if (transactions.length > 0) {
+                    startDate = transactions[0].date;
+                    endDate = transactions[0].date;
+                    
+                    transactions.forEach(transaction => {
+                        if (transaction.date < startDate) startDate = transaction.date;
+                        if (transaction.date > endDate) endDate = transaction.date;
+                    });
+                }
+                
+                return {
+                    bank: bankMatch ? bankMatch[1] : 'Desconhecido',
+                    account: accountMatch ? accountMatch[1] : 'Desconhecida',
+                    startDate: startDate,
+                    endDate: endDate,
+                    transactions: transactions
+                };
+            }
+
+            formatDate(dateStr) {
+                if (!dateStr) return 'N/A';
+                const year = dateStr.substring(0, 4);
+                const month = dateStr.substring(4, 6);
+                const day = dateStr.substring(6, 8);
+                return `${day}/${month}/${year}`;
+            }
+
+            formatCurrency(value) {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(value);
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            calculateTotals() {
+                if (!this.ofxData || !this.ofxData.transactions) return { income: 0, expenses: 0, balance: 0, count: 0 };
+                
+                let totalIncome = 0;
+                let totalExpenses = 0;
+                
+                this.ofxData.transactions.forEach(transaction => {
+                    if (transaction.amount > 0) {
+                        totalIncome += transaction.amount;
+                    } else {
+                        totalExpenses += Math.abs(transaction.amount);
+                    }
+                });
+                
+                return {
+                    income: totalIncome,
+                    expenses: totalExpenses,
+                    balance: totalIncome - totalExpenses,
+                    count: this.ofxData.transactions.length
+                };
+            }
+
+            applyGrouping() {
+                if (!this.ofxData || !this.ofxData.categorizedTransactions) return;
+                
+                const groupBy = document.getElementById('group-by')?.value || 'rule';
+                const groups = this.groupTransactions(groupBy);
+                
+                const groupedTable = document.getElementById('grouped-table');
+                if (!groupedTable) return;
+                
+                groupedTable.innerHTML = '';
+                
+                const sortedGroups = Object.entries(groups)
+                    .sort((a, b) => Math.abs(b[1].total) - Math.abs(a[1].total));
+                
+                sortedGroups.forEach(([key, data]) => {
+                    const row = groupedTable.insertRow();
+                    
+                    const keyCell = row.insertCell(0);
+                    keyCell.textContent = key;
+                    if (key === 'Outros') {
+                        keyCell.className = 'category-outros font-medium';
+                    }
+                    
+                    const countCell = row.insertCell(1);
+                    countCell.textContent = data.count;
+                    
+                    const totalCell = row.insertCell(2);
+                    totalCell.textContent = this.formatCurrency(data.total);
+                    totalCell.className = data.total > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium';
+                    
+                    const typeCell = row.insertCell(3);
+                    typeCell.textContent = data.type;
+                    typeCell.className = data.total > 0 ? 
+                        'bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium' : 
+                        'bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium';
+                    
+                    const statusCell = row.insertCell(4);
+                    if (key === 'Outros') {
+                        statusCell.innerHTML = '<span class="text-yellow-600 font-medium"><i class="fas fa-exclamation-triangle mr-1"></i>Não Agrupado</span>';
+                    } else {
+                        statusCell.innerHTML = '<span class="text-green-600 font-medium"><i class="fas fa-check-circle mr-1"></i>Agrupado</span>';
+                    }
+                });
+            }
+
+            groupTransactions(groupBy) {
+                const groups = {};
+                const transactions = this.ofxData.categorizedTransactions;
+
+                transactions.forEach(transaction => {
+                    let key;
+                    
+                    switch (groupBy) {
+                        case 'rule':
+                            key = transaction.category || 'Outros';
+                            break;
+                        case 'category':
+                            key = transaction.ruleCategory || 'Outros';
+                            break;
+                        case 'memo':
+                        default:
+                            key = transaction.memo;
+                            break;
+                    }
+
+                    if (!groups[key]) {
+                        groups[key] = {
+                            count: 0,
+                            total: 0,
+                            type: transaction.amount > 0 ? 'Entrada' : 'Saída'
+                        };
+                    }
+                    
+                    groups[key].count++;
+                    groups[key].total += transaction.amount;
+                });
+                
+                return groups;
+            }
+
+            updateCategoryFilters() {
+                if (!this.ofxData || !this.ofxData.categorizedTransactions) return;
+
+                const categories = [...new Set(this.ofxData.categorizedTransactions.map(t => t.category))];
+                const container = document.getElementById('category-filters');
+                if (!container) return;
+
+                container.innerHTML = '';
+
+                categories.forEach(category => {
+                    const badge = document.createElement('button');
+                    badge.className = category === 'Outros' ? 'filter-badge category-outros' : 'filter-badge';
+                    badge.textContent = category;
+                    badge.dataset.category = category;
+
+                    badge.addEventListener('click', (e) => {
+                        document.querySelectorAll('#category-filters .filter-badge').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentFilters.category = category;
+                        this.updateTransactionsTable();
+                    });
+
+                    container.appendChild(badge);
+                });
+
+                const allBadge = document.createElement('button');
+                allBadge.className = 'filter-badge active';
+                allBadge.textContent = 'Todas';
+                allBadge.dataset.category = 'all';
+                allBadge.addEventListener('click', (e) => {
+                    document.querySelectorAll('#category-filters .filter-badge').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.currentFilters.category = 'all';
+                    this.updateTransactionsTable();
+                });
+                container.prepend(allBadge);
+            }
+
+            updateTransactionsTable() {
+                if (!this.ofxData || !this.ofxData.categorizedTransactions) return;
+
+                const transactions = this.ofxData.categorizedTransactions.filter(transaction => {
+                    if (this.currentFilters.type === 'income' && transaction.amount <= 0) return false;
+                    if (this.currentFilters.type === 'expense' && transaction.amount >= 0) return false;
+                    
+                    if (this.currentFilters.category !== 'all' && transaction.category !== this.currentFilters.category) return false;
+                    
+                    if (this.currentFilters.showUngrouped && transaction.isGrouped) return false;
+                    
+                    if (this.currentFilters.search && 
+                        !transaction.memo.toLowerCase().includes(this.currentFilters.search.toLowerCase()) &&
+                        !transaction.category.toLowerCase().includes(this.currentFilters.search.toLowerCase())) {
+                        return false;
+                    }
+                    
+                    return true;
+                });
+
+                const transactionsTable = document.getElementById('transactions-table');
+                if (!transactionsTable) return;
+                
+                transactionsTable.innerHTML = '';
+                
+                if (transactions.length === 0) {
+                    const row = transactionsTable.insertRow();
+                    const cell = row.insertCell(0);
+                    cell.colSpan = 6;
+                    cell.className = 'px-3 py-4 text-center text-gray-500';
+                    cell.textContent = 'Nenhuma transação encontrada com os filtros aplicados';
+                    return;
+                }
+
+                transactions.forEach(transaction => {
+                    const row = transactionsTable.insertRow();
+                    
+                    if (!transaction.isGrouped) {
+                        row.className = 'transaction-not-grouped';
+                    }
+                    
+                    const dateCell = row.insertCell(0);
+                    dateCell.textContent = this.formatDate(transaction.date);
+                    
+                    const memoCell = row.insertCell(1);
+                    memoCell.textContent = transaction.memo;
+                    
+                    const categoryCell = row.insertCell(2);
+                    categoryCell.textContent = transaction.category;
+                    if (transaction.category === 'Outros') {
+                        categoryCell.className = 'category-outros px-2 py-1 rounded text-xs font-medium';
+                    } else {
+                        categoryCell.className = 'bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs';
+                    }
+                    
+                    const amountCell = row.insertCell(3);
+                    amountCell.textContent = this.formatCurrency(transaction.amount);
+                    amountCell.className = transaction.amount > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium';
+                    
+                    const typeCell = row.insertCell(4);
+                    typeCell.textContent = transaction.amount > 0 ? 'Entrada' : 'Saída';
+                    typeCell.className = transaction.amount > 0 ? 
+                        'bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium' : 
+                        'bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium';
+                    
+                    const statusCell = row.insertCell(5);
+                    if (transaction.isGrouped) {
+                        statusCell.innerHTML = '<span class="text-green-600 font-medium"><i class="fas fa-check-circle mr-1"></i>Agrupado</span>';
+                    } else {
+                        statusCell.innerHTML = '<span class="text-yellow-600 font-medium"><i class="fas fa-exclamation-triangle mr-1"></i>Não Agrupado</span>';
+                    }
+                });
+            }
+
+            updateUI() {
+                if (!this.ofxData) return;
+                
+                const totals = this.calculateTotals();
+                
+                // Atualizar cards principais
+                const totalIncome = document.getElementById('total-income');
+                const totalExpenses = document.getElementById('total-expenses');
+                const finalBalance = document.getElementById('final-balance');
+                const totalTransactions = document.getElementById('total-transactions');
+                const periodInfo = document.getElementById('period-info');
+                
+                if (totalIncome) totalIncome.textContent = this.formatCurrency(totals.income);
+                if (totalExpenses) totalExpenses.textContent = this.formatCurrency(totals.expenses);
+                if (finalBalance) finalBalance.textContent = this.formatCurrency(totals.balance);
+                if (totalTransactions) totalTransactions.textContent = totals.count;
+                if (periodInfo) {
+                    periodInfo.textContent = 
+                        `Período: ${this.formatDate(this.ofxData.startDate)} a ${this.formatDate(this.ofxData.endDate)} | Banco: ${this.ofxData.bank}`;
+                }
+                
+                // Atualizar sidebar
+                const sidebarIncome = document.getElementById('sidebar-income');
+                const sidebarExpenses = document.getElementById('sidebar-expenses');
+                const sidebarBalance = document.getElementById('sidebar-balance');
+                
+                if (sidebarIncome) sidebarIncome.textContent = this.formatCurrency(totals.income);
+                if (sidebarExpenses) sidebarExpenses.textContent = this.formatCurrency(totals.expenses);
+                if (sidebarBalance) sidebarBalance.textContent = this.formatCurrency(totals.balance);
+                
+                this.updateTransactionsTable();
+                this.updateCategoryFilters();
+                this.applyGrouping();
+                this.updateGroupingStats();
+                this.updateChart();
+            }
+
+            showLoading() {
+                const loading = document.getElementById('loading');
+                const analysisResults = document.getElementById('analysis-results');
+                if (loading) loading.classList.remove('hidden');
+                if (analysisResults) analysisResults.classList.add('hidden');
+            }
+
+            hideLoading() {
+                const loading = document.getElementById('loading');
+                if (loading) loading.classList.add('hidden');
+            }
+
+            showAnalysisResults() {
+                const analysisResults = document.getElementById('analysis-results');
+                if (analysisResults) analysisResults.classList.remove('hidden');
+            }
+        }
+
+        // Inicializar a aplicação quando a página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            new OFXAnalyzer();
+        });
+    </script>
+</body>
+</html>
