@@ -274,6 +274,40 @@
         .chart-control-btn:hover:not(.active) {
             background: #f8fafc;
         }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bank-badge {
+            color: white;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .bank-badge.todos { background: #10b981; }
+        .bank-badge.santander { background: #ec4899; }
+        .bank-badge.caixa { background: #f59e0b; }
+        .bank-badge.itau { background: #ff6b00; }
+        .bank-badge.bradesco { background: #cc092f; }
+        .bank-badge.bb { background: #fbcd04; color: #000; }
+        .bank-badge.nubank { background: #8a05be; }
+        .bank-badge.inter { background: #ff6c0d; }
+        .bank-badge.original { background: #00aaff; }
+        .bank-badge.btg { background: #0033a0; }
+        .bank-badge.sicoob { background: #0055a4; }
+        .bank-badge.sicredi { background: #0055a4; }
+        .bank-badge.safra { background: #0055a4; }
+        .bank-badge.pan { background: #ff0000; }
+        .bank-badge.banrisul { background: #00a651; }
+        .bank-badge.outros { background: #6b7280; }
     </style>
 </head>
 <body class="min-h-screen p-3">
@@ -281,7 +315,7 @@
         <!-- Conteúdo será carregado via JavaScript -->
     </div>
 
-    <div id="toast-container"></div>
+    <div id="toast-container" class="fixed top-4 right-4 z-50 max-w-sm w-full"></div>
 
     <script>
         // ToastManager
@@ -301,10 +335,10 @@
 
                 const config = typeConfigs[type] || typeConfigs.info;
 
-                toast.className = `bg-white rounded-lg shadow-lg p-4 mb-2 border-l-4 ${config.class} flex items-center justify-between`;
+                toast.className = `bg-white rounded-lg shadow-lg p-4 mb-2 border-l-4 ${config.class} flex items-center justify-between fade-in`;
                 toast.innerHTML = `
                     <div class="flex items-center">
-                        <i class="fas ${config.icon} mr-3"></i>
+                        <i class="fas ${config.icon} mr-3 text-${type === 'success' ? 'green' : type === 'error' ? 'red' : type === 'warning' ? 'yellow' : 'blue'}-500"></i>
                         <span class="text-sm font-medium">${message}</span>
                     </div>
                     <button class="text-gray-400 hover:text-gray-600 ml-4">
@@ -325,7 +359,7 @@
             }
         }
 
-        // Sistema de Regras
+        // Sistema de Regras por Banco
         class RuleManager {
             constructor() {
                 this.rules = this.loadRules();
@@ -352,26 +386,28 @@
                 }
             }
 
-            addRule(name, patterns, category) {
+            addRule(name, patterns, category, bank = 'todos') {
                 const newRule = {
                     id: 'rule_' + Date.now(),
                     name,
                     patterns: Array.isArray(patterns) ? patterns : [patterns],
-                    category
+                    category,
+                    bank: bank || 'todos'
                 };
                 this.rules.push(newRule);
                 this.saveRules();
                 return newRule;
             }
 
-            updateRule(ruleId, name, patterns, category) {
+            updateRule(ruleId, name, patterns, category, bank = 'todos') {
                 const ruleIndex = this.rules.findIndex(rule => rule.id === ruleId);
                 if (ruleIndex !== -1) {
                     this.rules[ruleIndex] = {
                         ...this.rules[ruleIndex],
                         name,
                         patterns: Array.isArray(patterns) ? patterns : [patterns],
-                        category
+                        category,
+                        bank: bank || 'todos'
                     };
                     this.saveRules();
                     return this.rules[ruleIndex];
@@ -388,47 +424,73 @@
                 return this.rules.find(rule => rule.id === ruleId);
             }
 
-            categorizeTransaction(description) {
+            getRulesByBank(bankName) {
+                if (!bankName || bankName === 'todos') {
+                    return this.rules;
+                }
+                return this.rules.filter(rule => 
+                    rule.bank === 'todos' || rule.bank === bankName
+                );
+            }
+
+            categorizeTransaction(description, currentBank = null) {
                 if (!this.rules || !Array.isArray(this.rules)) {
                     return null;
                 }
 
-                const descUpper = description.toUpperCase();
-                for (const rule of this.rules) {
-                    if (!rule.patterns || !Array.isArray(rule.patterns)) continue;
-                    
-                    for (const pattern of rule.patterns) {
-                        if (pattern && descUpper.includes(pattern.toUpperCase())) {
-                            return rule;
+                const descUpper = description ? description.toUpperCase() : '';
+                
+                // Primeiro procura regras específicas do banco atual
+                if (currentBank) {
+                    for (const rule of this.rules) {
+                        if (rule.bank === currentBank && rule.patterns && Array.isArray(rule.patterns)) {
+                            for (const pattern of rule.patterns) {
+                                if (pattern && descUpper.includes(pattern.toUpperCase())) {
+                                    return rule;
+                                }
+                            }
                         }
                     }
                 }
+                
+                // Depois procura regras gerais (bank = 'todos')
+                for (const rule of this.rules) {
+                    if (rule.bank === 'todos' && rule.patterns && Array.isArray(rule.patterns)) {
+                        for (const pattern of rule.patterns) {
+                            if (pattern && descUpper.includes(pattern.toUpperCase())) {
+                                return rule;
+                            }
+                        }
+                    }
+                }
+                
                 return null;
             }
 
-            applyRulesToTransactions(transactions) {
+            applyRulesToTransactions(transactions, currentBank = null) {
                 if (!transactions || !Array.isArray(transactions)) {
                     return [];
                 }
 
                 return transactions.map(transaction => {
-                    const rule = this.categorizeTransaction(transaction.memo || '');
+                    const rule = this.categorizeTransaction(transaction.memo || '', currentBank);
                     return {
                         ...transaction,
                         category: rule ? rule.name : 'Outros',
                         ruleCategory: rule ? rule.category : 'Outros',
                         ruleId: rule ? rule.id : null,
-                        isGrouped: !!rule
+                        isGrouped: !!rule,
+                        ruleBank: rule ? rule.bank : null
                     };
                 });
             }
 
-            getGroupingStats(transactions) {
+            getGroupingStats(transactions, currentBank = null) {
                 if (!transactions || !Array.isArray(transactions)) {
                     return { total: 0, grouped: 0, ungrouped: 0, percentage: 0 };
                 }
 
-                const categorized = this.applyRulesToTransactions(transactions);
+                const categorized = this.applyRulesToTransactions(transactions, currentBank);
                 const grouped = categorized.filter(t => t.isGrouped).length;
                 const total = categorized.length;
                 const ungrouped = total - grouped;
@@ -440,6 +502,18 @@
                     ungrouped,
                     percentage
                 };
+            }
+
+            getBankStats() {
+                const banks = {};
+                this.rules.forEach(rule => {
+                    const bank = rule.bank || 'todos';
+                    if (!banks[bank]) {
+                        banks[bank] = 0;
+                    }
+                    banks[bank]++;
+                });
+                return banks;
             }
         }
 
@@ -459,6 +533,7 @@
                 this.chart = null;
                 this.chartType = 'doughnut';
                 this.chartView = 'count';
+                this.currentBank = null;
                 this.init();
             }
 
@@ -482,11 +557,14 @@
                                     </div>
                                     <div>
                                         <h1 class="text-lg font-bold text-gray-800">Analisador de Arquivos OFX</h1>
-                                        <p class="text-gray-600 text-xs">Análise detalhada de extratos bancários</p>
+                                        <p class="text-gray-600 text-xs">Suporte para 15+ bancos brasileiros - Regras separadas por banco</p>
                                     </div>
                                 </div>
                                 
                                 <div class="flex items-center gap-3">
+                                    <div id="current-bank-indicator" class="hidden">
+                                        <!-- Indicador do banco atual será mostrado aqui -->
+                                    </div>
                                     <button
                                         onclick="window.location.href = 'documentos.html'"
                                         class="bg-white text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 card-hover transition flex items-center gap-2 hover:border-blue-500 hover:text-blue-600 text-sm"
@@ -504,6 +582,14 @@
                                 <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4 mb-6">
                                     <h2 class="text-lg font-bold text-gray-800 mb-4">Visão Geral</h2>
                                     
+                                    <!-- Banco Atual -->
+                                    <div id="current-bank-info" class="mb-4 p-3 bg-purple-50 rounded-lg hidden">
+                                        <h3 class="text-sm font-semibold text-purple-800 mb-2">Banco Atual</h3>
+                                        <div id="bank-info-content" class="space-y-2">
+                                            <!-- Informações do banco serão carregadas aqui -->
+                                        </div>
+                                    </div>
+
                                     <!-- Estatísticas de Agrupamento -->
                                     <div class="mb-4 p-3 bg-blue-50 rounded-lg">
                                         <h3 class="text-sm font-semibold text-blue-800 mb-2">Agrupamento</h3>
@@ -600,7 +686,7 @@
                                                     <i class="fas fa-file-upload text-4xl text-gray-400"></i>
                                                     <div>
                                                         <p class="text-lg font-semibold text-gray-700">Clique ou arraste um arquivo OFX</p>
-                                                        <p class="text-sm text-gray-500 mt-1">Suporta arquivos OFX e TXT</p>
+                                                        <p class="text-sm text-gray-500 mt-1">Suporta 15+ bancos brasileiros: Santander, Caixa, Itaú, Bradesco, BB, Nubank, Inter, e mais</p>
                                                     </div>
                                                 </div>
                                                 <div id="file-info" class="file-info mt-4 text-sm text-gray-600">Nenhum arquivo selecionado</div>
@@ -647,7 +733,9 @@
                                         <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4 mb-6">
                                             <div class="flex justify-between items-center">
                                                 <h2 class="text-lg font-bold text-gray-800">Informações do Extrato</h2>
-                                                <div id="period-info" class="text-sm text-gray-600">Selecione um arquivo OFX para análise</div>
+                                                <div id="period-info" class="text-sm text-gray-600 text-right">
+                                                    Selecione um arquivo OFX para análise
+                                                </div>
                                             </div>
                                         </div>
 
@@ -655,11 +743,42 @@
                                         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6">
                                             <div class="p-6">
                                                 <div class="flex justify-between items-center mb-4">
-                                                    <h2 class="text-lg font-bold text-gray-800">Criar Regras Manuais</h2>
-                                                    <button id="add-rule-btn" class="btn-primary text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm">
-                                                        <i class="fas fa-plus"></i>
-                                                        Nova Regra
-                                                    </button>
+                                                    <h2 class="text-lg font-bold text-gray-800">
+                                                        Regras de Categorização
+                                                        <span id="rules-bank-indicator" class="text-sm font-normal text-gray-600 ml-2"></span>
+                                                    </h2>
+                                                    <div class="flex gap-2">
+                                                        <select id="bank-filter" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
+                                                            <option value="todos">Todos os Bancos</option>
+                                                            <option value="Santander">Santander</option>
+                                                            <option value="Caixa">Caixa Econômica</option>
+                                                            <option value="Itau">Itaú</option>
+                                                            <option value="Bradesco">Bradesco</option>
+                                                            <option value="BB">Banco do Brasil</option>
+                                                            <option value="Nubank">Nubank</option>
+                                                            <option value="Inter">Inter</option>
+                                                            <option value="Original">Original</option>
+                                                            <option value="BTG">BTG Pactual</option>
+                                                            <option value="Sicoob">Sicoob</option>
+                                                            <option value="Sicredi">Sicredi</option>
+                                                            <option value="Safra">Safra</option>
+                                                            <option value="Pan">Pan</option>
+                                                            <option value="Banrisul">Banrisul</option>
+                                                            <option value="Outros">Outros Bancos</option>
+                                                        </select>
+                                                        <button id="add-rule-btn" class="btn-primary text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm">
+                                                            <i class="fas fa-plus"></i>
+                                                            Nova Regra
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Estatísticas de Regras por Banco -->
+                                                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                    <h3 class="text-sm font-semibold text-gray-700 mb-2">Regras por Banco</h3>
+                                                    <div id="bank-stats" class="flex flex-wrap gap-2">
+                                                        <!-- Estatísticas serão carregadas aqui -->
+                                                    </div>
                                                 </div>
 
                                                 <!-- Regras Existentes -->
@@ -787,6 +906,31 @@
                                 </div>
                                 
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Banco</label>
+                                    <select id="rule-bank" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="todos">Todos os Bancos</option>
+                                        <option value="Santander">Santander</option>
+                                        <option value="Caixa">Caixa Econômica</option>
+                                        <option value="Itau">Itaú</option>
+                                        <option value="Bradesco">Bradesco</option>
+                                        <option value="BB">Banco do Brasil</option>
+                                        <option value="Nubank">Nubank</option>
+                                        <option value="Inter">Inter</option>
+                                        <option value="Original">Original</option>
+                                        <option value="BTG">BTG Pactual</option>
+                                        <option value="Sicoob">Sicoob</option>
+                                        <option value="Sicredi">Sicredi</option>
+                                        <option value="Safra">Safra</option>
+                                        <option value="Pan">Pan</option>
+                                        <option value="Banrisul">Banrisul</option>
+                                        <option value="Outros">Outros Bancos</option>
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Escolha para qual banco esta regra será aplicada
+                                    </p>
+                                </div>
+                                
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Texto para Procurar</label>
                                     <div class="space-y-2" id="patterns-container">
                                         <!-- Padrões serão adicionados aqui -->
@@ -827,6 +971,7 @@
 
                 setTimeout(() => {
                     this.updateRulesDisplay();
+                    this.updateBankStats();
                 }, 100);
             }
 
@@ -875,6 +1020,14 @@
                         if (e.key === 'Enter') {
                             this.addPattern();
                         }
+                    });
+                }
+
+                // Filtro de banco nas regras
+                const bankFilter = document.getElementById('bank-filter');
+                if (bankFilter) {
+                    bankFilter.addEventListener('change', (e) => {
+                        this.updateRulesDisplay(e.target.value);
                     });
                 }
 
@@ -980,14 +1133,16 @@
                 const saveRuleText = document.getElementById('save-rule-text');
                 const patternsContainer = document.getElementById('patterns-container');
                 const ruleName = document.getElementById('rule-name');
+                const ruleBank = document.getElementById('rule-bank');
                 const ruleCategory = document.getElementById('rule-category');
                 const newPatternInput = document.getElementById('new-pattern');
 
-                if (!modal || !patternsContainer || !ruleName || !ruleCategory || !newPatternInput) return;
+                if (!modal || !patternsContainer || !ruleName || !ruleBank || !ruleCategory || !newPatternInput) return;
 
                 // Limpar campos
                 patternsContainer.innerHTML = '';
                 ruleName.value = '';
+                ruleBank.value = 'todos';
                 ruleCategory.value = 'Receitas';
                 newPatternInput.value = '';
 
@@ -998,6 +1153,7 @@
                         modalTitle.textContent = 'Editar Regra';
                         saveRuleText.textContent = 'Atualizar Regra';
                         ruleName.value = this.editingRule.name;
+                        ruleBank.value = this.editingRule.bank || 'todos';
                         ruleCategory.value = this.editingRule.category;
                         
                         // Preencher padrões
@@ -1080,6 +1236,7 @@
 
             saveRule() {
                 const name = document.getElementById('rule-name')?.value.trim();
+                const bank = document.getElementById('rule-bank')?.value;
                 const patterns = this.getPatternsFromModal();
                 const category = document.getElementById('rule-category')?.value;
 
@@ -1095,23 +1252,25 @@
 
                 if (this.editingRule) {
                     // Atualizar regra existente
-                    this.ruleManager.updateRule(this.editingRule.id, name, patterns, category);
+                    this.ruleManager.updateRule(this.editingRule.id, name, patterns, category, bank);
                     ToastManager.show('Regra atualizada com sucesso!', 'success');
                 } else {
                     // Criar nova regra
-                    this.ruleManager.addRule(name, patterns, category);
+                    this.ruleManager.addRule(name, patterns, category, bank);
                     ToastManager.show('Regra criada com sucesso!', 'success');
                 }
 
                 this.hideRuleModal();
                 this.updateRulesDisplay();
+                this.updateBankStats();
                 
-                // CORREÇÃO CRÍTICA: Recategorizar TODAS as transações quando uma regra é editada
+                // Recategorizar transações se houver arquivo carregado
                 if (this.ofxData && this.ofxData.transactions) {
-                    // Recriar completamente as transações categorizadas
-                    this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(this.ofxData.transactions);
+                    this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(
+                        this.ofxData.transactions, 
+                        this.currentBank
+                    );
                     
-                    // Forçar atualização completa da UI
                     this.updateCategoryFilters();
                     this.updateTransactionsTable();
                     this.applyGrouping();
@@ -1120,200 +1279,40 @@
                 }
             }
 
-            updateGroupingStats() {
-                if (!this.ofxData || !this.ofxData.transactions) return;
-
-                const stats = this.ruleManager.getGroupingStats(this.ofxData.transactions);
-                const container = document.getElementById('grouping-stats');
+            updateBankStats() {
+                const bankStats = this.ruleManager.getBankStats();
+                const container = document.getElementById('bank-stats');
                 if (!container) return;
 
-                let percentageClass = 'text-green-600';
-                if (stats.percentage < 50) {
-                    percentageClass = 'text-red-600';
-                } else if (stats.percentage < 80) {
-                    percentageClass = 'text-yellow-600';
-                }
+                container.innerHTML = '';
 
-                container.innerHTML = `
-                    <div class="flex justify-between text-xs">
-                        <span>Total:</span>
-                        <span class="font-medium">${stats.total}</span>
-                    </div>
-                    <div class="flex justify-between text-xs">
-                        <span>Agrupadas:</span>
-                        <span class="font-medium text-green-600">${stats.grouped}</span>
-                    </div>
-                    <div class="flex justify-between text-xs">
-                        <span>Não Agrupadas:</span>
-                        <span class="font-medium text-yellow-600">${stats.ungrouped}</span>
-                    </div>
-                    <div class="flex justify-between text-xs font-semibold border-t pt-1 mt-1">
-                        <span>Percentual:</span>
-                        <span class="${percentageClass}">${stats.percentage}%</span>
-                    </div>
-                `;
-            }
-
-            updateChart() {
-                if (!this.ofxData || !this.ofxData.categorizedTransactions) return;
-
-                const transactions = this.ofxData.categorizedTransactions;
-                const categories = {};
-                
-                // CORREÇÃO: Calcular dados corretamente baseado na visualização selecionada
-                transactions.forEach(transaction => {
-                    const category = transaction.category || 'Outros';
-                    if (!categories[category]) {
-                        categories[category] = {
-                            count: 0,
-                            total: 0
-                        };
-                    }
-                    categories[category].count++;
-                    
-                    // CORREÇÃO: Para valor, usar o valor absoluto se for visualização de valor
-                    if (this.chartView === 'amount') {
-                        categories[category].total += Math.abs(transaction.amount);
-                    }
+                Object.entries(bankStats).forEach(([bank, count]) => {
+                    const badge = document.createElement('span');
+                    badge.className = `bank-badge ${bank.toLowerCase()}`;
+                    badge.textContent = `${bank}: ${count} regras`;
+                    container.appendChild(badge);
                 });
-
-                const labels = Object.keys(categories);
-                
-                // CORREÇÃO: Usar os dados corretos baseado na visualização
-                const data = this.chartView === 'count' 
-                    ? labels.map(label => categories[label].count)
-                    : labels.map(label => categories[label].total);
-
-                const ctx = document.getElementById('grouping-chart').getContext('2d');
-                
-                // Destruir gráfico anterior se existir
-                if (this.chart) {
-                    this.chart.destroy();
-                }
-
-                // Configurações comuns
-                const commonOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        }
-                    }
-                };
-
-                // CORREÇÃO: Tooltip callback melhorado
-                const tooltipCallback = (context) => {
-                    const label = context.label || '';
-                    const value = context.raw || 0;
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                    
-                    if (this.chartView === 'count') {
-                        return `${label}: ${value} transações (${percentage}%)`;
-                    } else {
-                        return `${label}: ${this.formatCurrency(value)} (${percentage}%)`;
-                    }
-                };
-
-                if (this.chartType === 'doughnut') {
-                    this.chart = new Chart(ctx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                data: data,
-                                backgroundColor: [
-                                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-                                    '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#64748b'
-                                ],
-                                borderWidth: 2,
-                                borderColor: '#ffffff'
-                            }]
-                        },
-                        options: {
-                            ...commonOptions,
-                            plugins: {
-                                ...commonOptions.plugins,
-                                tooltip: {
-                                    callbacks: {
-                                        label: tooltipCallback
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } else if (this.chartType === 'bar') {
-                    this.chart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: this.chartView === 'count' ? 'Quantidade de Transações' : 'Valor Total (R$)',
-                                data: data,
-                                backgroundColor: '#3b82f6',
-                                borderColor: '#2563eb',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            ...commonOptions,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        font: {
-                                            size: 10
-                                        },
-                                        // CORREÇÃO: Formatar eixos para valores monetários
-                                        callback: this.chartView === 'amount' ? function(value) {
-                                            return 'R$ ' + value.toLocaleString('pt-BR');
-                                        } : undefined
-                                    }
-                                },
-                                x: {
-                                    ticks: {
-                                        font: {
-                                            size: 9
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: {
-                                ...commonOptions.plugins,
-                                tooltip: {
-                                    callbacks: {
-                                        label: tooltipCallback
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
             }
 
-            updateRulesDisplay() {
+            updateRulesDisplay(bankFilter = 'todos') {
                 const container = document.getElementById('rules-container');
                 if (!container) return;
 
                 container.innerHTML = '';
 
-                if (!this.ruleManager.rules || !Array.isArray(this.ruleManager.rules) || this.ruleManager.rules.length === 0) {
+                const rulesToShow = this.ruleManager.getRulesByBank(bankFilter);
+                
+                if (!rulesToShow || rulesToShow.length === 0) {
                     container.innerHTML = '<span class="text-gray-500 text-sm">Nenhuma regra criada ainda</span>';
                     return;
                 }
 
-                this.ruleManager.rules.forEach(rule => {
+                rulesToShow.forEach(rule => {
                     const badge = document.createElement('div');
                     badge.className = 'rule-badge';
-                    badge.title = `Padrões: ${rule.patterns.join(', ')}`;
+                    badge.title = `Padrões: ${rule.patterns.join(', ')} | Banco: ${rule.bank}`;
                     badge.innerHTML = `
+                        <span class="bank-badge ${rule.bank ? rule.bank.toLowerCase() : 'todos'} mr-1">${rule.bank || 'todos'}</span>
                         ${rule.name}
                         <span class="text-xs text-gray-500 ml-1">(${rule.patterns.length})</span>
                         <button class="ml-1 text-blue-500 hover:text-blue-700" data-rule-id="${rule.id}" title="Editar regra">
@@ -1336,9 +1335,13 @@
                         e.stopPropagation();
                         if (confirm(`Deseja remover a regra "${rule.name}"?`)) {
                             this.ruleManager.removeRule(rule.id);
-                            this.updateRulesDisplay();
+                            this.updateRulesDisplay(bankFilter);
+                            this.updateBankStats();
                             if (this.ofxData && this.ofxData.transactions) {
-                                this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(this.ofxData.transactions);
+                                this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(
+                                    this.ofxData.transactions, 
+                                    this.currentBank
+                                );
                                 this.updateUI();
                             }
                         }
@@ -1356,6 +1359,49 @@
 
                     container.appendChild(badge);
                 });
+
+                // Atualizar indicador de banco nas regras
+                const rulesIndicator = document.getElementById('rules-bank-indicator');
+                if (rulesIndicator) {
+                    rulesIndicator.textContent = bankFilter === 'todos' ? '' : `(Filtro: ${bankFilter})`;
+                }
+            }
+
+            updateCurrentBankInfo() {
+                const bankInfo = document.getElementById('current-bank-info');
+                const bankInfoContent = document.getElementById('bank-info-content');
+                const currentBankIndicator = document.getElementById('current-bank-indicator');
+
+                if (!this.currentBank) {
+                    if (bankInfo) bankInfo.classList.add('hidden');
+                    if (currentBankIndicator) currentBankIndicator.classList.add('hidden');
+                    return;
+                }
+
+                if (bankInfo) {
+                    bankInfo.classList.remove('hidden');
+                    if (bankInfoContent) {
+                        bankInfoContent.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">${this.currentBank}</span>
+                                <span class="bank-badge ${this.currentBank.toLowerCase()}">Ativo</span>
+                            </div>
+                            <div class="text-xs text-gray-600 mt-1">
+                                Aplicando regras específicas deste banco
+                            </div>
+                        `;
+                    }
+                }
+
+                if (currentBankIndicator) {
+                    currentBankIndicator.classList.remove('hidden');
+                    currentBankIndicator.innerHTML = `
+                        <span class="bank-badge ${this.currentBank.toLowerCase()}">
+                            <i class="fas fa-university mr-1"></i>
+                            ${this.currentBank}
+                        </span>
+                    `;
+                }
             }
 
             handleFileSelect(e) {
@@ -1389,11 +1435,24 @@
                     try {
                         const fileContent = e.target.result;
                         this.ofxData = this.parseOFX(fileContent);
-                        this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(this.ofxData.transactions);
+                        
+                        // Determinar o banco atual baseado no arquivo
+                        this.currentBank = this.determineBank(this.ofxData.bank, this.ofxData.format);
+                        
+                        // Aplicar regras específicas do banco atual
+                        this.ofxData.categorizedTransactions = this.ruleManager.applyRulesToTransactions(
+                            this.ofxData.transactions, 
+                            this.currentBank
+                        );
+                        
                         this.hideLoading();
                         ToastManager.show(`Arquivo processado com sucesso! ${this.ofxData.transactions.length} transações encontradas.`, 'success');
+                        ToastManager.show(`Formato detectado: ${this.ofxData.format} | Banco: ${this.currentBank}`, 'info');
+                        
                         this.showAnalysisResults();
+                        this.updateCurrentBankInfo();
                         this.updateRulesDisplay();
+                        this.updateBankStats();
                         this.updateCategoryFilters();
                         this.updateGroupingStats();
                         this.updateChart();
@@ -1413,55 +1472,229 @@
                 reader.readAsText(file);
             }
 
-            parseOFX(content) {
-                const bankMatch = content.match(/<ORG>([^<]+)</);
-                const accountMatch = content.match(/<ACCTID>([^<]+)</);
-                const transactionMatches = content.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g) || [];
+            determineBank(bankName, format) {
+                // Verificação de segurança para evitar undefined
+                const bankNameSafe = bankName || '';
+                const formatSafe = format || '';
                 
-                const transactions = transactionMatches.map(transaction => {
-                    const typeMatch = transaction.match(/<TRNTYPE>([^<]+)</);
-                    const dateMatch = transaction.match(/<DTPOSTED>([^<]+)</);
-                    const amountMatch = transaction.match(/<TRNAMT>([^<]+)</);
-                    const memoMatch = transaction.match(/<MEMO>([^<]+)</);
-                    
-                    let amount = 0;
-                    if (amountMatch) {
-                        amount = parseFloat(amountMatch[1].replace(',', '.'));
+                const bankNameLower = bankNameSafe.toLowerCase();
+                const formatLower = formatSafe.toLowerCase();
+
+                // Mapeamento completo de bancos brasileiros
+                const bankMappings = [
+                    { names: ['santander'], code: 'Santander' },
+                    { names: ['caixa', 'economica'], code: 'Caixa' },
+                    { names: ['itau', 'itaú'], code: 'Itau' },
+                    { names: ['bradesco'], code: 'Bradesco' },
+                    { names: ['banco do brasil', 'banco brasil', 'bb'], code: 'BB' },
+                    { names: ['nubank', 'nu bank'], code: 'Nubank' },
+                    { names: ['inter', 'banco inter'], code: 'Inter' },
+                    { names: ['original'], code: 'Original' },
+                    { names: ['btg', 'btg pactual'], code: 'BTG' },
+                    { names: ['sicoob'], code: 'Sicoob' },
+                    { names: ['sicredi'], code: 'Sicredi' },
+                    { names: ['safra'], code: 'Safra' },
+                    { names: ['pan', 'banco pan'], code: 'Pan' },
+                    { names: ['banrisul'], code: 'Banrisul' },
+                    { names: ['c6', 'c6 bank'], code: 'C6' },
+                    { names: ['next'], code: 'Next' },
+                    { names: ['neon'], code: 'Neon' },
+                    { names: ['picpay'], code: 'PicPay' },
+                    { names: ['mercadopago', 'mercado pago'], code: 'MercadoPago' },
+                    { names: ['bancoob'], code: 'Bancoob' },
+                    { names: ['viacredi'], code: 'Viacredi' },
+                    { names: ['ailos'], code: 'Ailos' }
+                ];
+
+                for (const mapping of bankMappings) {
+                    for (const name of mapping.names) {
+                        if (bankNameLower.includes(name) || formatLower.includes(name)) {
+                            return mapping.code;
+                        }
                     }
-                    
-                    let date = '';
-                    if (dateMatch) {
-                        date = dateMatch[1].substring(0, 8);
-                    }
-                    
-                    return {
-                        type: typeMatch ? typeMatch[1] : 'OTHER',
-                        date: date,
-                        amount: amount,
-                        memo: memoMatch ? memoMatch[1].trim() : ''
-                    };
-                });
-                
-                let startDate = null;
-                let endDate = null;
-                
-                if (transactions.length > 0) {
-                    startDate = transactions[0].date;
-                    endDate = transactions[0].date;
-                    
-                    transactions.forEach(transaction => {
-                        if (transaction.date < startDate) startDate = transaction.date;
-                        if (transaction.date > endDate) endDate = transaction.date;
-                    });
                 }
-                
-                return {
-                    bank: bankMatch ? bankMatch[1] : 'Desconhecido',
-                    account: accountMatch ? accountMatch[1] : 'Desconhecida',
-                    startDate: startDate,
-                    endDate: endDate,
-                    transactions: transactions
-                };
+
+                return 'Outros';
+            }
+
+            parseOFX(content) {
+                try {
+                    console.log('Iniciando parse do arquivo OFX...');
+                    
+                    // Detectar o formato do arquivo OFX
+                    const isCaixaFormat = content.includes('<BANKACCTFROM>') && content.includes('<NAME>');
+                    const isSantanderFormat = content.includes('<MEMO>');
+                    const isItauFormat = content.includes('<FITID>') && content.includes('<CHECKNUM>');
+                    const isBradescoFormat = content.includes('<BANKID>033</BANKID>');
+                    const isBBFormat = content.includes('<BANKID>001</BANKID>');
+                    
+                    let format = 'Misto';
+                    if (isCaixaFormat) format = 'Caixa';
+                    else if (isSantanderFormat) format = 'Santander';
+                    else if (isItauFormat) format = 'Itaú';
+                    else if (isBradescoFormat) format = 'Bradesco';
+                    else if (isBBFormat) format = 'Banco do Brasil';
+                    
+                    console.log('Formato detectado:', format);
+                    
+                    // Extrair informações básicas da conta
+                    const bankMatch = content.match(/<BANKID>([^<]+)</) || content.match(/<ORG>([^<]+)</);
+                    const branchMatch = content.match(/<BRANCHID>([^<]+)</);
+                    const accountMatch = content.match(/<ACCTID>([^<]+)</);
+                    const currencyMatch = content.match(/<CURDEF>([^<]+)</);
+
+                    // Mapear códigos de banco para nomes
+                    const bankCodes = {
+                        '033': 'Banco Santander',
+                        '104': 'Caixa Econômica Federal',
+                        '341': 'Banco Itaú',
+                        '237': 'Banco Bradesco',
+                        '001': 'Banco do Brasil',
+                        '077': 'Banco Inter',
+                        '212': 'Banco Original',
+                        '208': 'BTG Pactual',
+                        '756': 'Sicoob',
+                        '748': 'Sicredi',
+                        '422': 'Banco Safra',
+                        '623': 'Banco Pan',
+                        '041': 'Banrisul',
+                        '655': 'C6 Bank',
+                        '237': 'Next',
+                        '735': 'Neon',
+                        '380': 'PicPay',
+                        '323': 'MercadoPago',
+                        '756': 'Bancoob',
+                        '085': 'Ailos'
+                    };
+
+                    let bankName = 'Desconhecido';
+                    if (bankMatch) {
+                        const bankCode = bankMatch[1];
+                        bankName = bankCodes[bankCode] || `Banco ${bankCode}`;
+                    }
+
+                    // Encontrar todas as transações - método universal
+                    const transactionMatches = content.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g) || [];
+                    
+                    console.log(`Encontradas ${transactionMatches.length} transações`);
+
+                    const transactions = transactionMatches.map((transaction, index) => {
+                        try {
+                            // Extrair tipo da transação
+                            const typeMatch = transaction.match(/<TRNTYPE>([^<]+)</);
+                            const type = typeMatch ? typeMatch[1] : 'OTHER';
+                            
+                            // Extrair data - formato: YYYYMMDD...
+                            const dateMatch = transaction.match(/<DTPOSTED>([^<]+)</);
+                            let date = '';
+                            if (dateMatch) {
+                                // Extrair apenas a parte da data (YYYYMMDD)
+                                const dateStr = dateMatch[1];
+                                date = dateStr.substring(0, 8);
+                            }
+                            
+                            // Extrair valor
+                            const amountMatch = transaction.match(/<TRNAMT>([^<]+)</);
+                            let amount = 0;
+                            if (amountMatch) {
+                                amount = parseFloat(amountMatch[1].replace(',', '.'));
+                                if (isNaN(amount)) {
+                                    console.warn(`Valor inválido na transação ${index}:`, amountMatch[1]);
+                                    amount = 0;
+                                }
+                            }
+                            
+                            // Extrair descrição - tenta vários formatos
+                            let memo = '';
+                            
+                            // Tenta diferentes tags em ordem de prioridade
+                            const nameMatch = transaction.match(/<NAME>([^<]+)</);
+                            const memoMatch = transaction.match(/<MEMO>([^<]+)</);
+                            const checkNumMatch = transaction.match(/<CHECKNUM>([^<]+)</);
+                            
+                            if (nameMatch) {
+                                memo = nameMatch[1].trim();
+                            } else if (memoMatch) {
+                                memo = memoMatch[1].trim();
+                            } else if (checkNumMatch) {
+                                memo = `Cheque ${checkNumMatch[1]}`;
+                            }
+                            
+                            // Se ainda não tem descrição, usa uma padrão
+                            if (!memo) {
+                                memo = `Transação ${type}`;
+                            }
+                            
+                            // Extrair ID da transação
+                            const fitIdMatch = transaction.match(/<FITID>([^<]+)</);
+                            const fitId = fitIdMatch ? fitIdMatch[1] : `trans_${index}_${Date.now()}`;
+
+                            return {
+                                type: type,
+                                date: date,
+                                amount: amount,
+                                memo: memo,
+                                fitId: fitId
+                            };
+                        } catch (error) {
+                            console.error(`Erro ao processar transação ${index}:`, error);
+                            return null;
+                        }
+                    }).filter(transaction => transaction !== null); // Remove transações com erro
+
+                    // Encontrar período do extrato
+                    let startDate = null;
+                    let endDate = null;
+                    
+                    // Tenta encontrar nas tags do período
+                    const dtStartMatch = content.match(/<DTSTART>([^<]+)</);
+                    const dtEndMatch = content.match(/<DTEND>([^<]+)</);
+                    
+                    if (dtStartMatch) {
+                        startDate = dtStartMatch[1].substring(0, 8);
+                    }
+                    if (dtEndMatch) {
+                        endDate = dtEndMatch[1].substring(0, 8);
+                    }
+                    
+                    // Se não encontrou nas tags, calcula a partir das transações
+                    if ((!startDate || !endDate) && transactions.length > 0) {
+                        const dates = transactions.map(t => t.date).filter(d => d);
+                        if (dates.length > 0) {
+                            dates.sort();
+                            startDate = dates[0];
+                            endDate = dates[dates.length - 1];
+                        }
+                    }
+
+                    // Extrair saldo final se disponível
+                    let finalBalance = 0;
+                    const balanceMatch = content.match(/<BALAMT>([^<]+)</);
+                    if (balanceMatch) {
+                        finalBalance = parseFloat(balanceMatch[1].replace(',', '.'));
+                    }
+
+                    const result = {
+                        bank: bankName,
+                        branch: branchMatch ? branchMatch[1] : 'N/A',
+                        account: accountMatch ? accountMatch[1] : 'Desconhecida',
+                        currency: currencyMatch ? currencyMatch[1] : 'BRL',
+                        startDate: startDate,
+                        endDate: endDate,
+                        finalBalance: finalBalance,
+                        transactions: transactions,
+                        format: format,
+                        totalTransactions: transactions.length,
+                        bankCode: bankMatch ? bankMatch[1] : null
+                    };
+
+                    console.log('Parse concluído:', result);
+                    return result;
+
+                } catch (error) {
+                    console.error('Erro crítico no parse do OFX:', error);
+                    throw new Error(`Falha ao processar arquivo OFX: ${error.message}`);
+                }
             }
 
             formatDate(dateStr) {
@@ -1701,6 +1934,186 @@
                 });
             }
 
+            updateGroupingStats() {
+                if (!this.ofxData || !this.ofxData.transactions) return;
+
+                const stats = this.ruleManager.getGroupingStats(this.ofxData.transactions, this.currentBank);
+                const container = document.getElementById('grouping-stats');
+                if (!container) return;
+
+                let percentageClass = 'text-green-600';
+                if (stats.percentage < 50) {
+                    percentageClass = 'text-red-600';
+                } else if (stats.percentage < 80) {
+                    percentageClass = 'text-yellow-600';
+                }
+
+                container.innerHTML = `
+                    <div class="flex justify-between text-xs">
+                        <span>Total:</span>
+                        <span class="font-medium">${stats.total}</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span>Agrupadas:</span>
+                        <span class="font-medium text-green-600">${stats.grouped}</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span>Não Agrupadas:</span>
+                        <span class="font-medium text-yellow-600">${stats.ungrouped}</span>
+                    </div>
+                    <div class="flex justify-between text-xs font-semibold border-t pt-1 mt-1">
+                        <span>Percentual:</span>
+                        <span class="${percentageClass}">${stats.percentage}%</span>
+                    </div>
+                `;
+            }
+
+            updateChart() {
+                if (!this.ofxData || !this.ofxData.categorizedTransactions) return;
+
+                const transactions = this.ofxData.categorizedTransactions;
+                const categories = {};
+                
+                // Calcular dados corretamente baseado na visualização selecionada
+                transactions.forEach(transaction => {
+                    const category = transaction.category || 'Outros';
+                    if (!categories[category]) {
+                        categories[category] = {
+                            count: 0,
+                            total: 0
+                        };
+                    }
+                    categories[category].count++;
+                    
+                    // Para valor, usar o valor absoluto se for visualização de valor
+                    if (this.chartView === 'amount') {
+                        categories[category].total += Math.abs(transaction.amount);
+                    }
+                });
+
+                const labels = Object.keys(categories);
+                
+                // Usar os dados corretos baseado na visualização
+                const data = this.chartView === 'count' 
+                    ? labels.map(label => categories[label].count)
+                    : labels.map(label => categories[label].total);
+
+                const ctx = document.getElementById('grouping-chart');
+                if (!ctx) return;
+                
+                // Destruir gráfico anterior se existir
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+
+                // Configurações comuns
+                const commonOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // Tooltip callback melhorado
+                const tooltipCallback = (context) => {
+                    const label = context.label || '';
+                    const value = context.raw || 0;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                    
+                    if (this.chartView === 'count') {
+                        return `${label}: ${value} transações (${percentage}%)`;
+                    } else {
+                        return `${label}: ${this.formatCurrency(value)} (${percentage}%)`;
+                    }
+                };
+
+                if (this.chartType === 'doughnut') {
+                    this.chart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: data,
+                                backgroundColor: [
+                                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                                    '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#64748b',
+                                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+                                ],
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            plugins: {
+                                ...commonOptions.plugins,
+                                tooltip: {
+                                    callbacks: {
+                                        label: tooltipCallback
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else if (this.chartType === 'bar') {
+                    this.chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: this.chartView === 'count' ? 'Quantidade de Transações' : 'Valor Total (R$)',
+                                data: data,
+                                backgroundColor: '#3b82f6',
+                                borderColor: '#2563eb',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        font: {
+                                            size: 10
+                                        },
+                                        // Formatar eixos para valores monetários
+                                        callback: this.chartView === 'amount' ? function(value) {
+                                            return 'R$ ' + value.toLocaleString('pt-BR');
+                                        } : undefined
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        font: {
+                                            size: 9
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                ...commonOptions.plugins,
+                                tooltip: {
+                                    callbacks: {
+                                        label: tooltipCallback
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
             updateUI() {
                 if (!this.ofxData) return;
                 
@@ -1718,8 +2131,10 @@
                 if (finalBalance) finalBalance.textContent = this.formatCurrency(totals.balance);
                 if (totalTransactions) totalTransactions.textContent = totals.count;
                 if (periodInfo) {
-                    periodInfo.textContent = 
-                        `Período: ${this.formatDate(this.ofxData.startDate)} a ${this.formatDate(this.ofxData.endDate)} | Banco: ${this.ofxData.bank}`;
+                    periodInfo.innerHTML = 
+                        `Período: ${this.formatDate(this.ofxData.startDate)} a ${this.formatDate(this.ofxData.endDate)}<br>
+                         Banco: ${this.ofxData.bank} | Formato: ${this.ofxData.format}<br>
+                         Conta: ${this.ofxData.account} | Transações: ${this.ofxData.totalTransactions}`;
                 }
                 
                 // Atualizar sidebar
