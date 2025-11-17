@@ -466,13 +466,14 @@
             }
         };
 
-        // Função para remover TODOS os caracteres especiais
+        // Função para remover caracteres especiais, mas PRESERVAR PONTOS nas contas contábeis
         const removerCaracteresEspeciais = (texto) => {
             if (!texto) return '';
             
             try {
                 let textoLimpo = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                textoLimpo = textoLimpo.replace(/[^\w\s]/g, ' ');
+                // Preserva pontos e números, remove outros caracteres especiais
+                textoLimpo = textoLimpo.replace(/[^\w\s.]/g, ' ');
                 textoLimpo = textoLimpo.replace(/\s+/g, ' ');
                 textoLimpo = textoLimpo.trim();
                 return textoLimpo;
@@ -509,14 +510,16 @@
                     let historicoFormatado = (doc.historico || 'Lancamento automatico').substring(0, 50);
                     historicoFormatado = removerCaracteresEspeciais(historicoFormatado).padEnd(50, ' ');
                     
-                    const contaDebitoFormatada = removerCaracteresEspeciais(doc.contaDebito || '').padEnd(17, ' ');
-                    const contaCreditoFormatada = removerCaracteresEspeciais(doc.contaCredito || '').padEnd(17, ' ');
+                    // PRESERVA OS PONTOS NAS CONTAS CONTÁBEIS - NÃO APLICA removerCaracteresEspeciais
+                    const contaDebitoFormatada = (doc.contaDebito || '').padEnd(17, ' ');
+                    const contaCreditoFormatada = (doc.contaCredito || '').padEnd(17, ' ');
                     
                     const hp = (doc.hp || '   ').padEnd(3, ' ');
                     const filialDebito = (config.filialDebito || '00').padEnd(2, ' ');
                     const filialCredito = (config.filialCredito || '00').padEnd(2, ' ');
                     
-                    const lancamentoDebito = 
+                    // CORREÇÃO: Gerar apenas UMA linha por lançamento
+                    const lancamento = 
                         dataLancamento +
                         numeroLancFormatado +
                         contaDebitoFormatada +
@@ -527,19 +530,7 @@
                         filialDebito +
                         filialCredito;
                     
-                    const lancamentoCredito = 
-                        dataLancamento +
-                        numeroLancFormatado +
-                        contaCreditoFormatada +
-                        contaDebitoFormatada +
-                        valorFormatado +
-                        hp +
-                        historicoFormatado +
-                        filialCredito +
-                        filialDebito;
-                    
-                    ctbilContent += lancamentoDebito + '\r\n';
-                    ctbilContent += lancamentoCredito + '\r\n';
+                    ctbilContent += lancamento + '\r\n';
                     
                     numeroLancamento++;
                 });
@@ -632,7 +623,8 @@
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
-                    ToastManager.show(`Arquivo ${filename} gerado com sucesso!`, 'success');
+                    const lineCount = content.split('\r\n').filter(line => line.trim() !== '').length;
+                    ToastManager.show(`Arquivo ${filename} gerado com ${lineCount} lançamentos!`, 'success');
                     return true;
                 } catch (error) {
                     console.error('Erro ao baixar CTBIL:', error);
@@ -828,8 +820,8 @@
                                 id: Date.now() + index,
                                 data: dataFormatada,
                                 documento: formatarDocumento(row['Documento'] || row['documento'] || ''),
-                                contaDebito: removerCaracteresEspeciais(row['Conta Débito'] || row['contaDebito'] || row['conta_debito'] || ''),
-                                contaCredito: removerCaracteresEspeciais(row['Conta Crédito'] || row['contaCredito'] || row['conta_credito'] || ''),
+                                contaDebito: (row['Conta Débito'] || row['contaDebito'] || row['conta_debito'] || '').toString(), // PRESERVA PONTOS
+                                contaCredito: (row['Conta Crédito'] || row['contaCredito'] || row['conta_credito'] || '').toString(), // PRESERVA PONTOS
                                 valor: formatarValorExibicao(row['Valor'] || row['valor'] || ''),
                                 hp: (row['HP'] || row['hp'] || '').toString(),
                                 historico: removerCaracteresEspeciais(row['Histórico'] || row['historico'] || '')
@@ -905,8 +897,13 @@
                     valorFinal = formatarValorExibicao(editValue);
                 } else if (editingCell.campo === 'documento' && editValue) {
                     valorFinal = formatarDocumento(editValue);
-                } else if (['contaDebito', 'contaCredito', 'historico'].includes(editingCell.campo) && editValue) {
+                } else if (['contaDebito', 'contaCredito'].includes(editingCell.campo) && editValue) {
+                    // PRESERVA PONTOS NAS CONTAS - não aplica removerCaracteresEspeciais
+                    valorFinal = editValue.toString();
+                } else if (editingCell.campo === 'historico' && editValue) {
                     valorFinal = removerCaracteresEspeciais(editValue);
+                } else {
+                    valorFinal = editValue;
                 }
 
                 setLancamentos(prev => prev.map(item => 
@@ -986,11 +983,21 @@
                                     <ul className="list-disc list-inside space-y-1">
                                         <li><strong>Data:</strong> Data do lançamento (formato dd/mm/aaaa)</li>
                                         <li><strong>Documento:</strong> Número do documento (8 dígitos com zeros à esquerda)</li>
-                                        <li><strong>Conta Débito:</strong> Código da conta de débito</li>
-                                        <li><strong>Conta Crédito:</strong> Código da conta de crédito</li>
+                                        <li><strong>Conta Débito:</strong> Código da conta de débito (preserva pontos: 1.1.1.01.001)</li>
+                                        <li><strong>Conta Crédito:</strong> Código da conta de crédito (preserva pontos: 2.1.1.01.001)</li>
                                         <li><strong>Valor:</strong> Valor do lançamento (com separadores: 1.500,00)</li>
                                         <li><strong>HP:</strong> Código HP (opcional)</li>
                                         <li><strong>Histórico:</strong> Descrição do lançamento</li>
+                                    </ul>
+                                </div>
+
+                                <div className="bg-yellow-50 p-4 rounded-lg">
+                                    <h4 className="font-semibold text-yellow-800 mb-2">Sobre o formato CTBIL:</h4>
+                                    <ul className="list-disc list-inside space-y-1">
+                                        <li>Cada lançamento gera UMA linha no arquivo CTBIL</li>
+                                        <li>O arquivo contém débito e crédito na mesma linha</li>
+                                        <li>Formato fixo de 121 caracteres por linha</li>
+                                        <li>Codificação: ISO-8859-1 (Latin1)</li>
                                     </ul>
                                 </div>
                             </div>
@@ -1356,7 +1363,7 @@
                                         <p className="text-xs text-blue-800">
                                             <i className="fas fa-info-circle mr-1"></i>
                                             Será gerado o arquivo: <strong>CTBIL{configCTBIL.codigoEmpresa.padStart(3, '0')}.TXT</strong><br/>
-                                            Com <strong>{lancamentos.length}</strong> lançamentos ({lancamentos.length * 2} linhas)
+                                            Com <strong>{lancamentos.length}</strong> lançamentos (1 linha por lançamento)
                                         </p>
                                     </div>
                                 </div>
