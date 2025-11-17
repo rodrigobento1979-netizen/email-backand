@@ -355,13 +355,16 @@
             if (!dataString) return '';
             
             try {
-                if (typeof dataString === 'string' && dataString.includes('/')) {
-                    const partes = dataString.split('/');
+                // Converte para string primeiro
+                const strData = dataString.toString();
+                
+                if (strData.includes('/')) {
+                    const partes = strData.split('/');
                     if (partes.length === 3) {
                         const [dia, mes, ano] = partes;
                         return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
                     }
-                    return dataString;
+                    return strData;
                 }
                 
                 if (dataString instanceof Date) {
@@ -371,8 +374,8 @@
                     return `${dia}/${mes}/${ano}`;
                 }
                 
-                if (typeof dataString === 'string' && dataString.includes('-')) {
-                    const [ano, mes, dia] = dataString.split('-');
+                if (strData.includes('-')) {
+                    const [ano, mes, dia] = strData.split('-');
                     return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
                 }
                 
@@ -384,10 +387,10 @@
                     return `${dia}/${mes}/${ano}`;
                 }
                 
-                return dataString || '';
+                return strData || '';
             } catch (error) {
                 console.error('Erro ao formatar data:', error, dataString);
-                return dataString || '';
+                return dataString?.toString() || '';
             }
         };
 
@@ -396,15 +399,17 @@
             if (!dataString) return '';
             
             try {
-                if (dataString.includes('-')) {
-                    return dataString;
+                const strData = dataString.toString();
+                
+                if (strData.includes('-')) {
+                    return strData;
                 }
                 
-                const [dia, mes, ano] = dataString.split('/');
+                const [dia, mes, ano] = strData.split('/');
                 return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
             } catch (error) {
                 console.error('Erro ao converter data:', error);
-                return dataString;
+                return dataString?.toString() || '';
             }
         };
 
@@ -471,7 +476,8 @@
             if (!texto) return '';
             
             try {
-                let textoLimpo = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const strTexto = texto.toString();
+                let textoLimpo = strTexto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 // Preserva pontos e números, remove outros caracteres especiais
                 textoLimpo = textoLimpo.replace(/[^\w\s.]/g, ' ');
                 textoLimpo = textoLimpo.replace(/\s+/g, ' ');
@@ -479,7 +485,7 @@
                 return textoLimpo;
             } catch (error) {
                 console.error('Erro ao remover caracteres especiais:', error);
-                return texto || '';
+                return texto?.toString() || '';
             }
         };
 
@@ -494,8 +500,9 @@
                     
                     let dataLancamento = '';
                     try {
-                        if (doc.data && doc.data.includes('/')) {
-                            const [dia, mes, ano] = doc.data.split('/');
+                        const dataStr = doc.data?.toString() || '';
+                        if (dataStr && dataStr.includes('/')) {
+                            const [dia, mes, ano] = dataStr.split('/');
                             dataLancamento = ano + mes.padStart(2, '0') + dia.padStart(2, '0');
                         } else {
                             dataLancamento = '00000000';
@@ -507,16 +514,16 @@
                     
                     const valorFormatado = CTBILGenerator.formatValue(converterValorParaCTBIL(doc.valor));
                     
-                    let historicoFormatado = (doc.historico || 'Lancamento automatico').substring(0, 50);
+                    let historicoFormatado = (doc.historico?.toString() || 'Lancamento automatico').substring(0, 50);
                     historicoFormatado = removerCaracteresEspeciais(historicoFormatado).padEnd(50, ' ');
                     
                     // PRESERVA OS PONTOS NAS CONTAS CONTÁBEIS - NÃO APLICA removerCaracteresEspeciais
-                    const contaDebitoFormatada = (doc.contaDebito || '').padEnd(17, ' ');
-                    const contaCreditoFormatada = (doc.contaCredito || '').padEnd(17, ' ');
+                    const contaDebitoFormatada = (doc.contaDebito?.toString() || '').padEnd(17, ' ');
+                    const contaCreditoFormatada = (doc.contaCredito?.toString() || '').padEnd(17, ' ');
                     
-                    const hp = (doc.hp || '   ').padEnd(3, ' ');
-                    const filialDebito = (config.filialDebito || '00').padEnd(2, ' ');
-                    const filialCredito = (config.filialCredito || '00').padEnd(2, ' ');
+                    const hp = (doc.hp?.toString() || '   ').padEnd(3, ' ');
+                    const filialDebito = (config.filialDebito?.toString() || '00').padEnd(2, ' ');
+                    const filialCredito = (config.filialCredito?.toString() || '00').padEnd(2, ' ');
                     
                     // CORREÇÃO: Gerar apenas UMA linha por lançamento
                     const lancamento = 
@@ -741,10 +748,10 @@
                 if (!searchTerm) return lancamentos;
                 
                 return lancamentos.filter(lancamento => 
-                    lancamento.documento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    lancamento.contaDebito?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    lancamento.contaCredito?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    lancamento.historico?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lancamento.documento?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lancamento.contaDebito?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lancamento.contaCredito?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lancamento.historico?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
                     lancamento.valor?.toString().includes(searchTerm)
                 );
             }, [lancamentos, searchTerm]);
@@ -854,7 +861,12 @@
                         return;
                     }
 
-                    const lancamentosSemData = lancamentos.filter(lanc => !lanc.data || lanc.data.trim() === '');
+                    // CORREÇÃO: Converter para string antes de usar .trim()
+                    const lancamentosSemData = lancamentos.filter(lanc => {
+                        const dataStr = lanc.data?.toString() || '';
+                        return !dataStr || dataStr.trim() === '';
+                    });
+                    
                     if (lancamentosSemData.length > 0) {
                         ToastManager.show(`Existem ${lancamentosSemData.length} lançamentos sem data`, 'error');
                         return;
@@ -880,7 +892,7 @@
                 } else if (campo === 'valor') {
                     setEditValue(converterValorParaCTBIL(valor) || '');
                 } else {
-                    setEditValue(valor || '');
+                    setEditValue(valor?.toString() || '');
                 }
                 
                 setShowEditModal(true);
@@ -903,7 +915,7 @@
                 } else if (editingCell.campo === 'historico' && editValue) {
                     valorFinal = removerCaracteresEspeciais(editValue);
                 } else {
-                    valorFinal = editValue;
+                    valorFinal = editValue?.toString() || '';
                 }
 
                 setLancamentos(prev => prev.map(item => 
@@ -1061,7 +1073,7 @@
                                 <button
                                     onClick={() => ModeloPlanilha.gerarModelo()}
                                     className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg card-hover transition flex items-center gap-2 text-sm"
-                                >
+                                    >
                                     <i className="fas fa-file-excel"></i>
                                     Baixar Modelo
                                 </button>
