@@ -113,7 +113,7 @@
         }
 
         .grid-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2563eb;
             color: white;
         }
 
@@ -182,7 +182,6 @@
             width: 90%;
         }
 
-        /* Estilos para Toastify */
         #toast-container {
             position: fixed;
             top: 1rem;
@@ -262,12 +261,10 @@
             background: rgba(0, 0, 0, 0.1);
         }
 
-        /* Estilos para área de upload compacta */
         .compact-upload-area {
             padding: 1.5rem !important;
         }
 
-        /* Estilos para o ícone de informação */
         .info-icon {
             background: #3b82f6;
             color: white;
@@ -309,21 +306,29 @@
             box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
         }
 
-        /* Estilo ajustado para a tabela de lançamentos */
         .table-container {
             max-height: 400px;
             overflow-y: auto;
         }
 
-        /* Tamanhos de coluna ajustados para caber melhor */
-        .compact-table th:nth-child(1) { width: 70px; } /* Ações */
-        .compact-table th:nth-child(2) { width: 80px; } /* Data */
-        .compact-table th:nth-child(3) { width: 90px; } /* Documento */
-        .compact-table th:nth-child(4) { width: 120px; } /* Conta Débito */
-        .compact-table th:nth-child(5) { width: 120px; } /* Conta Crédito */
-        .compact-table th:nth-child(6) { width: 90px; } /* Valor */
-        .compact-table th:nth-child(7) { width: 60px; } /* HP */
-        .compact-table th:nth-child(8) { min-width: 150px; } /* Histórico */
+        .compact-table th:nth-child(1) { width: 70px; }
+        .compact-table th:nth-child(2) { width: 80px; }
+        .compact-table th:nth-child(3) { width: 90px; }
+        .compact-table th:nth-child(4) { width: 120px; }
+        .compact-table th:nth-child(5) { width: 120px; }
+        .compact-table th:nth-child(6) { width: 90px; }
+        .compact-table th:nth-child(7) { width: 60px; }
+        .compact-table th:nth-child(8) { min-width: 150px; }
+
+        .valor-right {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .documento-formatado {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body class="min-h-screen p-3">
@@ -350,25 +355,43 @@
             if (!dataString) return '';
             
             try {
-                if (dataString.includes('/')) {
+                if (typeof dataString === 'string' && dataString.includes('/')) {
+                    const partes = dataString.split('/');
+                    if (partes.length === 3) {
+                        const [dia, mes, ano] = partes;
+                        return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
+                    }
                     return dataString;
                 }
                 
+                if (dataString instanceof Date) {
+                    const dia = String(dataString.getDate()).padStart(2, '0');
+                    const mes = String(dataString.getMonth() + 1).padStart(2, '0');
+                    const ano = dataString.getFullYear();
+                    return `${dia}/${mes}/${ano}`;
+                }
+                
+                if (typeof dataString === 'string' && dataString.includes('-')) {
+                    const [ano, mes, dia] = dataString.split('-');
+                    return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
+                }
+                
                 const data = new Date(dataString);
-                if (isNaN(data.getTime())) return dataString;
+                if (!isNaN(data.getTime())) {
+                    const dia = String(data.getDate()).padStart(2, '0');
+                    const mes = String(data.getMonth() + 1).padStart(2, '0');
+                    const ano = data.getFullYear();
+                    return `${dia}/${mes}/${ano}`;
+                }
                 
-                const dia = String(data.getDate()).padStart(2, '0');
-                const mes = String(data.getMonth() + 1).padStart(2, '0');
-                const ano = data.getFullYear();
-                
-                return `${dia}/${mes}/${ano}`;
+                return dataString || '';
             } catch (error) {
-                console.error('Erro ao formatar data:', error);
-                return dataString;
+                console.error('Erro ao formatar data:', error, dataString);
+                return dataString || '';
             }
         };
 
-        // Função para converter data dd/mm/aaaa para aaaa-mm-dd (para o input date)
+        // Função para converter data dd/mm/aaaa para aaaa-mm-dd
         const converterDataParaInput = (dataString) => {
             if (!dataString) return '';
             
@@ -378,10 +401,84 @@
                 }
                 
                 const [dia, mes, ano] = dataString.split('/');
-                return `${ano}-${mes}-${dia}`;
+                return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
             } catch (error) {
                 console.error('Erro ao converter data:', error);
                 return dataString;
+            }
+        };
+
+        // Função para formatar documento com 8 caracteres e zeros à esquerda
+        const formatarDocumento = (documento) => {
+            if (!documento) return '00000000';
+            
+            try {
+                const apenasNumeros = documento.toString().replace(/\D/g, '');
+                return apenasNumeros.padStart(8, '0');
+            } catch (error) {
+                console.error('Erro ao formatar documento:', error);
+                return '00000000';
+            }
+        };
+
+        // Função SIMPLIFICADA para formatar valor para exibição
+        const formatarValorExibicao = (valorStr) => {
+            if (!valorStr || valorStr.toString().trim() === '') return '0,00';
+            
+            try {
+                let valor = valorStr.toString().trim();
+                
+                // Se já está formatado com vírgula, retorna como está
+                if (valor.includes(',')) {
+                    return valor;
+                }
+                
+                // Converte para número
+                let numero = parseFloat(valor.replace(/[^\d,.-]/g, '').replace(',', '.'));
+                
+                if (isNaN(numero)) {
+                    return '0,00';
+                }
+                
+                // Formata com separadores brasileiros
+                return numero.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } catch (error) {
+                console.error('Erro ao formatar valor:', error, valorStr);
+                return '0,00';
+            }
+        };
+
+        // Função para converter valor de exibição para formato numérico (para CTBIL)
+        const converterValorParaCTBIL = (valorExibicao) => {
+            if (!valorExibicao) return '0.00';
+            
+            try {
+                // Remove pontos (separadores de milhar) e substitui vírgula por ponto
+                return valorExibicao.toString()
+                    .replace(/\./g, '')
+                    .replace(',', '.');
+            } catch (error) {
+                console.error('Erro ao converter valor para CTBIL:', error);
+                return '0.00';
+            }
+        };
+
+        // Função para remover TODOS os caracteres especiais
+        const removerCaracteresEspeciais = (texto) => {
+            if (!texto) return '';
+            
+            try {
+                let textoLimpo = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                textoLimpo = textoLimpo.replace(/[^\w\s]/g, ' ');
+                textoLimpo = textoLimpo.replace(/\s+/g, ' ');
+                textoLimpo = textoLimpo.trim();
+                return textoLimpo;
+            } catch (error) {
+                console.error('Erro ao remover caracteres especiais:', error);
+                return texto || '';
             }
         };
 
@@ -396,20 +493,25 @@
                     
                     let dataLancamento = '';
                     try {
-                        if (doc.data.includes('/')) {
+                        if (doc.data && doc.data.includes('/')) {
                             const [dia, mes, ano] = doc.data.split('/');
-                            dataLancamento = ano + mes + dia;
+                            dataLancamento = ano + mes.padStart(2, '0') + dia.padStart(2, '0');
                         } else {
-                            dataLancamento = doc.data.replace(/-/g, '');
+                            dataLancamento = '00000000';
                         }
                     } catch (error) {
+                        console.error('Erro ao formatar data para CTBIL:', error, doc.data);
                         dataLancamento = '00000000';
                     }
                     
-                    const valorFormatado = CTBILGenerator.formatValue(doc.valor);
-                    const historicoFormatado = (doc.historico || 'Lançamento automático').substring(0, 50).padEnd(50, ' ');
-                    const contaDebitoFormatada = doc.contaDebito.padEnd(17, ' ');
-                    const contaCreditoFormatada = doc.contaCredito.padEnd(17, ' ');
+                    const valorFormatado = CTBILGenerator.formatValue(converterValorParaCTBIL(doc.valor));
+                    
+                    let historicoFormatado = (doc.historico || 'Lancamento automatico').substring(0, 50);
+                    historicoFormatado = removerCaracteresEspeciais(historicoFormatado).padEnd(50, ' ');
+                    
+                    const contaDebitoFormatada = removerCaracteresEspeciais(doc.contaDebito || '').padEnd(17, ' ');
+                    const contaCreditoFormatada = removerCaracteresEspeciais(doc.contaCredito || '').padEnd(17, ' ');
+                    
                     const hp = (doc.hp || '   ').padEnd(3, ' ');
                     const filialDebito = (config.filialDebito || '00').padEnd(2, ' ');
                     const filialCredito = (config.filialCredito || '00').padEnd(2, ' ');
@@ -447,50 +549,73 @@
 
             formatValue: (valorStr) => {
                 try {
-                    const cleanValue = valorStr.replace(/[^\d,]/g, '').replace(',', '.');
+                    if (!valorStr || valorStr.toString().trim() === '') {
+                        return ' '.repeat(14);
+                    }
+                    
+                    const cleanValue = valorStr.toString()
+                        .replace(/[^\d,.]/g, '')
+                        .replace(',', '.');
+                    
                     const valor = parseFloat(cleanValue) || 0;
                     
-                    if (isNaN(valor)) {
+                    if (isNaN(valor) || valor === 0) {
                         return ' '.repeat(14);
                     }
                     
                     const valorFormatado = valor.toFixed(2);
-                    const [parteInteira, parteDecimal] = valorFormatado.split('.');
+                    const partes = valorFormatado.split('.');
+                    const parteInteira = partes[0].padStart(11, '0');
+                    const parteDecimal = partes[1];
+                    
                     const valorCompleto = parteInteira + '.' + parteDecimal;
                     
                     if (valorCompleto.length > 14) {
-                        return valorCompleto.substring(0, 14).padStart(14, ' ');
+                        return valorCompleto.substring(0, 14);
                     }
                     
                     return valorCompleto.padStart(14, ' ');
                     
                 } catch (error) {
+                    console.error('Erro ao formatar valor:', error, valorStr);
                     return ' '.repeat(14);
                 }
             },
 
             validateCTBIL: (content) => {
-                const lines = content.split('\r\n').filter(line => line.trim() !== '');
-                
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    if (line.length !== 121) {
+                try {
+                    const lines = content.split('\r\n').filter(line => line.trim() !== '');
+                    
+                    if (lines.length === 0) {
                         return false;
                     }
                     
-                    const valor = line.substring(50, 64);
-                    if (!/^ *\d*\.?\d* *$/.test(valor)) {
-                        return false;
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i];
+                        
+                        if (line.length !== 121) {
+                            console.warn(`Linha ${i+1} tem ${line.length} caracteres, deveria ter 121:`, line);
+                            return false;
+                        }
+                        
+                        const valor = line.substring(50, 64);
+                        if (!/^[0-9\. ]+$/.test(valor)) {
+                            console.warn(`Valor inválido na linha ${i+1}:`, valor);
+                            return false;
+                        }
                     }
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Erro na validação CTBIL:', error);
+                    return false;
                 }
-                
-                return true;
             },
 
             downloadCTBIL: (content, filename) => {
                 try {
                     if (!CTBILGenerator.validateCTBIL(content)) {
-                        ToastManager.show('Erro na validação do arquivo CTBIL', 'error');
+                        ToastManager.show('Erro: Conteúdo do CTBIL inválido. Verifique os dados.', 'error');
                         return false;
                     }
                     
@@ -507,10 +632,11 @@
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
+                    ToastManager.show(`Arquivo ${filename} gerado com sucesso!`, 'success');
                     return true;
                 } catch (error) {
                     console.error('Erro ao baixar CTBIL:', error);
-                    ToastManager.show('Erro ao gerar arquivo CTBIL', 'error');
+                    ToastManager.show('Erro ao gerar arquivo CTBIL: ' + error.message, 'error');
                     return false;
                 }
             }
@@ -528,15 +654,6 @@
                         'Valor': '1500,00',
                         'HP': '001',
                         'Histórico': 'Pagamento de fornecedor'
-                    },
-                    {
-                        'Data': '16/01/2024',
-                        'Documento': '00000002',
-                        'Conta Débito': '1.1.2.01.001',
-                        'Conta Crédito': '2.1.2.01.001',
-                        'Valor': '2300,50',
-                        'HP': '002',
-                        'Histórico': 'Recebimento de cliente'
                     }
                 ];
 
@@ -551,6 +668,7 @@
                 worksheet['!cols'] = colWidths;
 
                 XLSX.writeFile(workbook, "modelo_lancamentos.xlsx");
+                ToastManager.show('Modelo de planilha baixado com sucesso!', 'success');
             }
         };
 
@@ -558,6 +676,8 @@
         const ToastManager = {
             show: (message, type = 'info', duration = 3000) => {
                 const container = document.getElementById('toast-container');
+                if (!container) return;
+
                 const toast = document.createElement('div');
                 
                 const typeConfigs = {
@@ -611,6 +731,7 @@
             const [lancamentos, setLancamentos] = useState([]);
             const [showCTBILModal, setShowCTBILModal] = useState(false);
             const [showInfoModal, setShowInfoModal] = useState(false);
+            const [searchTerm, setSearchTerm] = useState('');
 
             const [configCTBIL, setConfigCTBIL] = useState({
                 codigoEmpresa: '001',
@@ -624,25 +745,38 @@
             const [editValue, setEditValue] = useState('');
             const [showEditModal, setShowEditModal] = useState(false);
 
+            const lancamentosFiltrados = useMemo(() => {
+                if (!searchTerm) return lancamentos;
+                
+                return lancamentos.filter(lancamento => 
+                    lancamento.documento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lancamento.contaDebito?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lancamento.contaCredito?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lancamento.historico?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lancamento.valor?.toString().includes(searchTerm)
+                );
+            }, [lancamentos, searchTerm]);
+
             useEffect(() => {
-                const loadData = () => {
+                // Simular carregamento rápido
+                setTimeout(() => {
                     try {
                         const savedLancamentos = localStorage.getItem('lancamentosCTBIL');
                         const savedConfigCTBIL = localStorage.getItem('configCTBIL');
                         
                         if (savedLancamentos) {
-                            setLancamentos(JSON.parse(savedLancamentos));
+                            const lancamentosCarregados = JSON.parse(savedLancamentos);
+                            setLancamentos(lancamentosCarregados);
                         }
                         if (savedConfigCTBIL) {
                             setConfigCTBIL(JSON.parse(savedConfigCTBIL));
                         }
-                        setIsLoading(false);
                     } catch (error) {
                         console.error('Erro ao carregar dados:', error);
+                    } finally {
                         setIsLoading(false);
                     }
-                };
-                loadData();
+                }, 500);
             }, []);
 
             useEffect(() => {
@@ -659,6 +793,8 @@
                 const file = e.target.files[0];
                 if (!file) return;
 
+                e.target.value = '';
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
@@ -667,16 +803,38 @@
                         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                         const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-                        const lancamentosImportados = jsonData.map((row, index) => ({
-                            id: Date.now() + index,
-                            data: formatarData(row['Data'] || row['data'] || ''),
-                            documento: row['Documento'] || row['documento'] || '',
-                            contaDebito: row['Conta Débito'] || row['contaDebito'] || row['conta_debito'] || '',
-                            contaCredito: row['Conta Crédito'] || row['contaCredito'] || row['conta_credito'] || '',
-                            valor: row['Valor'] || row['valor'] || '',
-                            hp: row['HP'] || row['hp'] || '',
-                            historico: row['Histórico'] || row['historico'] || ''
-                        }));
+                        if (jsonData.length === 0) {
+                            ToastManager.show('A planilha está vazia ou não contém dados válidos', 'warning');
+                            return;
+                        }
+
+                        const lancamentosImportados = jsonData.map((row, index) => {
+                            let dataRaw = row['Data'] || row['data'] || '';
+                            let dataFormatada = '';
+                            
+                            try {
+                                if (typeof dataRaw === 'number') {
+                                    const data = XLSX.SSF.parse_date_code(dataRaw);
+                                    dataFormatada = `${String(data.d).padStart(2, '0')}/${String(data.m).padStart(2, '0')}/${data.y}`;
+                                } else {
+                                    dataFormatada = formatarData(dataRaw.toString());
+                                }
+                            } catch (error) {
+                                console.error('Erro ao processar data:', error, dataRaw);
+                                dataFormatada = formatarData(dataRaw.toString());
+                            }
+
+                            return {
+                                id: Date.now() + index,
+                                data: dataFormatada,
+                                documento: formatarDocumento(row['Documento'] || row['documento'] || ''),
+                                contaDebito: removerCaracteresEspeciais(row['Conta Débito'] || row['contaDebito'] || row['conta_debito'] || ''),
+                                contaCredito: removerCaracteresEspeciais(row['Conta Crédito'] || row['contaCredito'] || row['conta_credito'] || ''),
+                                valor: formatarValorExibicao(row['Valor'] || row['valor'] || ''),
+                                hp: (row['HP'] || row['hp'] || '').toString(),
+                                historico: removerCaracteresEspeciais(row['Histórico'] || row['historico'] || '')
+                            };
+                        });
 
                         setLancamentos(lancamentosImportados);
                         setCurrentView('lancamentos');
@@ -685,6 +843,9 @@
                         console.error('Erro ao importar planilha:', error);
                         ToastManager.show('Erro ao importar arquivo Excel. Verifique o formato.', 'error');
                     }
+                };
+                reader.onerror = function() {
+                    ToastManager.show('Erro ao ler o arquivo', 'error');
                 };
                 reader.readAsArrayBuffer(file);
             };
@@ -701,25 +862,31 @@
                         return;
                     }
 
+                    const lancamentosSemData = lancamentos.filter(lanc => !lanc.data || lanc.data.trim() === '');
+                    if (lancamentosSemData.length > 0) {
+                        ToastManager.show(`Existem ${lancamentosSemData.length} lançamentos sem data`, 'error');
+                        return;
+                    }
+
                     const ctbilContent = CTBILGenerator.generateCTBIL(lancamentos, configCTBIL);
                     const codigoEmpresaFormatado = configCTBIL.codigoEmpresa.padStart(3, '0');
                     const filename = `CTBIL${codigoEmpresaFormatado}.TXT`;
                     
-                    if (CTBILGenerator.downloadCTBIL(ctbilContent, filename)) {
-                        ToastManager.show(`Arquivo ${filename} gerado com ${lancamentos.length} lançamentos`, 'success');
-                        setShowCTBILModal(false);
-                    }
+                    CTBILGenerator.downloadCTBIL(ctbilContent, filename);
+                    setShowCTBILModal(false);
                 } catch (error) {
                     console.error('Erro ao gerar CTBIL:', error);
-                    ToastManager.show('Erro ao gerar arquivo CTBIL', 'error');
+                    ToastManager.show('Erro ao gerar arquivo CTBIL: ' + error.message, 'error');
                 }
             };
 
-            const iniciarEdicao = (lancamento, campo, valor, event) => {
+            const iniciarEdicao = (lancamento, campo, valor) => {
                 setEditingCell({ id: lancamento.id, campo });
                 
                 if (campo === 'data') {
                     setEditValue(converterDataParaInput(valor) || '');
+                } else if (campo === 'valor') {
+                    setEditValue(converterValorParaCTBIL(valor) || '');
                 } else {
                     setEditValue(valor || '');
                 }
@@ -734,6 +901,12 @@
                 
                 if (editingCell.campo === 'data' && editValue) {
                     valorFinal = formatarData(editValue);
+                } else if (editingCell.campo === 'valor' && editValue) {
+                    valorFinal = formatarValorExibicao(editValue);
+                } else if (editingCell.campo === 'documento' && editValue) {
+                    valorFinal = formatarDocumento(editValue);
+                } else if (['contaDebito', 'contaCredito', 'historico'].includes(editingCell.campo) && editValue) {
+                    valorFinal = removerCaracteresEspeciais(editValue);
                 }
 
                 setLancamentos(prev => prev.map(item => 
@@ -749,7 +922,7 @@
             };
 
             const excluirLancamento = (id) => {
-                if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+                if (window.confirm('Tem certeza que deseja excluir este lançamento?')) {
                     setLancamentos(prev => prev.filter(item => item.id !== id));
                     ToastManager.show('Lançamento excluído com sucesso', 'success');
                 }
@@ -765,10 +938,10 @@
                 const novoLancamento = {
                     id: Date.now(),
                     data: dataFormatada,
-                    documento: '',
+                    documento: '00000000',
                     contaDebito: '',
                     contaCredito: '',
-                    valor: '',
+                    valor: '0,00',
                     hp: '',
                     historico: ''
                 };
@@ -812,21 +985,12 @@
                                     <h4 className="font-semibold text-green-800 mb-2">Campos da Planilha:</h4>
                                     <ul className="list-disc list-inside space-y-1">
                                         <li><strong>Data:</strong> Data do lançamento (formato dd/mm/aaaa)</li>
-                                        <li><strong>Documento:</strong> Número do documento</li>
+                                        <li><strong>Documento:</strong> Número do documento (8 dígitos com zeros à esquerda)</li>
                                         <li><strong>Conta Débito:</strong> Código da conta de débito</li>
                                         <li><strong>Conta Crédito:</strong> Código da conta de crédito</li>
-                                        <li><strong>Valor:</strong> Valor do lançamento</li>
+                                        <li><strong>Valor:</strong> Valor do lançamento (com separadores: 1.500,00)</li>
                                         <li><strong>HP:</strong> Código HP (opcional)</li>
                                         <li><strong>Histórico:</strong> Descrição do lançamento</li>
-                                    </ul>
-                                </div>
-
-                                <div className="bg-purple-50 p-4 rounded-lg">
-                                    <h4 className="font-semibold text-purple-800 mb-2">Arquivo CTBIL:</h4>
-                                    <ul className="list-disc list-inside space-y-1">
-                                        <li>O arquivo será gerado com o nome <strong>CTBILXXX.TXT</strong></li>
-                                        <li><strong>XXX</strong> representa o código da empresa (3 dígitos)</li>
-                                        <li>Exemplo: CTBIL001.TXT, CTBIL123.TXT</li>
                                     </ul>
                                 </div>
                             </div>
@@ -861,7 +1025,7 @@
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 mb-6 p-4 card-hover">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+                                <div className="bg-blue-600 p-2 rounded-lg">
                                     <i className="fas fa-file-export text-xl text-white"></i>
                                 </div>
                                 <div>
@@ -992,10 +1156,11 @@
                                             type="text"
                                             placeholder="Buscar lançamentos..."
                                             className="search-input"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
                                         />
                                     </div>
 
-                                    {/* Container com altura reduzida */}
                                     <div className="table-container custom-scrollbar">
                                         <table className="w-full compact-table">
                                             <thead>
@@ -1011,7 +1176,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {lancamentos.map((lancamento) => (
+                                                {lancamentosFiltrados.map((lancamento) => (
                                                     <tr key={lancamento.id} className="document-row border-b border-gray-100 hover:bg-gray-50 transition-colors">
                                                         <td className="p-2">
                                                             <div className="flex items-center gap-1">
@@ -1030,23 +1195,23 @@
                                                         <td className="p-2">
                                                             <div 
                                                                 className="editable-field"
-                                                                onClick={(e) => iniciarEdicao(lancamento, 'data', lancamento.data, e)}
+                                                                onClick={() => iniciarEdicao(lancamento, 'data', lancamento.data)}
                                                             >
                                                                 {formatarData(lancamento.data)}
                                                             </div>
                                                         </td>
                                                         <td className="p-2">
                                                             <div 
-                                                                className="editable-field"
-                                                                onClick={(e) => iniciarEdicao(lancamento, 'documento', lancamento.documento, e)}
+                                                                className="editable-field documento-formatado"
+                                                                onClick={() => iniciarEdicao(lancamento, 'documento', lancamento.documento)}
                                                             >
-                                                                {lancamento.documento}
+                                                                {formatarDocumento(lancamento.documento)}
                                                             </div>
                                                         </td>
                                                         <td className="p-2">
                                                             <div 
                                                                 className="editable-field"
-                                                                onClick={(e) => iniciarEdicao(lancamento, 'contaDebito', lancamento.contaDebito, e)}
+                                                                onClick={() => iniciarEdicao(lancamento, 'contaDebito', lancamento.contaDebito)}
                                                             >
                                                                 {lancamento.contaDebito}
                                                             </div>
@@ -1054,23 +1219,23 @@
                                                         <td className="p-2">
                                                             <div 
                                                                 className="editable-field"
-                                                                onClick={(e) => iniciarEdicao(lancamento, 'contaCredito', lancamento.contaCredito, e)}
+                                                                onClick={() => iniciarEdicao(lancamento, 'contaCredito', lancamento.contaCredito)}
                                                             >
                                                                 {lancamento.contaCredito}
                                                             </div>
                                                         </td>
                                                         <td className="p-2">
                                                             <div 
-                                                                className="editable-field"
-                                                                onClick={(e) => iniciarEdicao(lancamento, 'valor', lancamento.valor, e)}
+                                                                className="editable-field valor-right"
+                                                                onClick={() => iniciarEdicao(lancamento, 'valor', lancamento.valor)}
                                                             >
-                                                                {lancamento.valor}
+                                                                {formatarValorExibicao(lancamento.valor)}
                                                             </div>
                                                         </td>
                                                         <td className="p-2">
                                                             <div 
                                                                 className="editable-field"
-                                                                onClick={(e) => iniciarEdicao(lancamento, 'hp', lancamento.hp, e)}
+                                                                onClick={() => iniciarEdicao(lancamento, 'hp', lancamento.hp)}
                                                             >
                                                                 {lancamento.hp}
                                                             </div>
@@ -1078,7 +1243,7 @@
                                                         <td className="p-2">
                                                             <div 
                                                                 className="editable-field line-clamp-2"
-                                                                onClick={(e) => iniciarEdicao(lancamento, 'historico', lancamento.historico, e)}
+                                                                onClick={() => iniciarEdicao(lancamento, 'historico', lancamento.historico)}
                                                                 title={lancamento.historico}
                                                             >
                                                                 {lancamento.historico}
@@ -1095,6 +1260,14 @@
                                             <i className="fas fa-inbox text-3xl mb-2"></i>
                                             <p className="text-sm">Nenhum lançamento importado</p>
                                             <p className="text-xs">Importe uma planilha ou adicione um novo lançamento</p>
+                                        </div>
+                                    )}
+
+                                    {lancamentos.length > 0 && lancamentosFiltrados.length === 0 && (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <i className="fas fa-search text-3xl mb-2"></i>
+                                            <p className="text-sm">Nenhum lançamento encontrado</p>
+                                            <p className="text-xs">Tente ajustar os termos da busca</p>
                                         </div>
                                     )}
                                 </div>
@@ -1127,7 +1300,7 @@
                                         <input
                                             type="text"
                                             value={configCTBIL.codigoEmpresa}
-                                            onChange={(e) => setConfigCTBIL(prev => ({...prev, codigoEmpresa: e.target.value}))}
+                                            onChange={(e) => setConfigCTBIL(prev => ({...prev, codigoEmpresa: e.target.value.replace(/\D/g, '').slice(0, 3)}))}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             placeholder="001"
                                             maxLength="3"
@@ -1157,7 +1330,7 @@
                                             <input
                                                 type="text"
                                                 value={configCTBIL.filialDebito}
-                                                onChange={(e) => setConfigCTBIL(prev => ({...prev, filialDebito: e.target.value}))}
+                                                onChange={(e) => setConfigCTBIL(prev => ({...prev, filialDebito: e.target.value.replace(/\D/g, '').slice(0, 2)}))}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="00"
                                                 maxLength="2"
@@ -1171,7 +1344,7 @@
                                             <input
                                                 type="text"
                                                 value={configCTBIL.filialCredito}
-                                                onChange={(e) => setConfigCTBIL(prev => ({...prev, filialCredito: e.target.value}))}
+                                                onChange={(e) => setConfigCTBIL(prev => ({...prev, filialCredito: e.target.value.replace(/\D/g, '').slice(0, 2)}))}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="00"
                                                 maxLength="2"
@@ -1183,7 +1356,7 @@
                                         <p className="text-xs text-blue-800">
                                             <i className="fas fa-info-circle mr-1"></i>
                                             Será gerado o arquivo: <strong>CTBIL{configCTBIL.codigoEmpresa.padStart(3, '0')}.TXT</strong><br/>
-                                            Com <strong>{lancamentos.length}</strong> lançamentos
+                                            Com <strong>{lancamentos.length}</strong> lançamentos ({lancamentos.length * 2} linhas)
                                         </p>
                                     </div>
                                 </div>
@@ -1226,11 +1399,11 @@
                                 
                                 <div className="mb-4">
                                     <label className="block text-xs font-medium text-gray-700 mb-2">
-                                        {editingCell.campo === 'data' && 'Data'}
-                                        {editingCell.campo === 'documento' && 'Documento'}
+                                        {editingCell.campo === 'data' && 'Data (dd/mm/aaaa)'}
+                                        {editingCell.campo === 'documento' && 'Documento (8 dígitos)'}
                                         {editingCell.campo === 'contaDebito' && 'Conta Débito'}
                                         {editingCell.campo === 'contaCredito' && 'Conta Crédito'}
-                                        {editingCell.campo === 'valor' && 'Valor'}
+                                        {editingCell.campo === 'valor' && 'Valor (ex: 1500,00)'}
                                         {editingCell.campo === 'hp' && 'HP'}
                                         {editingCell.campo === 'historico' && 'Histórico'}
                                     </label>
@@ -1241,12 +1414,21 @@
                                             onChange={(e) => setEditValue(e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         />
+                                    ) : editingCell.campo === 'valor' ? (
+                                        <input
+                                            type="text"
+                                            value={editValue}
+                                            onChange={(e) => setEditValue(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Ex: 1500,00"
+                                        />
                                     ) : (
                                         <input
                                             type="text"
                                             value={editValue}
                                             onChange={(e) => setEditValue(e.target.value)}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder={`Digite o ${editingCell.campo}`}
                                         />
                                     )}
                                 </div>
