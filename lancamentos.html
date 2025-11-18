@@ -10,26 +10,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-4">
+<body class="bg-gray-100 min-h-screen p-3">
     <div class="max-w-6xl mx-auto">
         <!-- Cabeçalho -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 mb-4">
             <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <div class="bg-blue-600 p-3 rounded-lg">
-                        <i class="fas fa-file-export text-white text-2xl"></i>
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 p-2 rounded-lg">
+                        <i class="fas fa-file-export text-white text-xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Sistema CTBIL</h1>
-                        <p class="text-gray-600">Importação e geração de arquivo CTBIL</p>
+                        <h1 class="text-xl font-bold text-gray-800">Sistema CTBIL</h1>
+                        <p class="text-gray-600 text-sm">Importação e geração de arquivo CTBIL</p>
                     </div>
                 </div>
-                <div class="flex space-x-3">
-                    <button onclick="baixarModelo()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                <div class="flex space-x-2">
+                    <button onclick="baixarModelo()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg flex items-center space-x-2 text-sm">
                         <i class="fas fa-file-excel"></i>
                         <span>Modelo</span>
                     </button>
-                    <button onclick="gerarCTBIL()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <button onclick="solicitarCodigoIntegracao()" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg flex items-center space-x-2 text-sm">
                         <i class="fas fa-file-export"></i>
                         <span>Gerar CTBIL</span>
                     </button>
@@ -38,71 +38,71 @@
         </div>
 
         <!-- Área Principal -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <!-- Painel de Upload -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="text-center mb-6">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-file-excel text-blue-600 text-2xl"></i>
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="text-center mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-file-excel text-blue-600 text-xl"></i>
                     </div>
-                    <h2 class="text-xl font-bold text-gray-800 mb-2">Importar Planilha</h2>
-                    <p class="text-gray-600 text-sm">Faça upload da planilha com os lançamentos</p>
+                    <h2 class="text-lg font-bold text-gray-800 mb-1">Importar Planilha</h2>
+                    <p class="text-gray-600 text-xs">Faça upload da planilha com os lançamentos</p>
                 </div>
 
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4 hover:border-blue-400 transition-colors cursor-pointer" onclick="document.getElementById('fileInput').click()">
-                    <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-3"></i>
-                    <p class="text-gray-700 font-medium">Clique para fazer upload</p>
-                    <p class="text-gray-500 text-sm mt-1">Arraste ou clique para selecionar arquivo</p>
-                    <p class="text-gray-400 text-xs mt-2">Formatos: .xlsx, .xls</p>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center mb-3 hover:border-blue-400 transition-colors cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                    <p class="text-gray-700 font-medium text-sm">Clique para fazer upload</p>
+                    <p class="text-gray-500 text-xs mt-1">Arraste ou clique para selecionar arquivo</p>
+                    <p class="text-gray-400 text-xs mt-1">Formatos: .xlsx, .xls</p>
                 </div>
 
                 <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden" onchange="processarArquivo(event)">
 
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p class="text-blue-800 font-medium text-sm mb-2">Colunas necessárias na planilha:</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-blue-800 font-medium text-xs mb-1">Colunas necessárias na planilha:</p>
                     <p class="text-blue-700 text-xs">Data, Documento, Conta Débito, Conta Crédito, Valor, HP, Histórico</p>
                 </div>
             </div>
 
             <!-- Tabela de Lançamentos -->
             <div class="bg-white rounded-lg shadow lg:col-span-2">
-                <div class="bg-blue-600 text-white px-6 py-4 rounded-t-lg">
+                <div class="bg-blue-600 text-white px-4 py-3 rounded-t-lg">
                     <div class="flex justify-between items-center">
-                        <h2 class="text-lg font-bold flex items-center space-x-2">
+                        <h2 class="text-base font-bold flex items-center space-x-2">
                             <i class="fas fa-list"></i>
                             <span>Lançamentos Importados</span>
                         </h2>
-                        <span class="bg-blue-500 px-3 py-1 rounded-full text-sm font-bold" id="contador">0</span>
+                        <span class="bg-blue-500 px-2 py-1 rounded-full text-xs font-bold" id="contador">0</span>
                     </div>
                 </div>
 
-                <div class="p-4 border-b">
+                <div class="p-3 border-b">
                     <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" id="campoBusca" placeholder="Buscar lançamentos..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <i class="fas fa-search absolute left-2 top-2 text-gray-400 text-sm"></i>
+                        <input type="text" id="campoBusca" placeholder="Buscar lançamentos..." class="w-full pl-8 pr-3 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                 </div>
 
-                <div class="overflow-x-auto max-h-96">
-                    <table class="w-full text-sm">
+                <div class="overflow-x-auto max-h-80">
+                    <table class="w-full text-xs">
                         <thead class="bg-gray-50 sticky top-0">
                             <tr>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-700 text-xs uppercase">Data</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-700 text-xs uppercase">Documento</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-700 text-xs uppercase">Conta Débito</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-700 text-xs uppercase">Conta Crédito</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-700 text-xs uppercase">Valor</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-700 text-xs uppercase">HP</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-700 text-xs uppercase">Histórico</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase">Data</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase">Documento</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase">Conta Débito</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase">Conta Crédito</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase">Valor</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase">HP</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700 uppercase">Histórico</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaLancamentos">
                             <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="7" class="px-4 py-6 text-center text-gray-500">
                                     <div class="flex flex-col items-center justify-center">
-                                        <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
-                                        <p class="text-gray-500 font-medium">Nenhum lançamento importado</p>
-                                        <p class="text-gray-400 text-sm">Faça upload de uma planilha para visualizar os dados</p>
+                                        <i class="fas fa-inbox text-gray-300 text-2xl mb-2"></i>
+                                        <p class="text-gray-500 font-medium text-sm">Nenhum lançamento importado</p>
+                                        <p class="text-gray-400 text-xs">Faça upload de uma planilha para visualizar os dados</p>
                                     </div>
                                 </td>
                             </tr>
@@ -113,15 +113,15 @@
         </div>
 
         <!-- Barra de Status -->
-        <div class="bg-white rounded-lg shadow p-4 mt-6">
+        <div class="bg-white rounded-lg shadow p-3 mt-4">
             <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span class="text-gray-600 text-sm" id="status">Pronto para importar planilha</span>
+                    <span class="text-gray-600 text-xs" id="status">Pronto para importar planilha</span>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-500 text-sm" id="nomeArquivo">Nenhum arquivo selecionado</span>
-                    <button onclick="limparTudo()" class="text-red-500 hover:text-red-700 text-sm flex items-center space-x-1">
+                <div class="flex items-center space-x-3">
+                    <span class="text-gray-500 text-xs" id="nomeArquivo">Nenhum arquivo selecionado</span>
+                    <button onclick="limparTudo()" class="text-red-500 hover:text-red-700 text-xs flex items-center space-x-1">
                         <i class="fas fa-trash"></i>
                         <span>Limpar</span>
                     </button>
@@ -130,9 +130,38 @@
         </div>
     </div>
 
+    <!-- Modal para código de integração -->
+    <div id="modalCodigo" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-80">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800">Código de Integração</h3>
+                <button onclick="fecharModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Informe o código da empresa (3 dígitos):
+                </label>
+                <input type="text" id="codigoIntegracao" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono text-lg"
+                       maxlength="3" placeholder="001" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button onclick="fecharModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm">
+                    Cancelar
+                </button>
+                <button onclick="gerarCTBIL()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
+                    Gerar Arquivo
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let lancamentos = [];
         let arquivoAtual = '';
+        let codigoEmpresa = '001'; // Código padrão
 
         function mostrarMensagem(mensagem, tipo = 'sucesso') {
             const fundo = tipo === 'sucesso' 
@@ -246,11 +275,11 @@
             if (lancamentos.length === 0) {
                 tabela.innerHTML = `
                     <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                        <td colspan="7" class="px-4 py-6 text-center text-gray-500">
                             <div class="flex flex-col items-center justify-center">
-                                <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
-                                <p class="text-gray-500 font-medium">Nenhum lançamento importado</p>
-                                <p class="text-gray-400 text-sm">Faça upload de uma planilha para visualizar os dados</p>
+                                <i class="fas fa-inbox text-gray-300 text-2xl mb-2"></i>
+                                <p class="text-gray-500 font-medium text-sm">Nenhum lançamento importado</p>
+                                <p class="text-gray-400 text-xs">Faça upload de uma planilha para visualizar os dados</p>
                             </div>
                         </td>
                     </tr>
@@ -262,13 +291,13 @@
             lancamentos.forEach(lanc => {
                 html += `
                     <tr class="border-t hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm">${lanc.data}</td>
-                        <td class="px-4 py-3 text-sm font-mono">${lanc.documento}</td>
-                        <td class="px-4 py-3 text-sm">${lanc.contaDebito}</td>
-                        <td class="px-4 py-3 text-sm">${lanc.contaCredito}</td>
-                        <td class="px-4 py-3 text-sm text-right font-mono text-green-600">${lanc.valor}</td>
-                        <td class="px-4 py-3 text-sm text-center">${lanc.hp}</td>
-                        <td class="px-4 py-3 text-sm">${lanc.historico}</td>
+                        <td class="px-3 py-2 text-xs">${lanc.data}</td>
+                        <td class="px-3 py-2 text-xs font-mono">${lanc.documento}</td>
+                        <td class="px-3 py-2 text-xs">${lanc.contaDebito}</td>
+                        <td class="px-3 py-2 text-xs">${lanc.contaCredito}</td>
+                        <td class="px-3 py-2 text-xs text-right font-mono text-green-600">${lanc.valor}</td>
+                        <td class="px-3 py-2 text-xs text-center">${lanc.hp}</td>
+                        <td class="px-3 py-2 text-xs">${lanc.historico}</td>
                     </tr>
                 `;
             });
@@ -311,67 +340,114 @@
             mostrarMensagem('Modelo baixado com sucesso!', 'sucesso');
         }
 
-        // GERAR CTBIL - SIMPLIFICADO E CORRIGIDO
-        function gerarCTBIL() {
+        function solicitarCodigoIntegracao() {
             if (lancamentos.length === 0) {
                 mostrarMensagem('Nenhum lançamento para gerar CTBIL', 'erro');
                 return;
             }
+            
+            document.getElementById('modalCodigo').classList.remove('hidden');
+            document.getElementById('codigoIntegracao').focus();
+        }
+
+        function fecharModal() {
+            document.getElementById('modalCodigo').classList.add('hidden');
+            document.getElementById('codigoIntegracao').value = '';
+        }
+
+        // GERAR CTBIL - COM SUPORTE A HISTÓRICOS LONGOS
+        function gerarCTBIL() {
+            const codigoInput = document.getElementById('codigoIntegracao').value;
+            
+            if (!codigoInput || codigoInput.length !== 3) {
+                mostrarMensagem('Informe um código de 3 dígitos', 'erro');
+                document.getElementById('codigoIntegracao').focus();
+                return;
+            }
+
+            codigoEmpresa = codigoInput.padStart(3, '0');
+            fecharModal();
 
             try {
                 let conteudoCTBIL = '';
                 let numero = 1;
+                let totalRegistros = 0;
                 
                 lancamentos.forEach(lanc => {
                     const dataCTBIL = lanc.data.split('/').reverse().join('');
                     const numeroFormatado = numero.toString().padStart(8, '0');
                     
-                    // CONVERSÃO SIMPLES: manter o valor com ponto decimal
+                    // Formatação do valor
                     let valorString = lanc.valor.toString();
-                    
-                    // Substituir vírgula por ponto e remover separadores de milhar
                     valorString = valorString.replace(/\./g, '').replace(',', '.');
-                    
-                    // Manter o valor como está (ex: "1500.75")
                     const valorFormatado = valorString.padStart(14, '0');
                     
-                    const historicoFormatado = (lanc.historico || 'Lancamento automatico')
-                        .substring(0, 50)
-                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                        .replace(/[^\w\s]/g, ' ')
-                        .padEnd(50, ' ');
-                    
+                    // Formatação das contas
                     const contaDebito = (lanc.contaDebito || '').padEnd(17, ' ');
                     const contaCredito = (lanc.contaCredito || '').padEnd(17, ' ');
                     const hp = (lanc.hp || '   ').padEnd(3, ' ');
                     
-                    const linha = 
-                        dataCTBIL.padStart(8, '0') +
-                        numeroFormatado +
-                        contaDebito +
-                        contaCredito +
-                        valorFormatado +
-                        hp +
-                        historicoFormatado +
-                        '00' + // Filial débito
-                        '00';  // Filial crédito
+                    // Tratamento do histórico (pode ter múltiplas linhas)
+                    const historicoBase = (lanc.historico || 'Lancamento automatico')
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^\w\s]/g, ' ');
                     
-                    conteudoCTBIL += linha + '\r\n';
+                    // Divide o histórico em linhas de 50 caracteres (máximo 5 linhas)
+                    const linhasHistorico = [];
+                    for (let i = 0; i < Math.min(historicoBase.length, 250); i += 50) {
+                        linhasHistorico.push(historicoBase.substring(i, i + 50).padEnd(50, ' '));
+                    }
+                    
+                    // Se não houver histórico, cria uma linha vazia
+                    if (linhasHistorico.length === 0) {
+                        linhasHistorico.push(''.padEnd(50, ' '));
+                    }
+                    
+                    // Cria um registro para cada linha do histórico
+                    linhasHistorico.forEach((linhaHistorico, indiceLinha) => {
+                        const numeroContinuacao = (indiceLinha + 1).toString();
+                        
+                        const linha = 
+                            dataCTBIL.padStart(8, '0') +
+                            numeroFormatado +
+                            contaDebito +
+                            contaCredito +
+                            valorFormatado +
+                            hp +
+                            linhaHistorico +
+                            '00' + // Filial débito
+                            '00' + // Filial crédito
+                            '    ' + // Evento (4 espaços)
+                            numeroContinuacao + // Cont (número da linha do histórico)
+                            '  ' + // User (2 espaços)
+                            ' ' + // Integ_to (1 espaço)
+                            ''.padEnd(15, ' ') + // Centro de Custo (15 espaços)
+                            ''.padEnd(4, ' ') + // Unidade Administrativa (4 espaços)
+                            ''.padEnd(14, ' ') + // Código CP (14 espaços)
+                            ''.padEnd(8, ' '); // Xref (8 espaços)
+                        
+                        conteudoCTBIL += linha + '\r\n';
+                        totalRegistros++;
+                    });
+                    
                     numero++;
                 });
+
+                // Nome do arquivo CTBIL
+                const nomeArquivo = `CTBIL${codigoEmpresa}.TXT`;
 
                 // Download do arquivo
                 const blob = new Blob([conteudoCTBIL], { type: 'text/plain;charset=ascii' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'CTBIL001.TXT';
+                link.download = nomeArquivo;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
                 
-                mostrarMensagem('Arquivo CTBIL gerado com sucesso!', 'sucesso');
+                mostrarMensagem(`Arquivo ${nomeArquivo} gerado com ${totalRegistros} registros!`, 'sucesso');
             } catch (erro) {
                 mostrarMensagem('Erro ao gerar CTBIL: ' + erro.message, 'erro');
             }
@@ -397,6 +473,13 @@
                     linha.style.display = texto.includes(termo) ? '' : 'none';
                 }
             });
+        });
+
+        // Fechar modal com ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                fecharModal();
+            }
         });
 
         document.addEventListener('DOMContentLoaded', function() {
