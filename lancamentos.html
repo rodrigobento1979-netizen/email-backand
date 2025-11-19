@@ -161,7 +161,7 @@
     <script>
         let lancamentos = [];
         let arquivoAtual = '';
-        let codigoEmpresa = '001'; // Código padrão
+        let codigoEmpresa = '001';
 
         function mostrarMensagem(mensagem, tipo = 'sucesso') {
             const fundo = tipo === 'sucesso' 
@@ -181,14 +181,27 @@
             if (!data) return '';
             try {
                 const texto = data.toString().trim();
+                
+                // Se for uma data do Excel (número serial)
+                if (!isNaN(texto) && texto > 25569) {
+                    const dataExcel = new Date((texto - 25569) * 86400 * 1000);
+                    const dia = dataExcel.getDate().toString().padStart(2, '0');
+                    const mes = (dataExcel.getMonth() + 1).toString().padStart(2, '0');
+                    const ano = dataExcel.getFullYear();
+                    return `${dia}/${mes}/${ano}`;
+                }
+                
+                // Se já estiver no formato DD/MM/AAAA
                 if (texto.includes('/')) {
                     const partes = texto.split('/');
                     if (partes.length === 3) {
                         let [dia, mes, ano] = partes.map(p => p.trim().padStart(2, '0'));
                         if (ano.length === 2) ano = '20' + ano;
+                        // CORREÇÃO: Manter a ordem original DD/MM/AAAA
                         return `${dia}/${mes}/${ano}`;
                     }
                 }
+                
                 return texto;
             } catch {
                 return data || '';
@@ -234,9 +247,9 @@
             leitor.onload = function(e) {
                 try {
                     const dados = new Uint8Array(e.target.result);
-                    const pasta = XLSX.read(dados, { type: 'array' });
+                    const pasta = XLSX.read(dados, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy' });
                     const primeiraAba = pasta.Sheets[pasta.SheetNames[0]];
-                    const dadosJSON = XLSX.utils.sheet_to_json(primeiraAba, { raw: false });
+                    const dadosJSON = XLSX.utils.sheet_to_json(primeiraAba, { raw: false, defval: '' });
 
                     if (dadosJSON.length === 0) {
                         mostrarMensagem('Planilha vazia ou sem dados válidos', 'erro');
@@ -259,6 +272,7 @@
                     document.getElementById('status').textContent = `Pronto - ${lancamentos.length} lançamentos carregados`;
                     mostrarMensagem(`Planilha importada com ${lancamentos.length} lançamentos`, 'sucesso');
                 } catch (erro) {
+                    console.error('Erro:', erro);
                     mostrarMensagem('Erro ao processar arquivo Excel', 'erro');
                     document.getElementById('status').textContent = 'Erro no processamento';
                 }
@@ -307,7 +321,7 @@
         function baixarModelo() {
             const dados = [
                 {
-                    'Data': '15/01/2024',
+                    'Data': '01/09/2024',
                     'Documento': '00000001',
                     'Conta Débito': '1.1.1.01.001',
                     'Conta Crédito': '2.1.1.01.001', 
@@ -316,7 +330,7 @@
                     'Histórico': 'Pagamento de fornecedor'
                 },
                 {
-                    'Data': '16/01/2024',
+                    'Data': '02/09/2024',
                     'Documento': '00000002',
                     'Conta Débito': '1.1.1.02.001',
                     'Conta Crédito': '2.1.1.02.001', 
@@ -355,7 +369,6 @@
             document.getElementById('codigoIntegracao').value = '';
         }
 
-        // GERAR CTBIL - COM SUPORTE A HISTÓRICOS LONGOS
         function gerarCTBIL() {
             const codigoInput = document.getElementById('codigoIntegracao').value;
             
@@ -374,41 +387,51 @@
                 let totalRegistros = 0;
                 
                 lancamentos.forEach(lanc => {
-                    const dataCTBIL = lanc.data.split('/').reverse().join('');
+                    // CORREÇÃO: Converter DD/MM/AAAA para AAAAMMDD
+                    const partesData = lanc.data.split('/');
+                    let dataCTBIL = '';
+                    if (partesData.length === 3) {
+                        const dia = partesData[0].padStart(2, '0');
+                        const mes = partesData[1].padStart(2, '0');
+                        const ano = partesData[2];
+                        dataCTBIL = ano + mes + dia; // AAAAMMDD
+                    } else {
+                        dataCTBIL = '00000000';
+                    }
+                    
                     const numeroFormatado = numero.toString().padStart(8, '0');
                     
                     // Formatação do valor
                     let valorString = lanc.valor.toString();
                     valorString = valorString.replace(/\./g, '').replace(',', '.');
-                    const valorFormatado = valorString.padStart(14, '0');
+                    const valorNumerico = parseFloat(valorString);
+                    const valorFormatado = isNaN(valorNumerico) ? '00000000000000' : valorNumerico.toFixed(2).replace('.', '').padStart(14, '0');
                     
                     // Formatação das contas
                     const contaDebito = (lanc.contaDebito || '').padEnd(17, ' ');
                     const contaCredito = (lanc.contaCredito || '').padEnd(17, ' ');
-                    const hp = (lanc.hp || '   ').padEnd(3, ' ');
+                    const hp = (lanc.hp || '000').padEnd(3, ' ');
                     
-                    // Tratamento do histórico (pode ter múltiplas linhas)
+                    // Tratamento do histórico
                     const historicoBase = (lanc.historico || 'Lancamento automatico')
                         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                        .replace(/[^\w\s]/g, ' ');
+                        .replace(/[^\w\s]/g, ' ')
+                        .toUpperCase();
                     
-                    // Divide o histórico em linhas de 50 caracteres (máximo 5 linhas)
                     const linhasHistorico = [];
                     for (let i = 0; i < Math.min(historicoBase.length, 250); i += 50) {
                         linhasHistorico.push(historicoBase.substring(i, i + 50).padEnd(50, ' '));
                     }
                     
-                    // Se não houver histórico, cria uma linha vazia
                     if (linhasHistorico.length === 0) {
                         linhasHistorico.push(''.padEnd(50, ' '));
                     }
                     
-                    // Cria um registro para cada linha do histórico
                     linhasHistorico.forEach((linhaHistorico, indiceLinha) => {
                         const numeroContinuacao = (indiceLinha + 1).toString();
                         
                         const linha = 
-                            dataCTBIL.padStart(8, '0') +
+                            dataCTBIL +
                             numeroFormatado +
                             contaDebito +
                             contaCredito +
@@ -417,14 +440,14 @@
                             linhaHistorico +
                             '00' + // Filial débito
                             '00' + // Filial crédito
-                            '    ' + // Evento (4 espaços)
-                            numeroContinuacao + // Cont (número da linha do histórico)
-                            '  ' + // User (2 espaços)
-                            ' ' + // Integ_to (1 espaço)
-                            ''.padEnd(15, ' ') + // Centro de Custo (15 espaços)
-                            ''.padEnd(4, ' ') + // Unidade Administrativa (4 espaços)
-                            ''.padEnd(14, ' ') + // Código CP (14 espaços)
-                            ''.padEnd(8, ' '); // Xref (8 espaços)
+                            '    ' + // Evento
+                            numeroContinuacao + // Cont
+                            '  ' + // User
+                            ' ' + // Integ_to
+                            ''.padEnd(15, ' ') + // Centro de Custo
+                            ''.padEnd(4, ' ') + // Unidade Administrativa
+                            ''.padEnd(14, ' ') + // Código CP
+                            ''.padEnd(8, ' '); // Xref
                         
                         conteudoCTBIL += linha + '\r\n';
                         totalRegistros++;
@@ -433,10 +456,7 @@
                     numero++;
                 });
 
-                // Nome do arquivo CTBIL
                 const nomeArquivo = `CTBIL${codigoEmpresa}.TXT`;
-
-                // Download do arquivo
                 const blob = new Blob([conteudoCTBIL], { type: 'text/plain;charset=ascii' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -449,6 +469,7 @@
                 
                 mostrarMensagem(`Arquivo ${nomeArquivo} gerado com ${totalRegistros} registros!`, 'sucesso');
             } catch (erro) {
+                console.error('Erro:', erro);
                 mostrarMensagem('Erro ao gerar CTBIL: ' + erro.message, 'erro');
             }
         }
@@ -475,7 +496,6 @@
             });
         });
 
-        // Fechar modal com ESC
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 fecharModal();
