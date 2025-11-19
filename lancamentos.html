@@ -9,6 +9,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
+    
+    <style>
+        .toast-success {
+            background: linear-gradient(to right, #4ade80, #22c55e);
+            border-radius: 8px;
+            font-weight: 500;
+            padding-left: 50px;
+        }
+        .toast-success::before {
+            content: "✓";
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+        }
+        .toast-error {
+            background: linear-gradient(to right, #ff5f6d, #ffc371);
+            border-radius: 8px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-3">
     <div class="max-w-6xl mx-auto">
@@ -22,6 +46,7 @@
                     <div>
                         <h1 class="text-xl font-bold text-gray-800">Sistema CTBIL</h1>
                         <p class="text-gray-600 text-sm">Importação e geração de arquivo CTBIL</p>
+                        <p class="text-gray-400 text-xs mt-1">Versão 1.0 - 19/11/2025</p>
                     </div>
                 </div>
                 <div class="flex space-x-2">
@@ -164,16 +189,12 @@
         let codigoEmpresa = '001';
 
         function mostrarMensagem(mensagem, tipo = 'sucesso') {
-            const fundo = tipo === 'sucesso' 
-                ? 'linear-gradient(to right, #00b09b, #96c93d)' 
-                : 'linear-gradient(to right, #ff5f6d, #ffc371)';
-            
             Toastify({
                 text: mensagem,
-                duration: 3000,
+                duration: 2000,
                 gravity: "top",
                 position: "right",
-                style: { background: fundo }
+                className: tipo === 'sucesso' ? 'toast-success' : 'toast-error',
             }).showToast();
         }
 
@@ -197,7 +218,6 @@
                     if (partes.length === 3) {
                         let [dia, mes, ano] = partes.map(p => p.trim().padStart(2, '0'));
                         if (ano.length === 2) ano = '20' + ano;
-                        // CORREÇÃO: Manter a ordem original DD/MM/AAAA
                         return `${dia}/${mes}/${ano}`;
                     }
                 }
@@ -218,20 +238,29 @@
         }
 
         function formatarValor(valor) {
-            if (!valor) return '0,00';
+            if (!valor) return '0.00';
             try {
                 let texto = valor.toString().trim();
-                if (texto.includes(',')) return texto;
                 
-                let numero = parseFloat(texto.replace(/[^\d,.-]/g, '').replace(',', '.'));
-                if (isNaN(numero)) return '0,00';
+                // Remove símbolos monetários (R$, $, etc.) e pontos de milhar
+                texto = texto.replace(/[^\d,.-]/g, '');
                 
-                return numero.toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
+                let numero = parseFloat(texto.replace(',', '.'));
+                if (isNaN(numero)) return '0.00';
+                
+                // CORREÇÃO: Formata sem separador de milhar, apenas com ponto decimal
+                return numero.toFixed(2);
             } catch {
-                return '0,00';
+                return '0.00';
+            }
+        }
+
+        function formatarHP(hp) {
+            if (!hp || hp.toString().trim() === '') return '000';
+            try {
+                return hp.toString().replace(/\D/g, '').padStart(3, '0');
+            } catch {
+                return '000';
             }
         }
 
@@ -264,7 +293,7 @@
                         contaDebito: (linha['Conta Débito'] || linha['contaDebito'] || linha['conta_debito'] || '').toString(),
                         contaCredito: (linha['Conta Crédito'] || linha['contaCredito'] || linha['conta_credito'] || '').toString(),
                         valor: formatarValor(linha['Valor'] || linha['valor'] || ''),
-                        hp: (linha['HP'] || linha['hp'] || '').toString(),
+                        hp: formatarHP(linha['HP'] || linha['hp'] || ''),
                         historico: (linha['Histórico'] || linha['historico'] || '').toString()
                     }));
 
@@ -310,7 +339,7 @@
                         <td class="px-3 py-2 text-xs">${lanc.contaDebito}</td>
                         <td class="px-3 py-2 text-xs">${lanc.contaCredito}</td>
                         <td class="px-3 py-2 text-xs text-right font-mono text-green-600">${lanc.valor}</td>
-                        <td class="px-3 py-2 text-xs text-center">${lanc.hp}</td>
+                        <td class="px-3 py-2 text-xs text-center font-mono">${lanc.hp}</td>
                         <td class="px-3 py-2 text-xs">${lanc.historico}</td>
                     </tr>
                 `;
@@ -325,7 +354,7 @@
                     'Documento': '00000001',
                     'Conta Débito': '1.1.1.01.001',
                     'Conta Crédito': '2.1.1.01.001', 
-                    'Valor': '1500,00',
+                    'Valor': '1500.00',
                     'HP': '001',
                     'Histórico': 'Pagamento de fornecedor'
                 },
@@ -334,7 +363,7 @@
                     'Documento': '00000002',
                     'Conta Débito': '1.1.1.02.001',
                     'Conta Crédito': '2.1.1.02.001', 
-                    'Valor': '2500,00',
+                    'Valor': '2500.00',
                     'HP': '002',
                     'Histórico': 'Recebimento de cliente'
                 }
@@ -387,7 +416,7 @@
                 let totalRegistros = 0;
                 
                 lancamentos.forEach(lanc => {
-                    // CORREÇÃO: Converter DD/MM/AAAA para AAAAMMDD
+                    // Converter DD/MM/AAAA para AAAAMMDD
                     const partesData = lanc.data.split('/');
                     let dataCTBIL = '';
                     if (partesData.length === 3) {
@@ -401,11 +430,24 @@
                     
                     const numeroFormatado = numero.toString().padStart(8, '0');
                     
-                    // Formatação do valor
+                    // CORREÇÃO: Formatação do valor sem separador de milhar
                     let valorString = lanc.valor.toString();
-                    valorString = valorString.replace(/\./g, '').replace(',', '.');
+                    
+                    // Remove qualquer caractere não numérico exceto ponto
+                    valorString = valorString.replace(/[^\d.]/g, '');
+                    
                     const valorNumerico = parseFloat(valorString);
-                    const valorFormatado = isNaN(valorNumerico) ? '00000000000000' : valorNumerico.toFixed(2).replace('.', '').padStart(14, '0');
+                    
+                    let valorFormatado;
+                    if (isNaN(valorNumerico)) {
+                        valorFormatado = '00000000000.00';
+                    } else {
+                        // Formata sem separador de milhar, apenas com ponto decimal
+                        const partes = valorNumerico.toFixed(2).split('.');
+                        const parteInteira = partes[0].padStart(11, '0');
+                        const parteDecimal = partes[1];
+                        valorFormatado = parteInteira + '.' + parteDecimal;
+                    }
                     
                     // Formatação das contas
                     const contaDebito = (lanc.contaDebito || '').padEnd(17, ' ');
