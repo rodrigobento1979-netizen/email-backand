@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema CTBIL - Cálculo Simples Nacional</title>
+    <style>
+        :root {
+            --primary-color: #6b46c1;
+            --secondary-color: #805ad5;
+            --accent-color: #e53e3e;
+            --light-color: #f7fafc;
+            --dark-color: #2d3748;
+            --border-color: #e2e8f0;
+            --success-color: #38a169;
+            --background-color: #f8f9fa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: #2d3748;
+            line-height: 1.6;
+            padding: 15px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header-content h1 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+        
+        .header-content p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(107, 70, 193, 0.2);
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-color);
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .result-card {
+            background-color: var(--light-color);
+            border-left: 4px solid var(--secondary-color);
+            padding: 15px;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .result-label {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .result-value {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+        
+        .aliquota-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .aliquota-table th, .aliquota-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .aliquota-table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .aliquota-table tr:hover {
+            background-color: #f8fafc;
+        }
+        
+        .anexo-selector {
+            display: flex;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        
+        .anexo-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            background-color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 12px;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .anexo-option:last-child {
+            border-right: none;
+        }
+        
+        .anexo-option.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .anexo-option:hover:not(.active) {
+            background-color: #f1f5f9;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        
+        .alert-info {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--secondary-color);
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .memoria-calculo {
+            background-color: #f8fafc;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .memoria-calculo h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .memoria-item {
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 25px;
+            padding: 15px;
+            color: #64748b;
+            font-size: 12px;
+        }
+        
+        .highlight {
+            background-color: #f0fff4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            color: var(--success-color);
+        }
+        
+        .calculation-formula {
+            background-color: #f1f5f9;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            margin: 10px 0;
+            border-left: 3px solid var(--secondary-color);
+            font-size: 12px;
+        }
+        
+        .info-box {
+            background-color: #f0f4ff;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .info-box h3 {
+            font-size: 14px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .info-box p {
+            font-size: 13px;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>Sistema CTBIL</h1>
+                <p>Cálculo do Simples Nacional - Versão 1.0 - 19/11/2025</p>
+            </div>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="calculadora">Calculadora</div>
+            <div class="tab" data-tab="informacoes">Informações</div>
+        </div>
+        
+        <div class="tab-content active" id="calculadora">
+            <div class="main-content">
+                <div class="input-section">
+                    <div class="card">
+                        <h2>Dados de Faturamento</h2>
+                        
+                        <div class="form-group">
+                            <label for="anexo">Anexo do Simples Nacional</label>
+                            <div class="anexo-selector">
+                                <div class="anexo-option active" data-anexo="I">Anexo I</div>
+                                <div class="anexo-option" data-anexo="II">Anexo II</div>
+                                <div class="anexo-option" data-anexo="III">Anexo III</div>
+                                <div class="anexo-option" data-anexo="IV">Anexo IV</div>
+                                <div class="anexo-option" data-anexo="V">Anexo V</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="faturamento12meses">Faturamento dos Últimos 12 Meses (R$)</label>
+                            <input type="number" id="faturamento12meses" class="form-control" placeholder="Ex: 150000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="faturamentoAtual">Faturamento do Mês Atual (R$)</label>
+                            <input type="number" id="faturamentoAtual" class="form-control" placeholder="Ex: 15000">
+                        </div>
+                        
+                        <button id="calcularBtn" class="btn btn-block">Calcular Simples Nacional</button>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Resultado do Cálculo</h2>
+                        <div id="resultado" class="result-card">
+                            <div class="alert alert-info">
+                                Preencha os dados de faturamento e clique em "Calcular" para ver o resultado.
+                            </div>
+                            <div id="resultadoDetalhado" class="hidden">
+                                <div class="result-item">
+                                    <span class="result-label">Alíquota Efetiva:</span>
+                                    <span id="aliquotaEfetiva" class="result-value">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Valor a Recolher:</span>
+                                    <span id="valorRecolher" class="result-value">-</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Faixa de Faturamento:</span>
+                                    <span id="faixaFaturamento" class="result-value">-</span>
+                                </div>
+                                
+                                <div class="memoria-calculo">
+                                    <h3>Memória de Cálculo</h3>
+                                    <div id="memoriaDetalhes">
+                                        <!-- Memória de cálculo será inserida aqui -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tables-section">
+                    <div class="card">
+                        <h2>Tabela de Alíquotas - <span id="anexoAtual">Anexo I</span></h2>
+                        <table class="aliquota-table" id="tabelaAnexo">
+                            <!-- A tabela será preenchida via JavaScript -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="informacoes">
+            <div class="card">
+                <h2>Informações sobre o Simples Nacional</h2>
+                
+                <div class="info-box">
+                    <h3>O que é o Simples Nacional?</h3>
+                    <p>O Simples Nacional é um regime tributário diferenciado, simplificado e favorecido, aplicável às Microempresas (ME) e Empresas de Pequeno Porte (EPP).</p>
+                </div>
+                
+                <h3 style="margin-top: 20px;">Anexos do Simples Nacional:</h3>
+                <ul style="margin-left: 20px; margin-top: 10px; font-size: 14px;">
+                    <li><strong>Anexo I:</strong> Comércio</li>
+                    <li><strong>Anexo II:</strong> Indústria</li>
+                    <li><strong>Anexo III:</strong> Prestação de Serviços</li>
+                    <li><strong>Anexo IV:</strong> Prestação de Serviços</li>
+                    <li><strong>Anexo V:</strong> Prestação de Serviços</li>
+                </ul>
+                
+                <h3 style="margin-top: 20px;">Como é feito o cálculo:</h3>
+                <p>O cálculo do Simples Nacional é progressivo, ou seja, quanto maior o faturamento, maior a alíquota. O sistema utiliza o faturamento dos últimos 12 meses para determinar a faixa de enquadramento e aplica a alíquota correspondente sobre o faturamento do mês atual.</p>
+                
+                <div class="alert alert-info" style="margin-top: 20px;">
+                    <strong>Nota:</strong> Este sistema faz um cálculo estimado. Para valores exatos, consulte um contador.
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Sistema CTBIL - Cálculo do Simples Nacional &copy; 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        // Tabelas de alíquotas do Simples Nacional (valores hipotéticos para demonstração)
+        const tabelasAnexos = {
+            "I": [
+                { faixa: "Até R$ 180.000,00", aliquota: 4.0, deducao: 0 },
+                { faixa: "De R$ 180.000,01 a R$ 360.000,00", aliquota: 7.3, deducao: 5940 },
+                { faixa: "De R$ 360.000,01 a R$ 720.000,00", aliquota: 9.5, deducao: 13860 },
+                { faixa: "De R$ 720.000,01 a R$ 1.800.000,00", aliquota: 10.7, deducao: 22500 },
+                { faixa: "De R$ 1.800.000,01 a R$ 3.600.000,00", aliquota: 14.3, deducao: 87300 },
+                { faixa: "De R$ 3.600.000,01 a R$ 4.800.000,00", aliquota: 19.0, deducao: 378000 }
+            ],
+            "II": [
+                { faixa: "Até R$ 180.000,00", aliquota: 4.5, deducao: 0 },
+                { faixa: "De R$ 180.000,01 a R$ 360.000,00", aliquota: 7.8, deducao: 5940 },
+                { faixa: "De R$ 360.000,01 a R$ 720.000,00", aliquota: 10.0, deducao: 13860 },
+                { faixa: "De R$ 720.000,01 a R$ 1.800.000,00", aliquota: 11.2, deducao: 22500 },
+                { faixa: "De R$ 1.800.000,01 a R$ 3.600.000,00", aliquota: 14.7, deducao: 85500 },
+                { faixa: "De R$ 3.600.000,01 a R$ 4.800.000,00", aliquota: 30.0, deducao: 720000 }
+            ],
+            "III": [
+                { faixa: "Até R$ 180.000,00", aliquota: 6.0, deducao: 0 },
+                { faixa: "De R$ 180.000,01 a R$ 360.000,00", aliquota: 11.2, deducao: 9360 },
+                { faixa: "De R$ 360.000,01 a R$ 720.000,00", aliquota: 13.5, deducao: 17640 },
+                { faixa: "De R$ 720.000,01 a R$ 1.800.000,00", aliquota: 16.0, deducao: 35640 },
+                { faixa: "De R$ 1.800.000,01 a R$ 3.600.000,00", aliquota: 21.0, deducao: 125640 },
+                { faixa: "De R$ 3.600.000,01 a R$ 4.800.000,00", aliquota: 33.0, deducao: 648000 }
+            ],
+            "IV": [
+                { faixa: "Até R$ 180.000,00", aliquota: 4.5, deducao: 0 },
+                { faixa: "De R$ 180.000,01 a R$ 360.000,00", aliquota: 9.0, deducao: 8100 },
+                { faixa: "De R$ 360.000,01 a R$ 720.000,00", aliquota: 10.2, deducao: 12420 },
+                { faixa: "De R$ 720.000,01 a R$ 1.800.000,00", aliquota: 14.0, deducao: 39780 },
+                { faixa: "De R$ 1.800.000,01 a R$ 3.600.000,00", aliquota: 22.0, deducao: 183780 },
+                { faixa: "De R$ 3.600.000,01 a R$ 4.800.000,00", aliquota: 33.0, deducao: 828000 }
+            ],
+            "V": [
+                { faixa: "Até R$ 180.000,00", aliquota: 15.5, deducao: 0 },
+                { faixa: "De R$ 180.000,01 a R$ 360.000,00", aliquota: 18.0, deducao: 4500 },
+                { faixa: "De R$ 360.000,01 a R$ 720.000,00", aliquota: 19.5, deducao: 9900 },
+                { faixa: "De R$ 720.000,01 a R$ 1.800.000,00", aliquota: 20.5, deducao: 17100 },
+                { faixa: "De R$ 1.800.000,01 a R$ 3.600.000,00", aliquota: 23.0, deducao: 62100 },
+                { faixa: "De R$ 3.600.000,01 a R$ 4.800.000,00", aliquota: 30.5, deducao: 540000 }
+            ]
+        };
+
+        // Elementos DOM
+        const anexoOptions = document.querySelectorAll('.anexo-option');
+        const faturamento12mesesInput = document.getElementById('faturamento12meses');
+        const faturamentoAtualInput = document.getElementById('faturamentoAtual');
+        const calcularBtn = document.getElementById('calcularBtn');
+        const resultadoDetalhado = document.getElementById('resultadoDetalhado');
+        const aliquotaEfetiva = document.getElementById('aliquotaEfetiva');
+        const valorRecolher = document.getElementById('valorRecolher');
+        const faixaFaturamento = document.getElementById('faixaFaturamento');
+        const tabelaAnexo = document.getElementById('tabelaAnexo');
+        const anexoAtual = document.getElementById('anexoAtual');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const memoriaDetalhes = document.getElementById('memoriaDetalhes');
+
+        // Anexo selecionado (padrão: Anexo I)
+        let anexoSelecionado = 'I';
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Carregar tabela do anexo selecionado
+            carregarTabelaAnexo(anexoSelecionado);
+            
+            // Configurar eventos
+            configurarEventos();
+        });
+
+        function configurarEventos() {
+            // Seleção de anexo
+            anexoOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    anexoOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    anexoSelecionado = this.getAttribute('data-anexo');
+                    anexoAtual.textContent = `Anexo ${anexoSelecionado}`;
+                    carregarTabelaAnexo(anexoSelecionado);
+                });
+            });
+            
+            // Cálculo
+            calcularBtn.addEventListener('click', calcularSimples);
+            
+            // Tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+
+        function carregarTabelaAnexo(anexo) {
+            const tabela = tabelasAnexos[anexo];
+            let html = `
+                <thead>
+                    <tr>
+                        <th>Faixa de Faturamento</th>
+                        <th>Alíquota (%)</th>
+                        <th>Parcela a Deduzir (R$)</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            tabela.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.faixa}</td>
+                        <td>${item.aliquota.toFixed(1).replace('.', ',')}%</td>
+                        <td>R$ ${item.deducao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody>';
+            tabelaAnexo.innerHTML = html;
+        }
+
+        function calcularSimples() {
+            const faturamento12meses = parseFloat(faturamento12mesesInput.value);
+            const faturamentoAtual = parseFloat(faturamentoAtualInput.value);
+            
+            // Validações
+            if (isNaN(faturamento12meses) || isNaN(faturamentoAtual)) {
+                alert('Por favor, preencha todos os campos com valores numéricos.');
+                return;
+            }
+            
+            if (faturamento12meses <= 0 || faturamentoAtual <= 0) {
+                alert('Os valores de faturamento devem ser maiores que zero.');
+                return;
+            }
+            
+            // Encontrar a faixa de faturamento
+            const tabela = tabelasAnexos[anexoSelecionado];
+            let faixaEncontrada = null;
+            let indiceFaixa = 0;
+            
+            // Limites das faixas (em milhares)
+            const limites = [180000, 360000, 720000, 1800000, 3600000, 4800000];
+            
+            for (let i = 0; i < limites.length; i++) {
+                if (faturamento12meses <= limites[i]) {
+                    faixaEncontrada = tabela[i];
+                    indiceFaixa = i;
+                    break;
+                }
+            }
+            
+            // Se ultrapassou a última faixa, usar a última
+            if (!faixaEncontrada) {
+                faixaEncontrada = tabela[tabela.length - 1];
+                indiceFaixa = tabela.length - 1;
+            }
+            
+            // Calcular alíquota efetiva
+            const aliquotaNominal = faixaEncontrada.aliquota;
+            const deducao = faixaEncontrada.deducao;
+            const aliquotaEfetivaValor = (faturamento12meses * aliquotaNominal / 100 - deducao) / faturamento12meses;
+            
+            // Calcular valor a recolher
+            const valorRecolherValor = faturamentoAtual * aliquotaEfetivaValor;
+            
+            // Exibir resultados
+            resultadoDetalhado.classList.remove('hidden');
+            aliquotaEfetiva.textContent = (aliquotaEfetivaValor * 100).toFixed(2).replace('.', ',') + '%';
+            valorRecolher.textContent = 'R$ ' + valorRecolherValor.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            faixaFaturamento.textContent = faixaEncontrada.faixa;
+            
+            // Exibir memória de cálculo
+            memoriaDetalhes.innerHTML = `
+                <div class="memoria-item"><strong>Faturamento 12 meses:</strong> <span class="highlight">R$ ${faturamento12meses.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
+                <div class="memoria-item"><strong>Faturamento mês atual:</strong> <span class="highlight">R$ ${faturamentoAtual.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
+                <div class="memoria-item"><strong>Faixa:</strong> ${indiceFaixa + 1} (${faixaEncontrada.faixa})</div>
+                <div class="memoria-item"><strong>Alíquota nominal:</strong> ${aliquotaNominal.toFixed(2).replace('.', ',')}%</div>
+                <div class="memoria-item"><strong>Parcela a deduzir:</strong> R$ ${deducao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                <div class="calculation-formula">
+                    <strong>Cálculo da alíquota efetiva:</strong><br>
+                    (${faturamento12meses.toLocaleString('pt-BR')} × ${aliquotaNominal.toFixed(2).replace('.', ',')}% - ${deducao.toLocaleString('pt-BR')}) ÷ ${faturamento12meses.toLocaleString('pt-BR')} = ${(aliquotaEfetivaValor * 100).toFixed(2).replace('.', ',')}%
+                </div>
+                <div class="calculation-formula">
+                    <strong>Cálculo do valor a recolher:</strong><br>
+                    ${faturamentoAtual.toLocaleString('pt-BR')} × ${(aliquotaEfetivaValor * 100).toFixed(2).replace('.', ',')}% = R$ ${valorRecolherValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
