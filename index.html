@@ -154,6 +154,10 @@
             color: var(--primary);
             margin-bottom: 8px;
             font-size: 1rem;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .tool-card p {
@@ -162,13 +166,14 @@
             font-size: 0.85rem;
             line-height: 1.4;
             flex-grow: 1;
+            min-height: 60px;
         }
 
         .tool-button {
             display: inline-block;
             background: var(--secondary);
             color: white;
-            padding: 8px 16px;
+            padding: 10px 16px;
             border-radius: 20px;
             text-decoration: none;
             font-weight: bold;
@@ -176,6 +181,12 @@
             font-size: 0.8rem;
             text-align: center;
             margin-top: auto;
+            width: 100%;
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
         .tool-button:hover {
@@ -550,6 +561,14 @@
                 padding: 15px;
             }
 
+            .tool-card h3 {
+                min-height: auto;
+            }
+
+            .tool-card p {
+                min-height: auto;
+            }
+
             .skill-column h3 {
                 font-size: 0.9rem;
             }
@@ -638,8 +657,8 @@
                         </div>
                         <h3>Simples Nacional</h3>
                         <p>Calcule tributos do Simples Nacional de forma precisa e otimizada</p>
-                        <a href="simples-nacional.html" class="tool-button">
-                            <i class="fas fa-external-link-alt me-2"></i>
+                        <a href="simples.html" class="tool-button">
+                            <i class="fas fa-external-link-alt"></i>
                             Acessar Calculadora
                         </a>
                     </div>
@@ -652,7 +671,7 @@
                         <h3>Cálculo Difal</h3>
                         <p>Calcule o Diferencial de Alíquota de forma rápida e precisa</p>
                         <a href="difal.html" class="tool-button">
-                            <i class="fas fa-external-link-alt me-2"></i>
+                            <i class="fas fa-external-link-alt"></i>
                             Acessar Calculadora
                         </a>
                     </div>
@@ -665,7 +684,7 @@
                         <h3>Simulado Tributário</h3>
                         <p>Simule diferentes cenários tributários para sua empresa</p>
                         <a href="simulador.html" class="tool-button">
-                            <i class="fas fa-external-link-alt me-2"></i>
+                            <i class="fas fa-external-link-alt"></i>
                             Acessar Simulador
                         </a>
                     </div>
@@ -678,7 +697,7 @@
                         <h3>Gestor Documentos</h3>
                         <p>Gerencie e organize seus documentos de forma eficiente</p>
                         <a href="documentos.html" class="tool-button">
-                            <i class="fas fa-external-link-alt me-2"></i>
+                            <i class="fas fa-external-link-alt"></i>
                             Acessar Gestor
                         </a>
                     </div>
@@ -691,7 +710,7 @@
                         <h3>Gestor de Planilhas</h3>
                         <p>Controle e gerencie lançamentos financeiros em planilhas</p>
                         <a href="lancamentos.html" class="tool-button">
-                            <i class="fas fa-external-link-alt me-2"></i>
+                            <i class="fas fa-external-link-alt"></i>
                             Acessar Gestor
                         </a>
                     </div>
@@ -704,7 +723,7 @@
                         <h3>Análise OFX</h3>
                         <p>Analise e processe arquivos OFX de extratos bancários</p>
                         <a href="analise-ofx.html" class="tool-button">
-                            <i class="fas fa-external-link-alt me-2"></i>
+                            <i class="fas fa-external-link-alt"></i>
                             Acessar Analisador
                         </a>
                     </div>
