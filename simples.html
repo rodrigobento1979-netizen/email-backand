@@ -31,7 +31,7 @@
         }
         
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         
@@ -56,11 +56,12 @@
         
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 400px 1fr;
             gap: 20px;
+            align-items: start;
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 968px) {
             .main-content {
                 grid-template-columns: 1fr;
             }
@@ -136,32 +137,36 @@
         .result-card {
             background-color: var(--light-color);
             border-left: 4px solid var(--secondary-color);
-            padding: 15px;
+            padding: 20px;
+            min-height: 200px;
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
         }
         
         .result-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .result-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            text-align: center;
         }
         
         .result-label {
             font-weight: 500;
-            font-size: 14px;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 5px;
         }
         
         .result-value {
-            font-weight: 600;
+            font-weight: 700;
             color: var(--primary-color);
-            font-size: 14px;
+            font-size: 16px;
         }
         
         .aliquota-table {
@@ -333,6 +338,18 @@
             font-size: 13px;
             color: #4a5568;
         }
+        
+        .results-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .table-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 </head>
 <body>
@@ -378,7 +395,9 @@
                         
                         <button id="calcularBtn" class="btn btn-block">Calcular Simples Nacional</button>
                     </div>
-                    
+                </div>
+                
+                <div class="results-section">
                     <div class="card">
                         <h2>Resultado do Cálculo</h2>
                         <div id="resultado" class="result-card">
@@ -386,17 +405,19 @@
                                 Preencha os dados de faturamento e clique em "Calcular" para ver o resultado.
                             </div>
                             <div id="resultadoDetalhado" class="hidden">
-                                <div class="result-item">
-                                    <span class="result-label">Alíquota Efetiva:</span>
-                                    <span id="aliquotaEfetiva" class="result-value">-</span>
-                                </div>
-                                <div class="result-item">
-                                    <span class="result-label">Valor a Recolher:</span>
-                                    <span id="valorRecolher" class="result-value">-</span>
-                                </div>
-                                <div class="result-item">
-                                    <span class="result-label">Faixa de Faturamento:</span>
-                                    <span id="faixaFaturamento" class="result-value">-</span>
+                                <div class="result-grid">
+                                    <div class="result-item">
+                                        <div class="result-label">Alíquota Efetiva</div>
+                                        <div id="aliquotaEfetiva" class="result-value">-</div>
+                                    </div>
+                                    <div class="result-item">
+                                        <div class="result-label">Valor a Recolher</div>
+                                        <div id="valorRecolher" class="result-value">-</div>
+                                    </div>
+                                    <div class="result-item">
+                                        <div class="result-label">Faixa de Faturamento</div>
+                                        <div id="faixaFaturamento" class="result-value">-</div>
+                                    </div>
                                 </div>
                                 
                                 <div class="memoria-calculo">
@@ -408,10 +429,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="tables-section">
-                    <div class="card">
+                    
+                    <div class="card table-container">
                         <h2>Tabela de Alíquotas - <span id="anexoAtual">Anexo I</span></h2>
                         <table class="aliquota-table" id="tabelaAnexo">
                             <!-- A tabela será preenchida via JavaScript -->
@@ -630,7 +649,7 @@
             resultadoDetalhado.classList.remove('hidden');
             aliquotaEfetiva.textContent = (aliquotaEfetivaValor * 100).toFixed(2).replace('.', ',') + '%';
             valorRecolher.textContent = 'R$ ' + valorRecolherValor.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            faixaFaturamento.textContent = faixaEncontrada.faixa;
+            faixaFaturamento.textContent = faixaEncontrada.faixa.split(' ')[0] + ' ' + faixaEncontrada.faixa.split(' ')[1];
             
             // Exibir memória de cálculo
             memoriaDetalhes.innerHTML = `
